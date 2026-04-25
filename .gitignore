@@ -32,6 +32,8 @@ feesh/
 # Cloned third-party hackathon-winning repos (research material, not ours)
 research/sponsors/*/clones/*
 !research/sponsors/*/clones/.gitkeep
+research/sources/repos/*
+!research/sources/repos/.gitkeep
 
 # Locally-installed Claude Code skill plugins (third-party, large, reproducible via clone)
 .claude/skills/

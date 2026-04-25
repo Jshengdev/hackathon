@@ -37,6 +37,15 @@ Canonical deep-dive per past hackathon project relevant to our HackTech 2026 ent
 
 See the [Projects section of `index.md`](../index.md#projects--per-project-teardowns) for the live list with one-line descriptions and verified-status.
 
-## Open gap (deferred)
+## Coverage status — TreeHacks 2026 top-6 teardowns landed 2026-04-25
 
-The TreeHacks 2026 top-6 teardowns (Mira, Tribune, ContainOS, Keryx, Orchestration Co. of Palo Alto, 4sight) are **TODO**. A background agent attempted them but stalled (three long-running subagent stalls tonight — system pattern). Pre-loaded picks + GH URLs + rationale at [`../scrapes/treehacks-2026-winners.md`](../scrapes/treehacks-2026-winners.md) §"Top 10 to clone-and-read." Dispatch one-repo-per-agent in a fresh window for better throughput.
+After a single mega-agent attempt stalled on laptop sleep, the 6 highest-relevance TreeHacks 2026 winners were teardown'd via parallel one-repo-per-agent dispatches:
+
+- [`mira.md`](mira.md) — 🔴 HIGH lookalike — 6 Devpost claims unimplemented
+- [`tribune.md`](tribune.md) — 🟠 8/10 — civic-tech + voice + cited-diff locked from us; audio-clip citations unimplemented
+- [`containos.md`](containos.md) — 🟡 6/10 — claimed multi-LLM ensemble; Claude SDK mocked
+- [`keryx.md`](keryx.md) — 🟡 — Depth Pro shipped but never called by agent path
+- [`orchestration-co-of-palo-alto.md`](orchestration-co-of-palo-alto.md) — 🔴 HIGH — closest witnessed-dissent UI precedent (with Vercel-preview as external referent)
+- [`4sight.md`](4sight.md) — 🔴 HIGH — not actually an agent loop (1-min Worker cron over SQL)
+
+The remaining ~54 winners with public repos are pre-prioritized in [`../scrapes/treehacks-2026-winners.md`](../scrapes/treehacks-2026-winners.md) §"Top 10 to clone-and-read" — clone on demand if needed.

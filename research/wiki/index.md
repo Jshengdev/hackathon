@@ -109,8 +109,14 @@ The PRD inherits from here. Every entry locked by Johnny with verifiable trace.
 | [`projects/jarvis.md`](projects/jarvis.md) | Construction-headcam intelligence (Localize-and-Zoom + spatial sidecar + grounded report + voice agent). | ❌ no repo |
 | [`projects/memento.md`](projects/memento.md) | 🔴 HIGH lookalike-risk teardown (HackTech 2025 winner with overlapping shape). | per scrape |
 | [`projects/renaissance-research.md`](projects/renaissance-research.md) | 🔴 HIGH lookalike-risk teardown (HackTech 2025 winner with three-perspective stream + grounded citations). | per scrape |
+| [`projects/mira.md`](projects/mira.md) | 🔴 TreeHacks 2026 Most Impactful + OpenAI AI Track 1st — Ray-Ban + spatial VLM eldercare. 6 Devpost claims unimplemented in repo. | ✅ partial |
+| [`projects/tribune.md`](projects/tribune.md) | 🟠 (8/10) TreeHacks 2026 Anthropic Human Flourishing 1st — civic policy diff w/ cited constituent voices. Audio-clip citations claim is unimplemented (text only). | ✅ partial |
+| [`projects/containos.md`](projects/containos.md) | 🟡 (6/10) TreeHacks 2026 OpenAI AI Track 1st — wildfire incident command. Claimed multi-LLM ensemble fires only GPT-4o + Gemini; Claude SDK installed but unused. | ✅ partial |
+| [`projects/keryx.md`](projects/keryx.md) | 🟡 TreeHacks 2026 Human Capital Fellowship — drone + VLM navigable world model. Apple Depth Pro shipped but never called by agent path. | ✅ partial |
+| [`projects/orchestration-co-of-palo-alto.md`](projects/orchestration-co-of-palo-alto.md) | 🔴 TreeHacks 2026 Interaction Co. (Poke) — Vision Pro AR control room with agents-as-3D-desks. Closest precedent for witnessed-dissent UI. | ✅ verified |
+| [`projects/4sight.md`](projects/4sight.md) | 🔴 TreeHacks 2026 Cloudflare Best Use ($250K) — wearable biometrics + egocentric VLM + Cloudflare-edge nudge. Not actually an agent loop — 1-min Worker cron over D1 SQL. | ✅ partial |
 
-> **Open gap (deferred):** the TreeHacks 2026 scrape names 60 public-repo winners; only 2 (BRIDGE + GreenChain — both HackPrinceton, NOT TreeHacks) have full code teardowns. Top-6 TreeHacks teardowns (Mira, Tribune, ContainOS, Keryx, Orchestration Co. of Palo Alto, 4sight) are **TODO** — a background agent attempted them on 2026-04-25 but stalled with stream timeouts (third long-running subagent stall tonight; system pattern). The picks + GitHub URLs + per-project rationale are pre-loaded in [`scrapes/treehacks-2026-winners.md`](scrapes/treehacks-2026-winners.md) §"Top 10 to clone-and-read" — pick this up in a fresh window with shorter per-repo agent dispatches (one repo per agent, not 6 in one).
+> **TreeHacks 2026 top-6 teardowns landed 2026-04-25** as one-repo-per-parallel-agent dispatches (after a single mega-agent attempt stalled on laptop sleep). Each teardown caught at least one Devpost-vs-repo gap that the team can exploit for differentiation. The remaining ~54 winners with public repos are pre-prioritized in [`scrapes/treehacks-2026-winners.md`](scrapes/treehacks-2026-winners.md) — clone on demand if needed.
 
 ## `patterns/` — cross-project architectural primitives
 

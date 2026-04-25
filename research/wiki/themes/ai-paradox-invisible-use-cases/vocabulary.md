@@ -203,6 +203,25 @@ cross-links:
 
 ---
 
+## Pivot vocabulary (Johnny verbatim, 2026-04-25 in-person yap)
+
+Sourced from [`caltech/context/yaps/2026-04-25-pivot-best-use-of-ai-hard-target-cultural-flattening-frame.md`](../../../../caltech/context/yaps/2026-04-25-pivot-best-use-of-ai-hard-target-cultural-flattening-frame.md). Captured in Johnny's own pitch voice during team-alignment conversation; informs the PRFAQ window's framing language.
+
+| Term | Source(s) | One-line definition | Companion terms | Opposing terms |
+|---|---|---|---|---|
+| **Algorithmic slop** | Johnny verbatim 2026-04-25 yap; pairs with source 002 + source 003 | Johnny's term for the algorithmic-feed flatness that traps a generation in passive consumption — the consumer-side surface of the same engine source 003 names as "trends slop" on the LLM-output side. *"Algorithmic slop that everybody is permanently stuck to using."* | trends slop; Filter World; presentation product | real curation; active choice |
+| **The "how do you know" question** | Johnny verbatim 2026-04-25 yap (lifting source 002) | The pitch frame, now load-bearing for the demo: *"How do you know what you like, how do you know who you are if you have always had an algorithm telling you what to like and who to be and who everyone else is."* | hollowed-out feeling; identity crisis; Filter World | self-curation; deliberate-training |
+| **Two-sided framing** | Johnny verbatim 2026-04-25 yap | The TRIBE V2 mechanism cuts both ways: same brain-response measurement enables platform manipulation OR user awareness/defense. *"Used to basically make you a slave to this but you can also use it the other way around."* The pitch leans into the inversion. | hero complex; un-black-box; auditor's empirical instrument | one-sided / pure-positive framing |
+| **Hero complex** | Johnny verbatim 2026-04-25 yap | The user archetype the un-black-box visualization is built for: *"if you have a hero complex being able to see what actually goes on can make you make a more informed decision."* The user who *wants* to see the wires — not the user who wants to be protected from them. | un-black-box; witnessed dissent; informed user | passive consumer; trust-the-algorithm user |
+| **Brain-lights-up** | Johnny verbatim 2026-04-25 yap; mechanism per `tribe-v2-canonical-reference.md` | The TRIBE V2 visualization in pitch language: showing the user *how their brain lights up certain content*. Operationalizes the "external referent" T2 was missing — the brain response IS the non-platform-derived ground truth. | external referent; cortical surface viz; auditor's empirical instrument | platform-derived ground truth; LLM-only auditor |
+| **Algorithmic-flattening lived-experience trio** | Johnny verbatim 2026-04-25 yap | Three concrete cases the pitch leans on: Spotify (don't find music, listen to recommended) · YouTube (don't search, watch homepage) · Instagram reels (don't see friends, scroll meaninglessly). | real curation; active choice; algorithmic slop | (these are the failure modes) |
+| **The great depression of quality** | Johnny verbatim 2026-04-25 yap (synth) | The civilizational impact frame: *"the equivalent of having a great depression but instead of it being on financials it's about the quality of people who use this technology unregulated."* Generational quality-collapse parallel to financial depression. | seniority-biased technological change; generation-without-guardrails; Filter World | deliberately-trained minority; the curriculum on purpose |
+| **Neuroplasticity reframe** | Johnny verbatim 2026-04-25 yap | The recovery half of the demo arc: after diagnosing the slop and un-black-boxing the engine, demo *the brain's capacity to recover* — *"show neuroplasticity that's possible, the good ones."* Without this beat, the demo is doom-scroll-the-research; with it, the pitch lands on hope. | hope mechanic; HookBodySurpriseLand "Land" beat | doom-scroll demo; pure-diagnostic pitch |
+| **Brain-viz + swarm-viz + neuroplasticity-arc trio** | Johnny verbatim 2026-04-25 yap | The three-layer visual demo story: TRIBE V2 cortical surface → multi-agent disagreement → recovery arc. *"Lots of visualizations with the brain hopefully and then the swarm visualization of like knowing where the decisions go to where it shows how fucked up it is and then we show neuroplasticity that's possible."* | demo theatre; HookBodySurpriseLand; visualizations as the show | feature-list demo; explanation-only demo |
+| **Best-Use-of-AI by being the most Best-Use-of-AI** | Johnny verbatim 2026-04-25 yap | The track-narrowing rule: don't optimize for two tracks; optimize for owning Best Use of AI so completely that creativity is incidental. *"Win Best Use of AI by having the most Best Use of AI."* Sharpens [decision 005](../decisions/005-best-use-of-ai-as-hard-target.md). | hard target; tech-first stack | track-splitting; balanced-portfolio |
+
+---
+
 ## Notes on coverage
 
 - **Verified terms:** every term cites at least one source file in the wiki or `caltech/context/`.

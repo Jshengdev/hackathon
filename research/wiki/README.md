@@ -9,10 +9,12 @@ This is **not** a sponsor-specific dump (that lives in `../sponsors/`). This is 
 ```
 wiki/
 ├── README.md          ← you are here (the index)
+├── themes/            ← directional "what should we build" — anchor for ideation; lock document(s) live here
 ├── projects/          ← per-project teardowns (source of truth for each)
 ├── patterns/          ← cross-project architecture patterns
 ├── stacks/            ← recurring full-stack combos that ship in 24-36h
-└── tools/             ← per-tool notes (API surface, gotchas, integration patterns)
+├── tools/             ← per-tool notes (API surface, gotchas, integration patterns)
+└── scrapes/           ← agent-produced gallery scrapes (TreeHacks, etc.) with GH-URL-first project tables
 ```
 
 Each `projects/<slug>.md` is the canonical deep-dive. The pattern / stack / tool files are **synthesis** — they cite the projects but don't restate them.
@@ -86,6 +88,12 @@ Demo theatrics, judge-fit, narrative hook.
 ```
 
 ## Index
+
+### Themes (start here — these are the "what should we build" anchors)
+- **[AI paradox / restoring humanity in the age of algorithms](themes/ai-paradox-invisible-use-cases/README.md)** — active anchor / lock document for HackTech 2026. Three sources, Socratic interaction protocol, live-thread changelog.
+
+### Scrapes
+- [TreeHacks 2026 winners](scrapes/treehacks-2026-winners.md) — 64 winners, 60 with public GitHub repos, industry breakdown, top picks for code teardown.
 
 ### Projects
 - [BRIDGE](projects/bridge.md) — HackPrinceton 2026, language-to-action robotics. K2 Think v2 + Gemini + PyBullet. Repo verified.

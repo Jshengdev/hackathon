@@ -42,3 +42,12 @@ research/sources/repos/*
 junsoo/__pycache__/
 junsoo/cache/
 junsoo/tribev2/
+
+# brain-swarm slice — local Python build artifacts, venv, runtime data, model cache
+_bmad/brain-swarm/backend/__pycache__/
+_bmad/brain-swarm/backend/services/__pycache__/
+_bmad/brain-swarm/backend/.venv/
+_bmad/brain-swarm/backend/data/
+_bmad/brain-swarm/backend/cache/
+_bmad/brain-swarm/frontend/node_modules/
+_bmad/brain-swarm/frontend/dist/

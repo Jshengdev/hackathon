@@ -108,6 +108,7 @@ Every meaningful shift in framing, hypothesis, or evidence gets one line here wi
 - **2026-04-25** — Johnny installs the **Socratic interaction rule**: Claude reflects, never proposes the idea. Saved as feedback memory.
 - **2026-04-25** — Source 003 added (Krafton CEO + trends slop + "comment section in flesh"). Theme triangulates across software / culture / strategic judgment. Shared underlying engine named: surface confidence decoupled from underlying validity.
 - **2026-04-25** — TreeHacks 2026 winners scrape lands (64 projects, 60 with repos). Headline: spatial / VLM-grounded (8) + vertical agent stacks (15) are dominant winning archetypes. Multi-site context federation **not present** in any winner — wide open.
+- **2026-04-25** — Johnny sharpens the **hypothesis frame** (still hypothesis, not idea): "Base it off of the AI slop thing. Hard target the best use of AI — and the best use of AI is fighting back against the things where AI can be used terribly and irresponsibly. Not out of ethics, not out of being good people — out of sheer impact. **Augmented human intelligence** should be the way humans actually interact with AI in a sense that it actually creates human ingenuity, spawns the human renaissance, and challenges a lot of previous beliefs and things that aren't really good about society. Each sponsor should be intrigued and in love with what we have." Direction is set; specific idea still TBD.
 - *(next entries land here as Johnny iterates the hypothesis or new sources arrive)*
 
 ---

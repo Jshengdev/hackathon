@@ -1,3 +1,23 @@
+---
+file-type: pattern
+status: verified
+last-verified: 2026-04-25
+supports-decisions:
+  - ../decisions/005-best-use-of-ai-as-hard-target.md
+  - ../decisions/011-demo-over-execution.md
+cites-sources:
+  - ../projects/greenchain.md
+  - ../projects/jarvis.md
+  - ../themes/ai-paradox-invisible-use-cases/sources/003-trends-slop-and-the-comment-section-in-flesh.md
+  - ../themes/ai-paradox-invisible-use-cases/sources/deep-dives/emotional-depth-demo-theatre-canonical.md
+cross-links:
+  - witnessed-dissent.md
+  - spatial-sidecar.md
+  - ../projects/greenchain.md
+  - ../projects/jarvis.md
+  - ../projects/renaissance-research.md
+---
+
 # Grounded citation
 
 **Every metric, claim, or recommendation in your output points back to a specific source artifact (event ID + timestamp + clip, or named dataset + row + URL). Auditability is the demo feature, not just a compliance feature.**
@@ -84,6 +104,18 @@ For video reports, the citation chip plays the clip at the cited timestamp:
 - **The LLM's job is not to invent citations.** It's to format already-attached citations. If you let the LLM choose what to cite, it hallucinates URLs. Pass citations in as structured input; the prompt is "format this; do not add or remove."
 - **Stale URLs.** Snapshot dataset versions and host them yourself if the demo lifetime exceeds the upstream's stability.
 
+## Theme alignment
+
+- **AI paradox / invisible use cases** — grounded citation is the architectural answer to source 003's *"a bad idea that sounds brilliant — that's a $250 million lawsuit."* Every clickable chip is one beat of the un-black-box. Maps directly to the comfort/safety mechanic in `emotional-depth-demo-theatre-canonical.md` §3.4 (the grounded-citation chip).
+- Co-pillar with **witnessed dissent** (companion pattern) — citation handles the *output unit* layer; witnessed dissent handles the *process* layer. Both together = the strongest comfort/safety play.
+
+## Anti-theme alignment
+
+- **Citation density inflation** turns the pattern into theatre — every adjective cited, no adjective load-bearing. The judge stops trusting any one citation because they all read as decoration.
+- **Citations to nothing** ("Source: EPA USEEIO" with no row ID) is performative grounding — *worse* than no citation, because it borrows trust without backing it.
+- **Letting the LLM choose what to cite** hallucinates URLs and inverts the trust the pattern is supposed to install. Citations must be passed in as structured input (cf. `robust-json-from-llms.md`).
+- If the demo doesn't *demonstrate* the citation working — judge has to take the chip on faith — the comfort beat is left on the table (cf. `emotional-depth-demo-theatre-canonical.md` §3.4 failure mode).
+
 ## Generalizes to
 
 - **Med:** every diagnosis claim cited to a specific imaging slice + DICOM ID + measurement.
@@ -96,4 +128,6 @@ For video reports, the citation chip plays the clip at the cited timestamp:
 
 - [`projects/greenchain.md`](../projects/greenchain.md)
 - [`projects/jarvis.md`](../projects/jarvis.md)
+- [`projects/renaissance-research.md`](../projects/renaissance-research.md) (sibling pattern at HackTech 2025 — the citations there are perspective-stream chips, not artifact chips, but the trust mechanism is identical)
 - [`patterns/spatial-sidecar.md`](spatial-sidecar.md) (the sidecar is where the citation handles get assigned)
+- [`patterns/witnessed-dissent.md`](witnessed-dissent.md) (companion pattern — process-layer transparency)

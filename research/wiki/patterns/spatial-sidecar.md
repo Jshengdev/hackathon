@@ -1,3 +1,20 @@
+---
+file-type: pattern
+status: verified
+last-verified: 2026-04-25
+supports-decisions:
+  - ../decisions/006-tribe-v2-as-special-mode.md
+  - ../decisions/009-ironside-pipeline-mirror.md
+cites-sources:
+  - ../projects/jarvis.md
+  - ../../caltech/context/sponsors/ironsite.md
+cross-links:
+  - localize-and-zoom.md
+  - grounded-citation.md
+  - witnessed-dissent.md
+  - ../projects/jarvis.md
+---
+
 # Spatial sidecar (fuse-then-reason)
 
 **Run several cheap, specialized perception models in parallel on each keyframe, fuse their outputs into a structured JSON evidence file, then let the LLM reason over the JSON instead of the pixels.**
@@ -58,6 +75,16 @@ keyframe ──┬──► [MiDaS depth]            depth_per_pixel: ndarray
 - **Any video/image analysis pipeline** where the question is interpretive but the perception is decomposable: surgical workflow, sports, traffic incidents, retail behavior, lab procedures, manufacturing QC.
 - **Document/UI understanding:** OCR + layout detection + table extraction → JSON sidecar → LLM Q&A. Same pattern, different perception models.
 - **Audio:** speech-to-text + speaker diarization + acoustic event detection → JSON sidecar → LLM summary. Same pattern, different modality.
+
+## Theme alignment
+
+- **AI paradox / invisible use cases** — separation-of-concerns is the architectural answer to "presentation product, not thinking product" (source 003). The LLM is asked to reason, not perceive; the perception is the deterministic floor under the reasoning.
+- **TRIBE V2 as the second modality stream** (decision 006) operationalizes the sidecar pattern at the brain-encoding layer — the brain encoding is *another* sidecar field added at every step (per Ironside's "parallel data stream" suggestion in [decision 009](../decisions/009-ironside-pipeline-mirror.md)).
+
+## Anti-theme alignment
+
+- **Dumping raw arrays in the JSON** (a 300×300 depth map serialized inline) is unreadable for both humans and LLMs — the LLM ends up doing perception over a structured-but-incomprehensible object. Summarize: `{nearest_point: 0.4m, mean_depth: 1.8m}`.
+- **Pixel-modification interventions** (highlighting hands, drawing bboxes on raw frames) — Ironside's own engineers tried this and it made performance *worse*. Augmentation must add a *new modality channel*, not modify existing pixels (cf. [decision 009](../decisions/009-ironside-pipeline-mirror.md)).
 
 ## Cross-links
 

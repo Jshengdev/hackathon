@@ -1,3 +1,19 @@
+---
+file-type: pattern
+status: verified
+last-verified: 2026-04-25
+supports-decisions:
+  - ../decisions/008-k2-think-as-speed-engine.md
+cites-sources:
+  - ../projects/greenchain.md
+cross-links:
+  - per-item-parallel-llm-evaluation.md
+  - two-stage-llm-compile.md
+  - witnessed-dissent.md
+  - ../tools/k2-think.md
+  - ../projects/greenchain.md
+---
+
 # Robust JSON from LLMs
 
 **Three layers stacked: strict Pydantic + brace-balanced extractor + retry-with-correction loop. ~30 lines, parses anything, never trusts the wrapper.**
@@ -92,6 +108,14 @@ You **don't need provider-side structured-output features** (OpenAI's `response_
 - **Don't lower temperature to 0** as the only fix. Temperature 0.1 + this loop is more robust than temperature 0 + no loop, because temperature 0 can lock the model into a wrong-but-confident response with no path out.
 - **Watch for `content` being a list of parts** (some providers do this). GreenChain handles it: `if isinstance(content, list): content = "".join(p.get("text","") for p in content if isinstance(p, dict))`.
 - **The retry user message must be terse.** Long error explanations make the model "explain" rather than "fix." "Your previous response was invalid. Problem: <error>. Return only valid JSON." is the right shape.
+
+## Theme alignment
+
+- **AI paradox / invisible use cases** — every Auditor diff in the witnessed-dissent pattern needs to be a *structured object* the UI can render, not prose. This pattern is the load-bearing parser for that structured stream. Without it, the swarm's disagreement degrades into unparseable monologue.
+
+## Anti-theme alignment
+
+- **Letting structured-output drift through to the UI silently** (no Pydantic strict-validation) lets trends slop leak into the demo as "the model said something that looked plausible." The discipline that catches schema drift loudly is the discipline that catches surface-confidence-decoupled-from-validity.
 
 ## Cross-links
 

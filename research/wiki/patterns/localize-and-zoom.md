@@ -1,3 +1,19 @@
+---
+file-type: pattern
+status: verified
+last-verified: 2026-04-25
+supports-decisions:
+  - ../decisions/009-ironside-pipeline-mirror.md
+cites-sources:
+  - ../projects/jarvis.md
+  - ../../caltech/context/sponsors/ironsite.md
+cross-links:
+  - spatial-sidecar.md
+  - grounded-citation.md
+  - ../projects/jarvis.md
+  - ../projects/memento.md
+---
+
 # Localize-and-Zoom
 
 **Defeat VLM spatial blindness without fine-tuning: use the model itself as a region proposer, then re-query it on a crop of the *raw* (un-downsampled) frame.**
@@ -65,6 +81,15 @@ Any wide-shot → small-interaction problem:
 - Drone footage (illegal dumping, infrastructure faults)
 - Microscopy / pathology (cell anomalies)
 - Satellite imagery (rural infrastructure changes)
+
+## Theme alignment
+
+- **AI paradox / invisible use cases** — defeating VLM spatial blindness *without fine-tuning* is engineering-over-prompting. The pattern's existence is a refutation of the trends-slop framing that AI can only do what its prompt asks; here the inference loop *itself* is the un-black-box.
+
+## Anti-theme alignment
+
+- **Cropping from the scan-pass input** instead of the raw frame (the most common failure mode) means the resolution gain never happens. The pattern reduces to two equivalent VLM calls — performance flat, latency 2×, demo-claim broken.
+- **Cost dishonesty** — quoting the pattern as "free spatial reasoning" while two VLM calls per keyframe stack tokens fast. Pre-filter keyframes aggressively or the demo budget collapses.
 
 ## Cross-links
 

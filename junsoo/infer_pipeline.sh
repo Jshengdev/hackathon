@@ -10,6 +10,10 @@
 #   - intermediate preds saved to ./out/preds.npz
 set -euo pipefail
 
+# Run from the script's own directory regardless of caller's cwd, so the
+# relative BACKEND_DATA_DIR path resolves correctly.
+cd "$(dirname "$0")"
+
 VIDEO="${1:?usage: infer_pipeline.sh <video> [out.json]}"
 OUT_JSON="${2:-out/activity.json}"
 ATLAS="${ATLAS:-yeo7}"

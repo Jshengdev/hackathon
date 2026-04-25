@@ -80,13 +80,10 @@ def build_yeo_labels(cache_dir: Path, n_networks: int = 7) -> np.ndarray:
     if cached.exists():
         return np.load(cached)
 
-    atlas = datasets.fetch_atlas_yeo_2011()
-    if n_networks == 7:
-        atlas_img = atlas["thick_7"]
-    elif n_networks == 17:
-        atlas_img = atlas["thick_17"]
-    else:
+    if n_networks not in (7, 17):
         raise ValueError(f"n_networks must be 7 or 17, got {n_networks}")
+    atlas = datasets.fetch_atlas_yeo_2011(n_networks=n_networks, thickness="thick")
+    atlas_img = atlas["maps"]
 
     fsaverage = datasets.fetch_surf_fsaverage(mesh="fsaverage5")
 
@@ -96,7 +93,7 @@ def build_yeo_labels(cache_dir: Path, n_networks: int = 7) -> np.ndarray:
             atlas_img,
             surf_mesh=fsaverage[f"pial_{hemi}"],
             inner_mesh=fsaverage[f"white_{hemi}"],
-            interpolation="nearest",
+            interpolation="nearest_most_frequent",
         )
         # vol_to_surf can return float labels with shape (n_vertices,) or
         # (n_vertices, 1); squeeze and round to nearest integer.

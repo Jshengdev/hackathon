@@ -7,6 +7,7 @@ Prompts are abbreviated; swap in junsoo/papers/prompts/<network>.md for full gro
 """
 from __future__ import annotations
 import asyncio
+import os
 import sys
 from pathlib import Path
 
@@ -21,6 +22,13 @@ def _load_prompt(network: str) -> str:
         return path.read_text()
     return FALLBACK_VOICES.get(network, f"You are the {network} network. React in 1 sentence.")
 
+
+_FALLBACK_MODERATOR = (
+    "You are the brain's moderator. Given 7 network observations and their activation values, "
+    "write ONE sentence describing the overall cognitive and affective state. "
+    "Stay at the level of mental state, not literal stimulus content. "
+    "Mention which network is dominant and whether the pattern is coherent or conflicted."
+)
 
 FALLBACK_VOICES: dict[str, str] = {
     "visual":
@@ -46,15 +54,15 @@ FALLBACK_VOICES: dict[str, str] = {
         "React in 1 sentence. Describe the narrative or self-referential processing happening.",
 }
 
-MODERATOR_SYSTEM = (
-    "You are the brain's moderator. Given 7 network observations and their activation values, "
-    "write ONE sentence describing the overall cognitive and affective state. "
-    "Stay at the level of mental state, not literal stimulus content. "
-    "Mention which network is dominant and whether the pattern is coherent or conflicted."
-)
+def _load_moderator_prompt() -> str:
+    path = _PROMPTS_DIR / "moderator.md"
+    if path.exists():
+        return path.read_text()
+    return _FALLBACK_MODERATOR
 
-SPIKE_THRESHOLD = 0.60   # only send to K2 when network exceeds this
-MAX_NETWORKS_PER_FRAME = 3  # cap parallel K2 calls per tick
+
+SPIKE_THRESHOLD = float(os.getenv("SWARM_SPIKE_THRESHOLD", "0.60"))
+MAX_NETWORKS_PER_FRAME = int(os.getenv("SWARM_MAX_PARALLEL", "3"))
 
 
 class Orchestrator:
@@ -65,6 +73,7 @@ class Orchestrator:
         self._prompts: dict[str, str] = {
             name: _load_prompt(name) for name in FALLBACK_VOICES
         }
+        self._moderator_prompt: str = _load_moderator_prompt()
 
     async def run_frame(
         self, network_frame: dict, t: int, speech_queue: asyncio.Queue
@@ -72,6 +81,9 @@ class Orchestrator:
         regions: dict[str, float] = network_frame.get("regions", {})
         if not regions:
             return
+
+        # Optional stimulus snippet (transcript word/sentence) attached by aggregate.py
+        stimulus_text: str = network_frame.get("stimulus") or ""
 
         # Fire only on networks that newly crossed the spike threshold
         now_active = {n for n, v in regions.items() if v > SPIKE_THRESHOLD}
@@ -86,11 +98,14 @@ class Orchestrator:
         tasks: dict[str, asyncio.Task] = {}
         for name in targets:
             system = self._prompts.get(name, FALLBACK_VOICES.get(name, ""))
-            user = (
-                f"Your activation: {regions.get(name, 0):.2f}. "
-                f"Other networks: {', '.join(f'{k}={v:.2f}' for k, v in regions.items() if k != name)}. "
-                f"Time: {t}s."
-            )
+            user_lines = [
+                f"Your activation: {regions.get(name, 0):.2f}.",
+                f"Other networks: {', '.join(f'{k}={v:.2f}' for k, v in regions.items() if k != name)}.",
+                f"Time: {t}s.",
+            ]
+            if stimulus_text:
+                user_lines.append(f'Stimulus right now: "{stimulus_text}"')
+            user = " ".join(user_lines)
             tasks[name] = asyncio.create_task(self.k2.chat(system, user, max_tokens=140))
 
         observations: dict[str, str] = {}
@@ -104,9 +119,12 @@ class Orchestrator:
         if len(observations) >= 2:
             obs_lines = "\n".join(f"{k}: {v}" for k, v in observations.items())
             region_str = ", ".join(f"{k}={v:.2f}" for k, v in regions.items())
-            user_msg = f"Network observations at t={t}s:\n{obs_lines}\nAll activations: {region_str}"
+            user_msg_parts = [f"Network observations at t={t}s:", obs_lines, f"All activations: {region_str}"]
+            if stimulus_text:
+                user_msg_parts.append(f'Current stimulus: "{stimulus_text}"')
+            user_msg = "\n".join(user_msg_parts)
             try:
-                moderator_text = await self.k2.chat(MODERATOR_SYSTEM, user_msg, max_tokens=240)
+                moderator_text = await self.k2.chat(self._moderator_prompt, user_msg, max_tokens=240)
                 await speech_queue.put({
                     "network": "moderator", "text": moderator_text,
                     "t": t, "type": "moderator",

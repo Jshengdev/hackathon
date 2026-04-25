@@ -66,7 +66,16 @@ def get_status():
         "t": _current_t,
         "n_frames": activity_reader.n_frames,
         "n_agents": swarm.n_agents,
+        "data_source": activity_reader.data_source,
+        "stimulus_label": activity_reader.stimulus_label,
     }
+
+
+@app.post("/brain/reload")
+def reload_activity():
+    """Re-read preds.npz + activity.json from disk. Use after running
+    infer_pipeline.sh manually to pick up new data without restarting."""
+    return {"ok": True, **activity_reader.reload()}
 
 
 @app.post("/brain/start")
@@ -87,13 +96,61 @@ async def stop_sim():
 
 @app.post("/brain/upload")
 async def upload_video(file: UploadFile = File(...)):
-    """Save a video file. Run Junsoo's pipeline separately to generate preds.npz + activity.json."""
+    """Save a video file. Caller can then POST /brain/run-inference with this filename."""
     upload_path = DATA_DIR / "input" / file.filename
     upload_path.parent.mkdir(parents=True, exist_ok=True)
     upload_path.write_bytes(await file.read())
     return {
         "saved": str(upload_path),
-        "next": f"python ../../junsoo/run_inference.py --video {upload_path} --out data/preds.npz",
+        "next": {
+            "endpoint": "/brain/run-inference",
+            "payload": {"video_filename": file.filename},
+        },
+    }
+
+
+@app.post("/brain/run-inference")
+async def run_inference(payload: dict):
+    """Run TRIBE V2 + aggregator on an uploaded video, then reload the
+    simulation's activity buffer. Synchronous — blocks until preds.npz and
+    activity.json land in data/. Expect a few minutes for ~1-minute video on
+    a GPU box.
+
+    Body: {"video_filename": "sintel.mp4"} — must already be uploaded via /brain/upload.
+    """
+    video_filename = payload.get("video_filename")
+    if not video_filename:
+        return {"ok": False, "error": "video_filename required"}
+
+    video_path = (DATA_DIR / "input" / video_filename).resolve()
+    if not video_path.exists():
+        return {"ok": False, "error": f"video not found at {video_path}"}
+
+    junsoo_dir = Path(__file__).parents[3] / "junsoo"
+    script = junsoo_dir / "infer_pipeline.sh"
+    if not script.exists():
+        return {"ok": False, "error": f"pipeline script not found at {script}"}
+
+    proc = await asyncio.create_subprocess_exec(
+        "bash", str(script), str(video_path),
+        cwd=str(junsoo_dir),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    stdout, _ = await proc.communicate()
+    log = stdout.decode(errors="replace")
+
+    if proc.returncode != 0:
+        return {
+            "ok": False,
+            "returncode": proc.returncode,
+            "log_tail": log[-1500:],
+        }
+
+    return {
+        "ok": True,
+        **activity_reader.reload(),
+        "log_tail": log[-500:],
     }
 
 

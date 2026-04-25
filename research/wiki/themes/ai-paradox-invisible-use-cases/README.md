@@ -98,18 +98,11 @@ These are the questions a hypothesis would need to answer. Claude does not answe
 
 ---
 
-## Live thread (changelog — append, don't rewrite)
+## Live thread (changelog)
 
-Every meaningful shift in framing, hypothesis, or evidence gets one line here with a date. This is the conversation log of the search.
-
-- **2026-04-25** — Theme bootstrapped with the Hak / AgentiveStack source on systems thinking + the broken junior pipeline. Initial framing: AI paradox / invisible use cases / generation-without-guardrails.
-- **2026-04-25** — Source 002 added (algorithmic culture / *Filter World* / *Death of Personal Style*). Theme broadens from dev-craft to consumer-culture. New named concepts: Filter World, real curation vs. algorithmic curation, attention colonization, singularity of nothing-new.
-- **2026-04-25** — Johnny articulates the **anchor problem statement**: "restore humanity in the age of AI; redefine the renaissance; un-black-box; Socratic." Shifts from open ideation to a directional commitment.
-- **2026-04-25** — Johnny installs the **Socratic interaction rule**: Claude reflects, never proposes the idea. Saved as feedback memory.
-- **2026-04-25** — Source 003 added (Krafton CEO + trends slop + "comment section in flesh"). Theme triangulates across software / culture / strategic judgment. Shared underlying engine named: surface confidence decoupled from underlying validity.
-- **2026-04-25** — TreeHacks 2026 winners scrape lands (64 projects, 60 with repos). Headline: spatial / VLM-grounded (8) + vertical agent stacks (15) are dominant winning archetypes. Multi-site context federation **not present** in any winner — wide open.
-- **2026-04-25** — Johnny sharpens the **hypothesis frame** (still hypothesis, not idea): "Base it off of the AI slop thing. Hard target the best use of AI — and the best use of AI is fighting back against the things where AI can be used terribly and irresponsibly. Not out of ethics, not out of being good people — out of sheer impact. **Augmented human intelligence** should be the way humans actually interact with AI in a sense that it actually creates human ingenuity, spawns the human renaissance, and challenges a lot of previous beliefs and things that aren't really good about society. Each sponsor should be intrigued and in love with what we have." Direction is set; specific idea still TBD.
-- *(next entries land here as Johnny iterates the hypothesis or new sources arrive)*
+> **Promoted to its own file:** [`live-thread.md`](live-thread.md) — append, don't rewrite. Every meaningful shift in framing, hypothesis, or evidence gets one line there with a date.
+>
+> Stub kept here so links from prior commits resolve. New entries go in [`live-thread.md`](live-thread.md).
 
 ---
 

@@ -22,3 +22,6 @@ npm-debug.log*
 
 # BMad output artifacts (regenerated)
 _bmad-output/
+
+# Nested project workspace — tracked in its own repo (Jshengdev/feesh)
+feesh/

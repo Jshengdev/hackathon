@@ -1,0 +1,47 @@
+[
+  {
+    "action": "approach scaffolding (routine)",
+    "t_start": 0,
+    "t_end": 12,
+    "regions": {
+      "visual": 0.55,
+      "somatomotor": 0.42,
+      "dorsal_attention": 0.61,
+      "ventral_attention": 0.18,
+      "limbic": 0.12,
+      "frontoparietal": 0.34,
+      "default_mode": 0.21
+    },
+    "stimulus": "step onto site; scaffolding ahead"
+  },
+  {
+    "action": "pick up drill (routine)",
+    "t_start": 12,
+    "t_end": 25,
+    "regions": {
+      "visual": 0.62,
+      "somatomotor": 0.71,
+      "dorsal_attention": 0.55,
+      "ventral_attention": 0.32,
+      "limbic": 0.18,
+      "frontoparietal": 0.49,
+      "default_mode": 0.08
+    },
+    "stimulus": "reach for drill; lift drill"
+  },
+  {
+    "action": "begin overhead drilling (novel angle)",
+    "t_start": 25,
+    "t_end": 42,
+    "regions": {
+      "visual": 0.71,
+      "somatomotor": 0.83,
+      "dorsal_attention": 0.78,
+      "ventral_attention": 0.66,
+      "limbic": 0.54,
+      "frontoparietal": 0.81,
+      "default_mode": 0.04
+    },
+    "stimulus": "raise arms overhead; drill overhead, dust falling"
+  }
+]

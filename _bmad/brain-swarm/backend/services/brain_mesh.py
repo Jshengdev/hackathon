@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 
 # Try to import Junsoo's atlas helpers (junsoo/ lives at repo root)
-_JUNSOO = Path(__file__).parents[3] / "junsoo"
+_JUNSOO = Path(__file__).parents[4] / "junsoo"
 if str(_JUNSOO) not in sys.path:
     sys.path.insert(0, str(_JUNSOO))
 

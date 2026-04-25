@@ -13,7 +13,7 @@ from pathlib import Path
 from services.k2_client import K2Client
 
 # Try to load full prompts from Junsoo's papers/prompts/ if available
-_PROMPTS_DIR = Path(__file__).parents[3] / "junsoo" / "papers" / "prompts"
+_PROMPTS_DIR = Path(__file__).parents[4] / "junsoo" / "papers" / "prompts"
 
 def _load_prompt(network: str) -> str:
     path = _PROMPTS_DIR / f"{network}.md"

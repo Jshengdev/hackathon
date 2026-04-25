@@ -55,6 +55,7 @@ The PRD inherits from here. Every entry locked by Johnny with verifiable trace.
 | [`decisions/014-karpathy-llm-wiki-pattern-adopted.md`](decisions/014-karpathy-llm-wiki-pattern-adopted.md) | Wiki structure follows Karpathy three-layer + three-operation pattern |
 | [`decisions/015-palohouse-dropped.md`](decisions/015-palohouse-dropped.md) | Palohouse track dropped |
 | [`decisions/016-twelve-hour-work-budget-four-people.md`](decisions/016-twelve-hour-work-budget-four-people.md) | Total work budget = ~12h × 4 people = ~48 person-hours |
+| [`decisions/017-ironside-report-card-as-junsoo-wrapper.md`](decisions/017-ironside-report-card-as-junsoo-wrapper.md) | Ironside per-action report card runs as a parallel pipeline in `junsoo/report_card/`, not as an orchestrator rewrite |
 
 ## `themes/` — directional anchors
 
@@ -129,6 +130,7 @@ The PRD inherits from here. Every entry locked by Johnny with verifiable trace.
 | [`patterns/spatial-sidecar.md`](patterns/spatial-sidecar.md) | Cheap perception models → JSON evidence file → LLM reasons over JSON |
 | [`patterns/grounded-citation.md`](patterns/grounded-citation.md) | Every output points back to a verifiable source artifact |
 | [`patterns/witnessed-dissent.md`](patterns/witnessed-dissent.md) | Multi-agent disagreement IS the un-black-box mechanism (Actor / Auditor / Mediator triad) |
+| [`patterns/k2-reasoning-plus-instruct-synthesis.md`](patterns/k2-reasoning-plus-instruct-synthesis.md) | Reasoning model for parallel specialists, fast instruct model for structured-JSON synthesis (split the model by job) |
 
 ## `tools/` — per-tool API + integration + gotchas
 

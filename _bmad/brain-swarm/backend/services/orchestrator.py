@@ -23,8 +23,15 @@ def _load_prompt(network: str) -> str:
     return FALLBACK_VOICES.get(network, f"You are the {network} network. React in 1 sentence.")
 
 
-_FALLBACK_MODERATOR = (
-    "You are the brain's moderator. Given 7 network observations and their activation values, "
+# Moderator: deliberately *not* loading the rich `papers/prompts/moderator.md`.
+# That prompt asks for structured JSON output (mode/valence/summary/boundary/
+# flags) plus a long decision rubric. K2 Think is a reasoning model and burns
+# its entire token budget reasoning through that rubric, so the swarm UI
+# silently shows incomplete output. A one-sentence inline prompt produces
+# clean, demo-ready text in ~6-8 s. moderator.md is kept for documentation
+# and as a future option if/when we swap to a non-reasoning fallback model.
+_MODERATOR_PROMPT = (
+    "You are the brain's moderator. Given the network observations and their activation values, "
     "write ONE sentence describing the overall cognitive and affective state. "
     "Stay at the level of mental state, not literal stimulus content. "
     "Mention which network is dominant and whether the pattern is coherent or conflicted."
@@ -54,13 +61,6 @@ FALLBACK_VOICES: dict[str, str] = {
         "React in 1 sentence. Describe the narrative or self-referential processing happening.",
 }
 
-def _load_moderator_prompt() -> str:
-    path = _PROMPTS_DIR / "moderator.md"
-    if path.exists():
-        return path.read_text()
-    return _FALLBACK_MODERATOR
-
-
 SPIKE_THRESHOLD = float(os.getenv("SWARM_SPIKE_THRESHOLD", "0.60"))
 MAX_NETWORKS_PER_FRAME = int(os.getenv("SWARM_MAX_PARALLEL", "3"))
 
@@ -73,7 +73,7 @@ class Orchestrator:
         self._prompts: dict[str, str] = {
             name: _load_prompt(name) for name in FALLBACK_VOICES
         }
-        self._moderator_prompt: str = _load_moderator_prompt()
+        self._moderator_prompt: str = _MODERATOR_PROMPT
 
     async def run_frame(
         self, network_frame: dict, t: int, speech_queue: asyncio.Queue

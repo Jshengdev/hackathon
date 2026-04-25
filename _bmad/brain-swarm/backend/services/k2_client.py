@@ -39,6 +39,20 @@ class K2Client:
         if not self.api_key:
             return "[K2_API_KEY not set]"
 
+        # K2 Think is a reasoning model — it wants to think aloud. Two
+        # countermeasures: (1) append an explicit "respond directly" hint to
+        # the system prompt; (2) give it a *generous* token budget so it has
+        # room to finish reasoning AND emit the final answer. We strip the
+        # reasoning out before returning.
+        system_with_directive = (
+            system
+            + "\n\nIMPORTANT: Respond with ONLY the final answer in the format requested. "
+            "Do not show your reasoning, do not preface with analysis, do not write 'Let me think'. "
+            "Output the requested sentence and stop."
+        )
+        # Reasoning-model headroom: ~3-4× the desired output length.
+        budget = max(max_tokens * 4, 800)
+
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             resp = await client.post(
                 f"{self.base_url}/chat/completions",
@@ -49,10 +63,10 @@ class K2Client:
                 json={
                     "model": self.model,
                     "messages": [
-                        {"role": "system", "content": system},
+                        {"role": "system", "content": system_with_directive},
                         {"role": "user", "content": user},
                     ],
-                    "max_tokens": max_tokens,
+                    "max_tokens": budget,
                     "temperature": 0.7,
                 },
             )

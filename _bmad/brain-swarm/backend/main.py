@@ -38,8 +38,13 @@ async def startup():
     global brain_mesh, activity_reader, swarm, orchestrator
     brain_mesh = BrainMesh()
     loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, brain_mesh.load)
+    try:
+        await loop.run_in_executor(None, brain_mesh.load)
+    except Exception as e:
+        print(f"WARNING: brain mesh load failed ({e}). Using mock sphere.")
+        brain_mesh.use_mock()
 
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     activity_reader = ActivityReader(DATA_DIR)
     activity_reader.load()
 

@@ -136,8 +136,13 @@ The PRD-builder cannot resolve these. Johnny names the resolution (or accepts th
 | When's the freeze? | [`decisions/012-feature-freeze-saturday-8pm.md`](../../../research/wiki/decisions/012-feature-freeze-saturday-8pm.md) |
 | What's the Karpathy wiki pattern operating manual? | [`themes/ai-paradox-invisible-use-cases/window-2-research-deepening/sources/007-karpathy-llm-wiki-pattern.md`](../../../research/wiki/themes/ai-paradox-invisible-use-cases/window-2-research-deepening/sources/007-karpathy-llm-wiki-pattern.md) (verbatim essay) |
 | What did the consolidation pass actually do? | [`caltech/CONSOLIDATION-REPORT.md`](../../../caltech/CONSOLIDATION-REPORT.md) |
-| What sponsor info is canonical? | `caltech/context/sponsors/` (e.g. `ironsite.md`, `ifm-k2.md`, `listenlabs.md`) — NOT `research/sponsors/` (those are inboxes) |
-| What yap notes capture team conversations? | `caltech/context/yaps/` (chronological by date) |
+| What sponsor info is canonical? | `caltech/context/sponsors/` — full list: `ifm-k2.md` (K2), `ironsite.md` (Ironside), `listenlabs.md` (Listen Labs), `palohouse.md` (dropped per decision 015), `sideshift.md`, `yc.md`, `mlh-mini-challenges.md`. NOT `research/sponsors/` (those are inboxes). |
+| What track is the team committing to? | `caltech/context/tracks/best-use-of-ai.md` (hard target per decision 005), `creativity.md` (curveball via TRIBE v2 per decision 006); also-considered: `cybersecurity-safety.md`, `not-so-sexy.md`. Track-strategy summary at `caltech/context/track-strategy.md`. |
+| What yap notes capture team conversations? | `caltech/context/yaps/` (chronological by date) — opening team direction, judge conversations, strategy pivot to tech-first stack. |
+| Who's on the team + what lane do they own? | `caltech/context/team.md` overview + per-person `caltech/context/team/{johnny,jacob,emilie,junsoo}.md` (lane assignments per decision 003). |
+| What is the architectural shape per the team's own context doc? | `caltech/context/architecture.md` |
+| What are the constraints (time, sponsor commitments, etc.)? | `caltech/context/constraints.md` |
+| What's the event itself — date, format, sponsors? | `caltech/context/event.md` |
 
 ## What this skill does NOT do
 

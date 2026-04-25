@@ -1,31 +1,45 @@
-# Integration gaps after pulling jacob → junsoo
+# Integration gaps — status log
 
-After merging `origin/jacob @ 9be66d0` and the path-fix + narration-tune commits, here's the actual end-to-end picture and what's still missing for a working demo.
+After merging `origin/jacob @ 9be66d0` into local junsoo and three rounds of integration work, here's the post-integration end-to-end picture and what's still open.
 
-## What we have now (post-merge)
+**Last updated**: covers merges through `b659884` (run-inference endpoint + grounded moderator + nilearn API compat) plus this session's activity_reader rewrite, README, swarm contract, and wiring smoke test.
+
+## End-to-end architecture (post-integration)
 
 ```
                 ┌──────────────────────┐
                 │  junsoo/             │  ← TRIBE v2 inference + research-grounded
-                │  - run_inference.py  │     swarm prompts
+                │  - run_inference.py  │     swarm prompts + JSON contract
                 │  - aggregate.py      │
-                │  - atlas.py          │
+                │  - atlas.py          │  ← (b659884) updated for current nilearn API
                 │  - papers/CONTEXT.md │
-                │  - papers/prompts/   │  (8 prompt files)
-                │  - infer_pipeline.sh │  ← copies activity.json into backend/data/
+                │  - papers/prompts/   │  (8 prompt files, all loaded by orchestrator)
+                │  - infer_pipeline.sh │  ← cd-safe, copies to backend/data/
+                │  - swarm_contract.md │  ← NEW — locked JSON schemas between lanes
                 └──────────┬───────────┘
                            │  preds.npz + activity.json
                            ▼
                 ┌──────────────────────────────────────────┐
                 │  _bmad/brain-swarm/backend/  (FastAPI)   │
-                │  - main.py                  : app wire-up │
-                │  - services/brain_mesh.py   : fsaverage5 │  ← imports junsoo/atlas.py
-                │  - services/activity_reader.py: JSON read│  ← reads junsoo's activity.json
-                │  - services/swarm.py        : boids sim  │
-                │  - services/orchestrator.py : K2 calls   │  ← loads junsoo/papers/prompts/
-                │  - services/k2_client.py    : Cerebras   │
+                │  - main.py: /brain/{mesh,status,start,   │
+                │     stop,upload,run-inference,reload,ws} │
+                │  - services/brain_mesh.py: fsaverage5    │
+                │     w/ jacob's UV-sphere mock fallback   │
+                │  - services/activity_reader.py: reads    │
+                │     preds.npz + activity.json,           │
+                │     normalizes JSON regions to [0,1],    │
+                │     exposes data_source + reload()       │
+                │  - services/swarm.py: 7 region agents    │
+                │     + 93 wanderer boids                  │
+                │  - services/orchestrator.py: K2 fan-out  │
+                │     w/ grounded moderator + stimulus +   │
+                │     env-var thresholds                   │
+                │  - smoke_test_swarm.py: K2-mocked        │
+                │     wiring check                          │
+                │  - README.md                              │
                 └──────────┬───────────────────────────────┘
-                           │  WebSocket: vertex activations + agents + speech
+                           │  WebSocket: 1 Hz {t, activations[20484],
+                           │  agents, network_activations, top_region, speech[]}
                            ▼
                 ┌──────────────────────────────────────────┐
                 │  _bmad/brain-swarm/frontend/   (Vue 3)   │
@@ -34,56 +48,65 @@ After merging `origin/jacob @ 9be66d0` and the path-fix + narration-tune commits
                 └──────────────────────────────────────────┘
 ```
 
-The wiring is **mostly there**. ActivityReader reads `data/preds.npz` + `data/activity.json`, BrainMesh imports `junsoo/atlas.py` to project Yeo7 labels, Orchestrator loads `junsoo/papers/prompts/<network>.md` for grounded voices. With Jacob's resilient-startup fix, the backend boots even without nilearn (UV-sphere mock). Path-resolution bug (`parents[3]` → `parents[4]`) is fixed.
+The wiring is **complete end-to-end** modulo the K2 401 (auth) and a few nice-to-haves. ActivityReader normalizes both vertex preds and JSON regions to `[0,1]`. Orchestrator loads all 7 grounded prompts + grounded moderator. The frame's stimulus transcript reaches every K2 call. Backend reloads without restart. Wiring is verifiable offline via `smoke_test_swarm.py`.
 
-## What we are missing — ranked
+## Status by gap
 
-### 🔴 Demo-critical (must fix before showing anything)
+### 🔴 Demo-critical
+| # | Item | Status |
+|---|---|---|
+| 1 | `K2_API_KEY` in `.env` | **Open** — key set but Cerebras returns 401. Likely needs different `K2_BASE_URL` (IFM-prefixed keys may use a different endpoint than `api.cerebras.ai/v1`) or different `K2_MODEL` than `k2-think-v2`. Check Cerebras console. |
+| 2 | `requirements.txt` includes nilearn | **Closed** — was already there; verified by `b659884` end-to-end boot. |
+| 3 | Frontend `npm install` | **Open** — manual demo-day step (documented in README). |
+| 4 | `_bmad/brain-swarm/README.md` | **Closed** — written this session. |
 
-1. **`backend/.env` with a real `K2_API_KEY`** — the K2 client returns the literal string `"[K2_API_KEY not set]"` if missing. All swarm narration will be that string. Check `.env.example`; copy to `.env` and set the Cerebras key.
-2. **`brain-swarm/backend/requirements.txt` is missing `nilearn` deps for the atlas** — wait, it has `nilearn>=0.10.0`, but our `junsoo/atlas.py` imports `from nilearn import datasets, surface`. That should work — but only after `backend/.venv` is built fresh. **Verify** `pip install -r requirements.txt` succeeds end-to-end on the deploy box.
-3. **Frontend `node_modules` not installed on demo box** — `cd _bmad/brain-swarm/frontend && npm install` and `npm run dev` (Vite). No script documents this.
-4. **No README at `_bmad/brain-swarm/`** — nobody on the team can boot the stack without reading 4 source files. Need a 30-line "how to run".
+### 🟡 Pipeline integrity
+| # | Item | Status |
+|---|---|---|
+| 5 | `infer_pipeline.sh` cwd assumption | **Closed** in `b659884` — `cd "$(dirname "$0")"` at top. |
+| 6 | Backend reload of `activity.json` | **Closed** in `b659884` — `POST /brain/reload` + `activity_reader.reload()`. |
+| 7 | Synthetic-fallback silence | **Closed** this session — `data_source` exposed in `/brain/status`: `synthetic` / `json_only` / `preds_npz_only` / `preds_npz_with_json`. |
+| 8 | Scale mismatch (raw means vs sigmoid-normalized) | **Closed** this session — `_normalize_region_frames` per-region min-max → `[0,1]`. SPIKE_THRESHOLD=0.60 now actually fires on JSON-fed runs. |
 
-### 🟡 Pipeline integrity (silent failures otherwise)
+### 🟠 Prompt grounding
+| # | Item | Status |
+|---|---|---|
+| 9 | `papers/prompts/moderator.md` unused | **Closed** in `b659884` — orchestrator now `_load_moderator_prompt()` from disk. |
+| 10 | Stimulus text not passed to agents | **Closed** in `b659884` — orchestrator passes `frame.stimulus` to every K2 user message. |
+| 11 | `SPIKE_THRESHOLD` / `MAX_NETWORKS_PER_FRAME` hard-coded | **Closed** in `b659884` — env vars `SWARM_SPIKE_THRESHOLD` / `SWARM_MAX_PARALLEL`. |
 
-5. **`infer_pipeline.sh` assumes cwd=`junsoo/`** — it does `cd` nowhere and uses `BACKEND_DATA_DIR=../_bmad/brain-swarm/backend/data`. If run from repo root it copies into the wrong place. Either document the cwd assumption or `cd "$(dirname "$0")"` at top.
-6. **Backend never reloads `activity.json`** — `ActivityReader.load()` runs once on startup. After `infer_pipeline.sh` drops new files, the backend keeps using the old data until restart. Either: (a) add a `POST /brain/reload` endpoint, (b) hot-reload uvicorn (already enabled when run with `__main__`), or (c) document the restart step.
-7. **Synthetic fallback in `activity_reader.py` is silent** — if `preds.npz` is missing it generates a synthetic 120-frame loop with no warning to the frontend. The HUD shows "running" but the brain is fake. Add a flag in `/brain/status` like `"data_source": "real" | "synthetic"`.
-8. **`aggregate.py` outputs raw mean activations** (range can be negative or >1), but `activity_reader._normalize` uses sigmoid squeeze on raw vertex preds, not on the per-network means. So the JSON `regions` values and the vertex-derived `regions` values are on **different scales**. Two paths:
-   - Make `ActivityReader.get_network_frame()` always derive from normalized vertex data (ignore the JSON's `regions`).
-   - Or normalize the JSON values too in `_normalize_frames()`.
-   Currently the orchestrator's `SPIKE_THRESHOLD = 0.60` is calibrated for normalized [0,1] data, so JSON-fed runs may never spike.
+### 🟢 Story & demo polish
+| # | Item | Status |
+|---|---|---|
+| 12 | Persistent moderator transcript on frontend | **Open** — current speech panel is transient. Quick win: append to a separate "transcript" reactive list, never evict. |
+| 13 | Frontend upload → run TRIBE → reload | **Closed** in `b659884` — `POST /brain/run-inference` calls `infer_pipeline.sh` and reloads. Frontend just needs an upload button to wire it through. |
+| 14 | VAN-spike visual marker on frontend | **Open** — `ventral_attention.md` calls itself the "boundary detector". Frontend should flash / draw a divider when VAN spikes. |
+| 15 | `swarm_contract.md` | **Closed** this session — contracts A/B/C/D locked, with mocking guidance per lane. |
 
-### 🟠 Prompt grounding (research polish)
+## What's *actually* still open
 
-9. **Orchestrator only uses 7 network prompts; `papers/prompts/moderator.md` is unused** — `MODERATOR_SYSTEM` is hard-coded inline in `orchestrator.py`. Should `_load_prompt("moderator")` and use the rich version (mode classification table, valence inference, boundary handling).
-10. **Network agents see `t={t}s` and the cross-network values, but not the stimulus text** — `aggregate.py` already attaches `frame["stimulus"]` (transcript snippet) when segments are available. Pass it into the user message so agents can reason about *what the subject is hearing/seeing*, not just activations.
-11. **`SPIKE_THRESHOLD` and `MAX_NETWORKS_PER_FRAME` hard-coded** — tune via env vars so demo-day calibration doesn't require code edits.
+3 items, all small:
 
-### 🟢 Story & demo polish (nice to haves)
+1. **K2 auth (401)** — non-code; needs the right `K2_BASE_URL` + `K2_MODEL` for the issued key. Try: `K2_BASE_URL=https://api.cerebras.ai/v1`, model name like `llama-3.3-70b` or `qwen-3-32b` (Cerebras' standard catalog) to first confirm credentials work, then swap in K2 once that's nailed down.
+2. **Frontend transcript log** (#12) — append-only reactive list next to the transient speech panel.
+3. **Frontend VAN-spike marker** (#14) — flash the brain or pulse a "▌" divider in the speech panel when `network_activations.ventral_attention > 0.7`.
 
-12. **No way to see the full moderator narrative** — moderator text is pushed into `speech_queue` but the frontend only shows recent items in a transient panel. Add a transcript log.
-13. **No way to upload a video from the frontend → run TRIBE → load the results** — `POST /brain/upload` saves the file and returns a *suggestion string* `"next: python ../../junsoo/run_inference.py …"`. There's no actual run trigger. For demo, manual two-shell flow is fine; for autonomy, wire `BackgroundTasks` to call `infer_pipeline.sh`.
-14. **No subtitle/event overlay tied to VAN spikes** — `papers/prompts/ventral_attention.md` says the VAN agent is the "event-boundary detector" and should emit boundary calls. The frontend doesn't yet visualize boundaries (a flash, a divider in the speech panel, etc.). Easy win for demo theatre.
-15. **No swarm contract doc** — `junsoo/future_plan.md` proposes a `swarm_contract.md` with locked JSON schemas between lanes. It's not written. With the integration converging, lock it now.
+## How to verify the wiring without running anything live
 
-## Suggested next 90 minutes
+```bash
+# 1. Pure-Python aggregator JSON shape (no nilearn, no GPU, no K2):
+cd junsoo && python smoke_test.py
 
-| Priority | Task | Owner | ETA |
-|---|---|---|---|
-| 🔴 | Set `K2_API_KEY` in `.env` and verify swarm narration works locally | Tech B | 5 min |
-| 🔴 | Write `_bmad/brain-swarm/README.md` (boot steps, env vars, restart-after-pipeline) | Tech C | 15 min |
-| 🟡 | Fix scale mismatch between aggregate.py JSON and ActivityReader normalization (gap #8) | Junsoo | 20 min |
-| 🟡 | Add `POST /brain/reload` so we don't need to restart after each `infer_pipeline.sh` run | Tech B | 10 min |
-| 🟠 | Wire `papers/prompts/moderator.md` into orchestrator (gap #9) | Junsoo | 5 min |
-| 🟠 | Pass `frame.stimulus` text into network-agent user message (gap #10) | Junsoo | 10 min |
-| 🟢 | VAN-spike visual marker on frontend (gap #14) | Tech C + non-tech | 20 min |
+# 2. Orchestrator wiring with mocked K2:
+cd _bmad/brain-swarm/backend && python smoke_test_swarm.py
+```
+
+The second test confirms (a) all 7 grounded prompts + grounded moderator load from `junsoo/papers/prompts/`, (b) stimulus text reaches every K2 call, (c) JSON region normalization pulls negative/>1 values into [0,1], (d) rising-edge spike detection prevents per-tick re-billing, (e) `data_source` reflects the inputs.
 
 ## Files to read for full context
 
+- `_bmad/brain-swarm/README.md` — boot steps, env vars, MiroFish patterns we adopted
+- `junsoo/swarm_contract.md` — locked JSON between lanes
 - `junsoo/papers/CONTEXT.md` — the *why* (research grounding)
-- `junsoo/future_plan.md` — the 4-person build plan + JSON contract
-- `_bmad/brain-swarm/backend/main.py` — the wire-up
-- `_bmad/brain-swarm/backend/services/orchestrator.py` — the K2 swarm logic
-- `_bmad/brain-swarm/backend/services/activity_reader.py` — the bridge from JSON → swarm
+- `junsoo/future_plan.md` — 4-person build plan
+- `_bmad/MIROFISH-REFERENCE.md` — original reference patterns we borrowed from

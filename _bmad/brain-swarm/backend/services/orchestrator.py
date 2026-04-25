@@ -91,7 +91,7 @@ class Orchestrator:
                 f"Other networks: {', '.join(f'{k}={v:.2f}' for k, v in regions.items() if k != name)}. "
                 f"Time: {t}s."
             )
-            tasks[name] = asyncio.create_task(self.k2.chat(system, user, max_tokens=60))
+            tasks[name] = asyncio.create_task(self.k2.chat(system, user, max_tokens=140))
 
         observations: dict[str, str] = {}
         for name, task in tasks.items():
@@ -106,7 +106,7 @@ class Orchestrator:
             region_str = ", ".join(f"{k}={v:.2f}" for k, v in regions.items())
             user_msg = f"Network observations at t={t}s:\n{obs_lines}\nAll activations: {region_str}"
             try:
-                moderator_text = await self.k2.chat(MODERATOR_SYSTEM, user_msg, max_tokens=80)
+                moderator_text = await self.k2.chat(MODERATOR_SYSTEM, user_msg, max_tokens=240)
                 await speech_queue.put({
                     "network": "moderator", "text": moderator_text,
                     "t": t, "type": "moderator",

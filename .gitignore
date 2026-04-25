@@ -37,3 +37,8 @@ research/sources/repos/*
 
 # Locally-installed Claude Code skill plugins (third-party, large, reproducible via clone)
 .claude/skills/
+
+# junsoo/ slice — local Python build artifacts and vendored third-party clone
+junsoo/__pycache__/
+junsoo/cache/
+junsoo/tribev2/

@@ -25,3 +25,7 @@ _bmad-output/
 
 # Nested project workspace — tracked in its own repo (Jshengdev/feesh)
 feesh/
+
+# Cloned third-party hackathon-winning repos (research material, not ours)
+research/sponsors/*/clones/*
+!research/sponsors/*/clones/.gitkeep

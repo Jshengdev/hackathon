@@ -1,0 +1,33 @@
+# Technical Patterns Library - Tool Manifest
+# Tracks transformed documentation for doc-explorer agent
+
+tools:
+  # Example entry (created by doc-transformer workflow):
+  # anthropic-api:
+  #   name: "Anthropic Claude API"
+  #   source: "https://docs.anthropic.com/en/api"
+  #   doc_size_pages: 127
+  #   transformed: true
+  #   transformed_date: "2026-01-22T03:15:00Z"
+  #   transformer_version: "1.0"
+  #   processing_strategy: "hybrid-shard-lens"
+  #   session_id: "anthropic-api-20260122-0315"
+  #
+  #   lenses:
+  #     capabilities: {status: complete, word_count: 2847}
+  #     creative-applications: {status: complete, ideas_count: 12}
+  #     quick-start: {status: complete, examples_count: 6}
+  #     code-patterns: {status: complete, patterns_count: 15}
+  #     hackathon-tracks: {status: complete, tracks_count: 8}
+  #     constraints: {status: complete, limitations_count: 10}
+  #
+  #   code_testing:
+  #     enabled: true
+  #     snippets_tested: 23
+  #     pass_rate: 87%
+  #
+  #   discovery_count: 0
+  #   explorer_ready: true
+
+# Manifest is auto-populated by doc-transformer workflow
+# Each transformed tool gets an entry here for doc-explorer to reference

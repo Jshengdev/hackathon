@@ -1,0 +1,46 @@
+installation:
+  version: 6.4.0
+  installDate: 2026-04-25T07:50:54.939Z
+  lastUpdated: 2026-04-25T07:51:42.971Z
+modules:
+  - name: core
+    version: 6.4.0
+    installDate: 2026-04-25T07:50:54.533Z
+    lastUpdated: 2026-04-25T07:51:42.778Z
+    source: built-in
+    npmPackage: null
+    repoUrl: null
+  - name: bmm
+    version: 6.4.0
+    installDate: 2026-04-25T07:50:54.620Z
+    lastUpdated: 2026-04-25T07:51:42.779Z
+    source: built-in
+    npmPackage: null
+    repoUrl: null
+  - name: bmb
+    version: v1.7.0
+    installDate: 2026-04-25T07:50:54.749Z
+    lastUpdated: 2026-04-25T07:51:42.828Z
+    source: external
+    npmPackage: bmad-builder
+    repoUrl: https://github.com/bmad-code-org/bmad-builder
+    channel: stable
+    sha: 86033fc9aeae2ca6d52c7cdb675c1f4bf17fc1c1
+  - name: cis
+    version: v0.2.0
+    installDate: 2026-04-25T07:50:54.810Z
+    lastUpdated: 2026-04-25T07:51:42.875Z
+    source: external
+    npmPackage: bmad-creative-intelligence-suite
+    repoUrl: https://github.com/bmad-code-org/bmad-module-creative-intelligence-suite
+    channel: stable
+    sha: 14a63b893c07173b7a6cfe0fb6a9a72ba51d3cf1
+  - name: hackathon-suite
+    version: null
+    installDate: 2026-04-25T07:51:42.971Z
+    lastUpdated: 2026-04-25T07:51:42.971Z
+    source: unknown
+    npmPackage: null
+    repoUrl: null
+ides:
+  - claude-code

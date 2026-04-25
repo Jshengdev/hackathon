@@ -1,0 +1,24 @@
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Editor scratch
+.vscode/
+.idea/
+*.swp
+
+# Local-only Claude state (don't sync chat history across machines)
+.claude/projects/
+
+# BMad output artifacts (regenerated)
+_bmad-output/

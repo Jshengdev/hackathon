@@ -3,6 +3,27 @@
     <div class="bg-grid" />
     <div class="bg-glow" />
 
+    <!-- Orbital backdrop: two faint, slow-rotating ellipses -->
+    <svg class="landing-orbital-svg" viewBox="0 0 800 800" aria-hidden="true">
+      <g class="landing-orbital-group">
+        <ellipse
+          class="landing-orbital landing-orbital--outer"
+          cx="400" cy="400"
+          rx="320" ry="190"
+          transform="rotate(-18 400 400)"
+        />
+        <ellipse
+          class="landing-orbital landing-orbital--inner"
+          cx="400" cy="400"
+          rx="220" ry="130"
+          transform="rotate(24 400 400)"
+        />
+      </g>
+    </svg>
+
+    <!-- Vignette: accent glow at center, fades to transparent -->
+    <div class="landing-vignette" />
+
     <div class="hero">
       <div class="brand-line">
         <span class="brand-dot" />
@@ -130,6 +151,45 @@ function onFileChange(ev) {
   position: absolute; inset: 0;
   background: radial-gradient(circle at 30% 40%, rgba(78, 205, 196, 0.10), transparent 50%),
               radial-gradient(circle at 70% 60%, rgba(187, 143, 206, 0.10), transparent 50%);
+  pointer-events: none;
+}
+
+/* Orbital backdrop — slow-rotating SVG ellipses, CSS-only animation */
+.landing-orbital-svg {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: min(120vmin, 1100px);
+  height: min(120vmin, 1100px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  overflow: visible;
+  opacity: 0.9;
+}
+.landing-orbital {
+  fill: none;
+  stroke-width: 1;
+  transform-origin: 400px 400px;
+  transform-box: fill-box;
+}
+.landing-orbital--outer {
+  stroke: rgba(180, 200, 255, 0.10);
+  animation: orbit-spin 60s linear infinite;
+}
+.landing-orbital--inner {
+  stroke: rgba(180, 200, 255, 0.06);
+  animation: orbit-spin 35s linear infinite reverse;
+}
+@keyframes orbit-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Vignette — accent glow at center, fades to transparent */
+.landing-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(130, 224, 170, 0.08) 0%,
+    rgba(130, 224, 170, 0) 55%);
   pointer-events: none;
 }
 

@@ -30,8 +30,38 @@ load_bearing_changes_from_v1:
   - iterative_loop_reveal: "BEAT-3 SHOWS the iterative-loop running visibly — score climbs Round 1 (0.42) → Round 8 (0.84) — this is the demo's emotional climax"
   - persona_dual_track: "Maya (Gen-Z teen) opens + closes Acts 1+4 (universal-relatable); workplace footage drives Act 3 demo (B2B-primary). Maya as the entry-point everyone recognizes; workplace as the load-bearing pitch"
   - vocabulary_lock: "brainrot / data layer / empathy layer / behavior gap / algorithm breaking out argument — locked across voiceover and on-screen text"
-  - sponsor_emphasis: "Ironsight + Listen Labs CORE up-front; Sideshift + YC as overlay; Best AI YEA/NAY rubric in Act 4 close"
   - pacing_retune: "Act 3 expanded from 100s to 110s to give iterative-loop reveal full ~25s of breathing room"
+  - conviction_first_universal_opening: |
+      v2.2 update — Act 2.1 NO LONGER names sponsors. The problem statement is delivered
+      as a UNIVERSAL human gap that hits B2B (workers being managed by action data) AND
+      B2C (users reading their own day-to-day from action data alone). The video must
+      CONVINCE the audience the problem is real and shared BEFORE they care about the
+      solution. Sponsor names live in the FAQ ammunition deck and Devpost — never in the
+      launch video opening.
+
+      The 4-second universal montage at 00:30 shows nurse + worker + retail rep + teen +
+      delivery driver — five faces of the same problem. On-screen text crystallizes the
+      universal claim: "Today's AI can describe what humans did. It can't see what they
+      felt while doing it." The nurse demonstration that follows is the SPECIFIC instance
+      that earns the universal claim, not the only instance.
+
+      Act 3.5.B montage closer now explicitly spans B2B AND B2C in the voiceover ("Same
+      engine runs across [B2B industries]. Same engine runs on a teenager scrolling her
+      own feed at home"). The conviction the opening built gets paid off here — the
+      single engine demonstrably crosses the worker/user boundary.
+canonical_problem_statement_alignment: |
+  This script's framing matches the canonical one-size-fits-all problem statement locked
+  across the project:
+   - _bmad-output/planning-artifacts/ironsight-listenlabs-prd.md frontmatter +
+     "One-Size-Fits-All Problem Statement" body section
+   - caltech/architecture-overview.md §1 "The Problem in One Paragraph"
+   - caltech/use-cases/two-demo-scenarios.md §0 problem statement field
+   - caltech/use-cases/empathy-layer-hero-output.md §1 epiphany distilled
+  All four canonical sources name the same gap: AI processes the surface but misses the
+  model of the human underneath. The video opening lands that gap as a UNIVERSAL human
+  problem — not as a sponsor-brief framing. The universal frame is what makes the
+  audience care; the sponsor-brief alignment lives in the FAQ + Devpost where it informs
+  judges without diluting the pitch.
 forbidden_claim_guardrails_load_bearing:
   - No reverse inference (use observational language: "responded to" / "specialist sustained engagement" / "default-mode dominant")
   - No clinical claims ("workforce-context augmentation, not psychological evaluation")
@@ -65,6 +95,8 @@ forbidden_claim_guardrails_load_bearing:
 ## §1. One-Page Treatment
 
 A 17-year-old girl scrolls Reels in her bedroom. She says she's tried to think for herself, but the algorithm keeps pulling her back. She's given up. Cut to a wider shot: twenty teenagers in identical posture, identical content beats playing across all twenty screens. Two doors appear. One leads to refusing the platforms and falling behind. The other leads to using them and becoming hollow. A third door materializes. Light spills through it.
+
+Cut to a fast montage. A nurse sits with a patient. A worker pauses on scaffolding. A retail rep listens to a customer mid-shift. A teen looks up from her phone. A delivery driver waits between stops. On-screen, large center text materializes: *"Today's AI can describe what humans did. It can't see what they felt while doing it."* Every day humans do work that no machine can read, and the people above them — the manager, the platform, the system — make decisions on data that's missing the human entirely.
 
 Cut to a hospital. A nurse enters a patient's room. She sits down. She sits there for thirty minutes. Her manager reads the action data and decides to cut visit time to ten minutes per room. The action data is wrong. The patient was processing a terminal diagnosis. The nurse held space. There's no way to put "she held space" into a productivity log. That's the empathy layer. That's what we built.
 
@@ -124,14 +156,31 @@ Side by side: action-data report on the left, says cut to ten. Empathy-layer doc
 
 ## §3. ACT 2 — THE EMPATHY GAP (0:30 – 0:50)
 
-**Total runtime: 20 seconds.** Transition register — slightly warmer than Act 1, still cinematic. The Guide voice enters here. **Pivot from Maya (B2C universal-relatable) to the B2B-primary use case (the workplace footage scenario).**
+**Total runtime: 20 seconds.** Transition register — slightly warmer than Act 1, still cinematic. The Guide voice enters here. **CONVICTION-FIRST opening: name the universal human problem (the empathy gap that hits everyone — workers + users + people in their day-to-day lives) before any specific scenario or sponsor framing. The audience needs to BELIEVE the problem is real and shared before they care about the solution.**
 
-### Scene 2.1 — The healthcare scenario named (0:30 – 0:42)
+### Scene 2.1 — The universal problem named + healthcare demonstration (0:30 – 0:42)
 
-**Visual.** Cut to clinical environment. A nurse (mid-shot, scrubs, fluorescent hospital lighting — visually distinct from Maya's bedroom). She enters a patient room. She sits down beside the bed. We see only the back of the patient's head. She holds the patient's hand. Time-lapse: minutes pass.
+**Visual (00:30 – 00:34, ~4s — the universal-conviction opening).**
 
-**Voiceover.** (Guide voice — calm, present, slightly warmer than Maya. The "guide" register.)
-> *"A nurse spends thirty minutes with a patient processing a terminal diagnosis. Her manager reads the action data and decides to cut her to ten. The data didn't see what the room actually was. There's no way to put 'she held space' into a productivity log. That's the gap we're closing. We call it the empathy layer."*
+Cut from third-door light to a fast montage of human moments where action data fails the human:
+- A nurse sitting with a patient (workplace)
+- A construction worker pausing on scaffolding (workplace)
+- A retail rep mid-conversation with a customer (workplace)
+- A teen in their bedroom looking up from their phone (consumer / Maya from Act 1, brief callback)
+- A delivery driver in their car between stops (consumer + worker overlap)
+
+Each frame holds for ~0.7s. They share one quality: a human in a moment that requires reading, not just measurement. Below the montage, on-screen text materializes large and centered:
+
+> ***"Today's AI can describe what humans did. It can't see what they felt while doing it."***
+
+Hold the text frame for 1 second.
+
+**Visual (00:34 – 00:42, ~8s — the nurse demonstration anchors the universal claim).**
+
+Hard cut to the clinical environment as the nurse enters a patient room and sits down. We see only the back of the patient's head. She holds the patient's hand. Time-lapse: minutes pass.
+
+**Voiceover.** (Guide voice — calm, conviction register. Speaks slowly. Each sentence carries weight.)
+> *"Every day humans do work that no machine can read. A nurse sits with a patient processing a terminal diagnosis. A worker pauses on scaffolding because something feels wrong. Someone scrolls their feed and can't say why they feel hollow afterward. AI today describes what they did. It can't see what they felt while doing it. And the people above them — the manager, the platform, the system — make decisions on the data that's missing the human. That's the gap we're closing. We call it the empathy layer."*
 
 **Sound design.** Soft warm pad enters at 0:30 (replaces Act 1's cool ambient hum). Quiet throughout the nurse scene — let the visual hold weight.
 
@@ -220,8 +269,8 @@ The 3D cortical mesh remains in the upper-left corner (small). The center of the
 
 A manager's hand (visible only as cursor) hovers over the LEFT report. Then moves to the RIGHT report. Then the cursor closes the LEFT report and acts on the RIGHT.
 
-**Voiceover.** (Guide voice — the business case crystallizes)
-> *"This is the choice the manager actually has now. The action data on the left would have cut nurse-time per room. The company would have lost the patient experience it was trying to optimize for. The empathy layer on the right shows what action data can't: how the nurse held space. The cut doesn't happen. The patient stays in care. The nurse stays. Same engine runs across construction, retail, healthcare, education. Anywhere humans do work that someone above them is grading. One engine. Different data."*
+**Voiceover.** (Guide voice — the business case crystallizes; lands the universal payoff)
+> *"This is the choice the manager actually has now. The action data on the left would have cut nurse-time per room. The company would have lost the patient experience it was trying to optimize for. The empathy layer on the right shows what action data can't: how the nurse held space. The cut doesn't happen. The patient stays in care. The nurse stays. Same engine runs across construction, retail, healthcare, education. Same engine runs on a teenager scrolling her own feed at home, giving her a brain-grounded journal of what her day actually felt like. Anywhere humans do work, anywhere humans do living, that someone above them — or the user themselves — is reading from action data alone. One engine. Different data."*
 
 **Source footage.** Empathy-layer document UI (Emilie's design, 3-section render). Pre-rendered.
 
@@ -425,8 +474,9 @@ Final 2 seconds: black frame. Product/team/sponsor logos.
 
 | # | TC | Dur | Type | Voiceover | Owner |
 |---|---|---|---|---|---|
-| SH-2.1.A | 00:30–00:36 | 6s | MS nurse entering patient room | "A nurse spends thirty minutes with a patient processing a terminal diagnosis. Her manager reads the action data and decides to cut her to ten." | Emilie + DP |
-| SH-2.1.B | 00:36–00:42 | 6s | Time-lapse of nurse seated, holding patient hand | "The data didn't see what the room actually was. There's no way to put 'she held space' into a productivity log. That's the gap we're closing. We call it the empathy layer." | Emilie |
+| SH-2.1.0 | 00:30–00:34 | 4s | Fast montage (5 frames @ ~0.7s each): nurse + patient / worker on scaffolding / retail rep mid-conversation / teen looking up from phone / delivery driver between stops; large center text materializes: *"Today's AI can describe what humans did. It can't see what they felt while doing it."* | "Every day humans do work that no machine can read. A nurse sits with a patient processing a terminal diagnosis. A worker pauses on scaffolding because something feels wrong. Someone scrolls their feed and can't say why they feel hollow afterward. AI today describes what they did. It can't see what they felt while doing it. And the people above them — the manager, the platform, the system — make decisions on the data that's missing the human." | GFX + Emilie |
+| SH-2.1.A | 00:34–00:38 | 4s | Hard cut to MS nurse entering patient room (anchor scene that carries the universal claim into a single specific demonstration) | (VO continues from 2.1.0) | Emilie + DP |
+| SH-2.1.B | 00:38–00:42 | 4s | Time-lapse of nurse seated, holding patient hand | "That's the gap we're closing. We call it the empathy layer." | Emilie |
 | SH-2.2.A | 00:42–00:46 | 4s | RENDER 3D cortical mesh appears, slow rotation | "We use Meta's brain-encoding model to read what work does to your brain. A swarm of specialists, one per brain region, translates the signal into language." | Junsoo + Emilie |
 | SH-2.2.B | 00:46–00:50 | 4s | RENDER mesh continues, regions glow | "Claude writes the paragraph that captures what you felt. Then we score it back against the brain pattern itself. Same way we matched Clair de Lune in prior work. Eight rounds. The language gets closer each time." | Junsoo + Emilie |
 
@@ -444,7 +494,7 @@ Final 2 seconds: black frame. Product/team/sponsor logos.
 | SH-3.3.D | 01:50–01:55 | 5s | Round 8 final paragraph crystallizes; score bar full at 0.84; convergence chime | (silence; let convergence land) | Same |
 | SH-3.4 | 01:55–02:10 | 15s | Final paragraph holds; falsification score-bar appears beneath at 0.27; side-by-side delta | "To prove the description isn't generic, we score the same paragraph against control footage. Same nurse, routine vitals visit. Similarity drops to 0.27. The paragraph is anchored to this scene. Not made up. We can prove it." | Junsoo + Jacob + Emilie |
 | SH-3.5.A | 02:10–02:25 | 15s | Side-by-side documents: action-data report (LEFT, red border) vs. empathy-layer document (RIGHT, warm-tone border); cursor hovers LEFT then RIGHT | "This is the choice the manager actually has now. The action data on the left would have cut nurse-time per room. The company would have lost the patient experience it was trying to optimize for. The empathy layer on the right shows what action data can't: how the nurse held space. The cut doesn't happen. The patient stays in care. The nurse stays." | Emilie |
-| SH-3.5.B | 02:25–02:40 | 15s | Cursor closes LEFT report and acts on RIGHT; cut to 4-tile montage of other industries (construction worker / retail rep / kitchen line cook / classroom teacher) all with their own empathy-layer documents | "Same engine runs across construction, retail, healthcare, education. Anywhere humans do work that someone above them is grading. One engine. Different data." | Emilie + Johnny |
+| SH-3.5.B | 02:25–02:40 | 15s | Cursor closes LEFT report and acts on RIGHT; cut to 5-tile montage spanning B2B + B2C: construction worker / retail rep / kitchen line cook / classroom teacher / Maya in her bedroom (B2C callback) — each with their own empathy-layer document rendered in their persona-appropriate framing | "Same engine runs across construction, retail, healthcare, education. Same engine runs on a teenager scrolling her own feed at home, giving her a brain-grounded journal of what her day actually felt like. Anywhere humans do work, anywhere humans do living, that someone above them — or the user themselves — is reading from action data alone. One engine. Different data." | Emilie + Johnny |
 
 ### Act 4 — Output / Payoff (4 shots, 20s)
 

@@ -8,6 +8,7 @@ Prompts are abbreviated; swap in backend/prompts/<network>.md for full grounded 
 from __future__ import annotations
 import asyncio
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -17,21 +18,72 @@ from services.k2_client import K2Client
 _PROMPTS_DIR = Path(__file__).parents[1] / "prompts"
 
 
+_TEMPLATE_ECHOES = (
+    "one-sentence call",
+    "what's likely happening in this network",
+    "low/med/high",
+    "what would change your call",
+    "low / med / high",
+)
+_CITE_LINE_RE = re.compile(r"^\s*\[?[A-Z][^.\n]{2,}?\d{4}[^.\n]*?\]?\s*$")
+_CONF_PREFIX_RE = re.compile(
+    r"^(?:high|medium|med|low)\b[\s,;:]?",
+    re.IGNORECASE,
+)
+
+
+def _looks_like_template_echo(line: str) -> bool:
+    low = line.lower()
+    return any(t in low for t in _TEMPLATE_ECHOES)
+
+
+def _strip_label(line: str) -> str:
+    """Drop a `Label:` or `**Label**:` prefix and surrounding markdown noise."""
+    s = line.split(":", 1)[-1] if ":" in line[:40] else line
+    return s.strip().lstrip("*").strip().strip("*").strip()
+
+
 def _parse_observation(text: str) -> dict:
     """Parse 3-line K2 output into {reading, confidence, cite}.
-    Tolerant: missing fields fall back to empty string; 'text' = full reading line."""
-    lines = [l.strip() for l in text.splitlines() if l.strip()]
+
+    K2 Think often (a) echoes the prompt template literally inside its
+    reasoning, (b) emits unlabeled lines like "High confidence; ..." or
+    "[Allen et al. 2022, Nature Neuroscience]", and (c) runs out of token
+    budget mid-thought. This parser:
+      1. Drops lines that are verbatim echoes of the prompt template
+      2. Recognizes labeled OR unlabeled confidence + cite lines
+      3. Falls back to the first non-echo, non-confidence, non-cite line
+         as `reading` rather than dumping the entire raw blob.
+    """
+    raw_lines = [l.strip() for l in text.splitlines() if l.strip()]
+    # Filter out lines that are verbatim template echoes from the prompt.
+    lines = [l for l in raw_lines if not _looks_like_template_echo(l)]
     out = {"reading": "", "confidence": "", "cite": ""}
+
+    candidates: list[str] = []
     for line in lines:
-        low = line.lower()
-        if low.startswith(("1.", "**reading**", "reading:")):
-            out["reading"] = line.split(":", 1)[-1].strip().lstrip("*").strip()
-        elif low.startswith(("2.", "**confidence", "confidence")):
-            out["confidence"] = line.split(":", 1)[-1].strip().lstrip("*").strip()
-        elif low.startswith(("3.", "**cite", "cite")):
-            out["cite"] = line.split(":", 1)[-1].strip().lstrip("*").strip()
+        low = line.lower().lstrip("*").strip()
+        if low.startswith(("1.", "**reading**", "reading", "**reading")):
+            out["reading"] = _strip_label(line)
+        elif low.startswith(("2.", "**confidence", "confidence", "**conf")):
+            out["confidence"] = _strip_label(line)
+        elif low.startswith(("3.", "**cite", "cite", "**citation", "citation", "source")):
+            out["cite"] = _strip_label(line)
+        elif _CITE_LINE_RE.match(line) or (line.startswith("[") and line.endswith("]")):
+            if not out["cite"]:
+                out["cite"] = line.strip("[]").strip()
+        elif _CONF_PREFIX_RE.match(line):
+            if not out["confidence"]:
+                out["confidence"] = line.strip()
+        else:
+            candidates.append(line)
+
+    if not out["reading"] and candidates:
+        # First non-template, non-cite, non-confidence line is the reading.
+        out["reading"] = candidates[0]
     if not out["reading"]:
-        out["reading"] = text.strip()
+        # Last-resort: stripped raw text without template echoes.
+        out["reading"] = " ".join(lines).strip() or text.strip()
     return out
 
 def _load_prompt(network: str) -> str:

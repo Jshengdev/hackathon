@@ -20,8 +20,14 @@ def _strip_reasoning(text: str) -> str:
     if "</think>" in text:
         text = text.rsplit("</think>", 1)[1]
     text = text.strip()
-    # Trailing-answer conventions
-    for marker in ("Final answer:", "FINAL ANSWER:", "Answer:", "ANSWER:"):
+    # Trailing-answer conventions. IFM K2 frequently writes "Thus final answer."
+    # on its own line before the actual answer.
+    for marker in (
+        "Thus final answer.", "Thus final answer:",
+        "Final answer.", "Final answer:",
+        "FINAL ANSWER:", "FINAL ANSWER.",
+        "Answer:", "ANSWER:",
+    ):
         idx = text.rfind(marker)
         if idx != -1:
             text = text[idx + len(marker):].strip()
@@ -39,19 +45,28 @@ class K2Client:
         if not self.api_key:
             return "[K2_API_KEY not set]"
 
-        # K2 Think is a reasoning model — it wants to think aloud. Two
-        # countermeasures: (1) append an explicit "respond directly" hint to
-        # the system prompt; (2) give it a *generous* token budget so it has
-        # room to finish reasoning AND emit the final answer. We strip the
-        # reasoning out before returning.
+        # K2 IFM Think v2 is a reasoning model that emits long preamble before
+        # the final answer (no <think> tags). Defenses:
+        #   1. Append a directive that re-asserts the output contract.
+        #   2. Append the user message with a "BEGIN FINAL ANSWER NOW" marker
+        #      so we have a reliable splitter even if the model doesn't write
+        #      "Final answer:" itself.
+        #   3. Generous budget — measured: clean K2 calls use ~250 tokens;
+        #      runaway-reasoning calls hit 3000+. Min 3500 keeps demo reliable.
+        #   4. Temperature 0.3 — same prompt should converge on roughly the
+        #      same final answer instead of diverging into fresh tangents.
         system_with_directive = (
             system
-            + "\n\nIMPORTANT: Respond with ONLY the final answer in the format requested. "
-            "Do not show your reasoning, do not preface with analysis, do not write 'Let me think'. "
-            "Output the requested sentence and stop."
+            + "\n\nOUTPUT CONTRACT (NON-NEGOTIABLE):\n"
+            "- Do NOT think out loud. Do NOT echo this prompt's format spec.\n"
+            "- Do NOT write 'We need to', 'Let me think', 'Potential pitfalls', 'The user is asking', or any meta-commentary.\n"
+            "- After your reasoning (if any), write the literal token 'FINAL ANSWER:' on its own line, then the three lines requested. Stop immediately after the third line."
         )
-        # Reasoning-model headroom: ~3-4× the desired output length.
-        budget = max(max_tokens * 4, 800)
+        user_with_marker = (
+            user
+            + "\n\nWrite 'FINAL ANSWER:' then the three lines. Nothing else."
+        )
+        budget = max(max_tokens * 8, 3500)
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             resp = await client.post(
@@ -64,10 +79,10 @@ class K2Client:
                     "model": self.model,
                     "messages": [
                         {"role": "system", "content": system_with_directive},
-                        {"role": "user", "content": user},
+                        {"role": "user", "content": user_with_marker},
                     ],
                     "max_tokens": budget,
-                    "temperature": 0.7,
+                    "temperature": 0.3,
                 },
             )
             resp.raise_for_status()

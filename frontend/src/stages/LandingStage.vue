@@ -71,11 +71,6 @@
         </div>
       </div>
 
-      <div class="hint">
-        <span class="key">tip</span>
-        Filename is what's matched, not the bytes. Anything named
-        <code>30s_ironsite.mp4</code> or <code>30s_twitter.mp4</code> works.
-      </div>
     </div>
   </div>
 </template>

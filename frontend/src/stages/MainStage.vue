@@ -74,15 +74,20 @@
            give these two more room. -->
       <div class="panels-rail">
         <div class="panels-rail-row">
+          <!-- :round-ms was bumped to 10000 for demo runs against the
+               prebaked cache (trajectory landed in <100ms and the ring
+               blew past every round). With live K2 backing the component
+               default (1100ms) is natural pacing. Uncomment locally for
+               demos against the cache. -->
           <IterativeLoop
             v-if="trajectoryRounds.length > 0"
             class="iter-loop"
             :trajectory="trajectoryRounds"
             :accent="iterativeAccent"
-            :round-ms="10000"
             :loop="false"
             @settled="loopSettled = true"
           />
+          <!-- :round-ms="10000" — uncomment locally for demo runs against the prebaked cache -->
           <div v-else class="panel-loading">iterative loop loading…</div>
 
           <AnalysisPanel

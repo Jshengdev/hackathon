@@ -73,3 +73,10 @@ junsoo/brain/__pycache__/
 # Worktrees (audit-time scratch; reports preserved in caltech/audits/)
 worktrees/
 archive/worktrees/
+
+# Hand-authored synthesis docs (not real Opus output) — kept local for
+# demo display, never committed. The 5 other clips' synthesis.json files
+# are real Opus bakes and remain tracked.
+backend/prerendered/30s_instagram/synthesis.json
+backend/prerendered/30s_cop/synthesis.json
+backend/prerendered/30s_professor/synthesis.json

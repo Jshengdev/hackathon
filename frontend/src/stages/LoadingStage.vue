@@ -242,9 +242,11 @@ async function runTribe() {
 // rises over MIN_MS and the swarm-count "lights up" one specialist per ~2.6s,
 // so the loading screen feels like the swarm is actually working.
 const WARMUP_MIN_MS_FULL = 20000      // 20s when backend has real work to do
-const WARMUP_MIN_MS_PREBAKED = 7000   // 7s theatrical floor even when cached
-                                       // — sells the "matching to brain pattern"
-                                       // beat without faking a cold-start wait
+// Min-floor for the prebaked path. Only needed because we ran into
+// accidentally precached data that returned in <100ms; with a real
+// first-run the backend pace IS the pace and no floor is required.
+const WARMUP_MIN_MS_PREBAKED = 0
+// const WARMUP_MIN_MS_PREBAKED = 7000  // ← uncomment locally for demo runs against the prebaked cache
 async function pollWarmup(maxMs = 180000, intervalMs = 600) {
   const start = performance.now()
   let lastShownCount = 0

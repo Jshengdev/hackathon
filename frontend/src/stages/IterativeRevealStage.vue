@@ -89,9 +89,13 @@ async function loadAndPlay() {
       progressValue.value = (i + 1) / rt.length
       excerpt.value = (r.paragraph_excerpt || '').slice(0, 80)
       i += 1
-      // 10s between rounds — gives the audience time to read each candidate
-      // excerpt and watch the bar advance discretely.
-      timer = setTimeout(step, 10000)
+      // Round playback delay. With genuine live K2 backing the rounds
+      // arrive at model-pace and don't need padding. The 10000ms version
+      // below was a workaround for accidentally precached trajectories
+      // that came back in <100ms — uncomment locally for demos that run
+      // against the prebaked cache.
+      timer = setTimeout(step, 2000)
+      // timer = setTimeout(step, 10000)  // ← uncomment locally for demo runs against the prebaked cache
     }
     step()
   } catch (e) {

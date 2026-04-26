@@ -27,11 +27,21 @@ from __future__ import annotations
 
 import os
 import re
+from pathlib import Path
 
 import httpx
 from dotenv import load_dotenv
 
-load_dotenv()
+# Search order:
+#   1. junsoo/.env (preferred — lane-local config)
+#   2. repo-root .env (fallback for shared keys)
+#   3. default upward search from cwd
+# Each load_dotenv() only sets vars that aren't already set, so earlier wins.
+_JUNSOO_DIR = Path(__file__).resolve().parents[1]
+_REPO_ROOT = _JUNSOO_DIR.parent
+load_dotenv(_JUNSOO_DIR / ".env")
+load_dotenv(_REPO_ROOT / ".env")
+load_dotenv()  # default behaviour as last resort
 
 _THINK_TAG_RE = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
 
@@ -60,7 +70,12 @@ class K2ReasoningClient:
 
     async def chat(self, system: str, user: str, max_tokens: int = 140) -> str:
         if not self.api_key:
-            return "[K2_API_KEY not set]"
+            # Raise rather than return a placeholder string — _call_one in
+            # run_specialists catches it and produces a properly-tagged
+            # "[<spec>: call failed]" entry. Returning a string here would
+            # let "[K2_API_KEY not set]" leak through as a real specialist
+            # observation and silently corrupt the synthesizer's input.
+            raise RuntimeError("K2_API_KEY not set in environment / .env")
 
         # Same token-budget hack as the live swarm: reasoning model needs
         # headroom to think AND produce final answer. Strip the reasoning out.

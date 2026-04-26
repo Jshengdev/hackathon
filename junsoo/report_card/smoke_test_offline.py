@@ -12,7 +12,7 @@ from __future__ import annotations
 import sys
 
 from .run_specialists import REQUIRED_SPECIALISTS, _build_user_message as build_spec_user
-from .synthesize import _placeholder_card
+from .synthesize import _extract_json_object, _placeholder_card
 from .validate_schema import validate_action_card, validate_report_card
 
 
@@ -108,6 +108,74 @@ def test_specialist_user_message_includes_all_regions() -> None:
     assert "pick up drill" in msg
 
 
+def test_extract_plain_json() -> None:
+    raw = '{"action": "x", "score": 0.5}'
+    out = _extract_json_object(raw)
+    parsed = __import__("json").loads(out)
+    assert parsed["action"] == "x"
+
+
+def test_extract_fenced_json() -> None:
+    raw = '```json\n{"action": "x"}\n```'
+    out = _extract_json_object(raw)
+    parsed = __import__("json").loads(out)
+    assert parsed["action"] == "x"
+
+
+def test_extract_preamble_then_fenced_json() -> None:
+    raw = 'Here is the report card you requested:\n```json\n{"action": "x", "n": 7}\n```'
+    out = _extract_json_object(raw)
+    parsed = __import__("json").loads(out)
+    assert parsed["n"] == 7
+
+
+def test_extract_json_with_trailing_prose() -> None:
+    raw = '{"action": "x", "n": 7}\n\nNote: scores reflect routine engagement.'
+    out = _extract_json_object(raw)
+    parsed = __import__("json").loads(out)
+    assert parsed["n"] == 7
+
+
+def test_extract_handles_braces_inside_strings() -> None:
+    # The closing "}" inside the string must not be counted as object close.
+    raw = '{"text": "she said {hello}", "n": 1}'
+    out = _extract_json_object(raw)
+    parsed = __import__("json").loads(out)
+    assert parsed["n"] == 1
+    assert "hello" in parsed["text"]
+
+
+def test_extract_nested_objects() -> None:
+    raw = 'preamble {"outer": {"inner": {"deep": 42}}, "tail": "ok"} trailing'
+    out = _extract_json_object(raw)
+    parsed = __import__("json").loads(out)
+    assert parsed["outer"]["inner"]["deep"] == 42
+    assert parsed["tail"] == "ok"
+
+
+def test_k2_missing_key_raises() -> None:
+    """Regression: K2 missing API key must raise, not return a placeholder string
+    that flows through as a real specialist observation."""
+    import asyncio
+    import os
+
+    # Ensure key is unset for this call
+    saved = os.environ.pop("K2_API_KEY", None)
+    try:
+        from .k2_caller import K2ReasoningClient
+        client = K2ReasoningClient()
+        client.api_key = ""  # belt-and-suspenders
+        try:
+            asyncio.run(client.chat("system", "user"))
+        except RuntimeError as e:
+            assert "K2_API_KEY" in str(e)
+            return
+        raise AssertionError("Expected RuntimeError when K2_API_KEY missing")
+    finally:
+        if saved is not None:
+            os.environ["K2_API_KEY"] = saved
+
+
 def main() -> int:
     tests = [
         test_validator_accepts_good_card,
@@ -118,6 +186,13 @@ def main() -> int:
         test_n_actions_mismatch_caught,
         test_placeholder_card_is_valid,
         test_specialist_user_message_includes_all_regions,
+        test_extract_plain_json,
+        test_extract_fenced_json,
+        test_extract_preamble_then_fenced_json,
+        test_extract_json_with_trailing_prose,
+        test_extract_handles_braces_inside_strings,
+        test_extract_nested_objects,
+        test_k2_missing_key_raises,
     ]
     failures = []
     for t in tests:

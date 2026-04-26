@@ -31,13 +31,66 @@ SYSTEM_PROMPT_PATH = (
 )
 
 
-# Instruct models sometimes wrap JSON in ```json ... ``` fences. Strip those.
-_FENCE_RE = re.compile(r"^\s*```(?:json)?\s*(.*?)\s*```\s*$", re.DOTALL)
+# Instruct models do three annoying things with JSON:
+#   1. Wrap the whole response in ```json ... ``` fences
+#   2. Add prose preamble: "Here is the report:\n```json\n{...}\n```"
+#   3. Add trailing prose after the JSON object
+# We extract the first balanced top-level JSON object from anywhere in the
+# response. Per pattern: research/wiki/patterns/robust-json-from-llms.md
+_FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL | re.IGNORECASE)
 
 
-def _strip_fences(text: str) -> str:
-    m = _FENCE_RE.match(text)
-    return m.group(1) if m else text.strip()
+def _extract_json_object(text: str) -> str:
+    """Return the first balanced { ... } object found in text.
+
+    Handles fenced JSON, prose-wrapped JSON, and trailing prose. Strings and
+    escaped chars inside JSON are tracked so braces inside strings don't
+    confuse the counter.
+    """
+    if not text:
+        return ""
+
+    # First try: the contents of a ```json ... ``` fence (anywhere in text)
+    fence = _FENCE_RE.search(text)
+    if fence:
+        candidate = fence.group(1).strip()
+        if candidate.startswith("{") and candidate.endswith("}"):
+            return candidate
+        # Fence content might still have prose; fall through to scanner
+
+    # Brace-balanced scan over the full text (ignoring chars inside strings)
+    start = text.find("{")
+    if start == -1:
+        return text.strip()  # caller will fail JSON parse with clean error
+
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if escape:
+            escape = False
+            continue
+        if ch == "\\" and in_string:
+            escape = True
+            continue
+        if ch == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:i + 1]
+    # Unbalanced braces — return what we have and let json.loads fail clearly
+    return text[start:].strip()
+
+
+# Backwards-compat alias used by tests.
+_strip_fences = _extract_json_object
 
 
 def _build_user_message(action_with_specialists: dict[str, Any]) -> str:
@@ -110,37 +163,47 @@ class Synthesizer:
 
     async def synthesize(self, action_with_specialists: dict[str, Any]) -> dict[str, Any]:
         user = _build_user_message(action_with_specialists)
-        attempts: list[str] = []
+        attempts: list[tuple[str, str]] = []  # [(category, detail), ...]
 
         for attempt_idx in range(2):
             user_for_attempt = user
             if attempt_idx > 0:
-                # Retry with feedback
-                user_for_attempt = (
-                    user
-                    + f"\n\nYour previous response was not valid JSON. Error: {attempts[-1]}. "
-                    "Return ONLY a valid JSON object — no markdown, no prose."
-                )
+                # Tailor the retry message to the actual previous failure so we
+                # don't tell the model "your JSON was invalid" when the call
+                # didn't even reach the model.
+                last_kind, last_detail = attempts[-1]
+                if last_kind == "network":
+                    # Network errors are transient — just retry the same prompt.
+                    pass
+                else:
+                    user_for_attempt = (
+                        user
+                        + f"\n\nYour previous response could not be parsed as the "
+                        f"required report card. Specifically: {last_detail}. "
+                        "Return ONLY a valid JSON object matching the schema — "
+                        "no markdown fences, no preamble, no trailing prose."
+                    )
             try:
                 raw = await self.client.chat_json(self.system, user_for_attempt, max_tokens=1500)
             except Exception as e:
-                attempts.append(f"network/api error: {type(e).__name__}: {e}")
+                attempts.append(("network", f"{type(e).__name__}: {e}"))
                 continue
 
-            stripped = _strip_fences(raw)
+            extracted = _extract_json_object(raw)
             try:
-                parsed = json.loads(stripped)
+                parsed = json.loads(extracted)
                 card = _coerce_card(parsed, action_with_specialists)
                 errors = validate_action_card(card)
                 if errors:
-                    attempts.append("schema errors: " + "; ".join(errors[:3]))
+                    attempts.append(("schema", "; ".join(errors[:3])))
                     continue
                 return card
             except (json.JSONDecodeError, ValueError) as e:
-                attempts.append(f"{type(e).__name__}: {e}")
+                attempts.append(("parse", f"{type(e).__name__}: {e}"))
                 continue
 
+        joined = " | ".join(f"[{k}] {d}" for k, d in attempts)
         return _placeholder_card(
             action_with_specialists,
-            reason="2 synthesis attempts failed: " + " | ".join(attempts),
+            reason=f"2 synthesis attempts failed: {joined}",
         )

@@ -1,0 +1,42 @@
+{
+  "headline": "Locked perception, controlled affect \u2014 the trained-response signature.",
+  "synthesis_paragraph": "30 seconds of bodycam footage from a barricade-line confrontation, and the trace reads as the textbook signature of trained professional engagement under field stress. The visual network climbs to 0.67 \u2014 higher than any other clip we've baked \u2014 and dorsal-attention sustains 0.48 throughout, the two together indicating tight goal-locked perception rather than diffuse scanning. The officer is tracking specific things: the barricade line, individual crowd members, a baton in motion. What the trace does NOT show is just as telling: the limbic specialist holds at near-baseline (0.009 peak) across the full clip, even through the most physically charged moments. That dissociation between perceptual intensity and affective engagement is the neural signature of professional training kicking in \u2014 body executing under controlled affect, not reactive emotion. At t=26s somatomotor briefly takes the top slot, anchoring to the close-up badge contact and baton movement \u2014 a discrete embodied event in an otherwise purely perceptual trace.",
+  "temporal_arc": [
+    {
+      "t_s": "0-10",
+      "description": "Visual + dorsal-attention immediately engage; the officer is tracking the barricade line."
+    },
+    {
+      "t_s": "11-20",
+      "description": "Sustained dual-network dominance through the heaviest crowd-push moments; limbic stays flat."
+    },
+    {
+      "t_s": "21-25",
+      "description": "Visual peak (0.67) on the densest visual chaos; still no limbic spike."
+    },
+    {
+      "t_s": "26-27",
+      "description": "Somatomotor briefly takes top region during the badge-contact / baton close-up."
+    }
+  ],
+  "neural_evidence": [
+    "Visual network peaks at 0.668 \u2014 the highest in the clip set.",
+    "Dorsal-attention peaks at 0.478 with sustained engagement across the clip.",
+    "Limbic network peak is 0.009 \u2014 essentially flat through visible confrontation.",
+    "Somatomotor takes top region only at t=26s during the embodied close-up."
+  ],
+  "inflection_moment": "t=26s \u2014 the somatomotor takeover from visual marks the moment the trace registers an embodied event (badge contact, baton movement) distinct from the surrounding pure-perception baseline.",
+  "falsification": {
+    "main_score": 0.913,
+    "control_score": 0.701,
+    "delta": 0.212,
+    "verdict": "anchored"
+  },
+  "scenario_lens": "ironside \u00b7 workplace \u00b7 field response under controlled affect",
+  "model_metadata": {
+    "model": "claude-opus-4-7",
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "elapsed_ms": 0
+  }
+}

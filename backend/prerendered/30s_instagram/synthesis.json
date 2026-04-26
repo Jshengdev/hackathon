@@ -1,0 +1,42 @@
+{
+  "headline": "Anchored attention, neutral affect \u2014 the pure-scroll signature.",
+  "synthesis_paragraph": "A 30-second Instagram scroll plays through four visually unrelated cuts \u2014 a hand opening a snack, an animated cookie-stand, a woman raising her phone for a photo, a static reaction meme \u2014 and the trace reads exactly like passive feed-watching. The visual network sustains dominance across nearly the entire clip, peaking around t=4-5s and again at t=23-24s where the cuts get denser. The default-mode network stays suppressed throughout, suggesting attention is anchored outward at the screen rather than drifting into self-referential thought. The limbic specialist holds at a slight negative baseline \u2014 the clip is emotionally neutral, the kind of content that gets watched once and scrolled past. The closing second tells a small but specific story: ventral-attention takes the top slot for the first time in the clip, suggesting the static meme triggered a brief salience response, the perceptual jolt of switching from motion to a still frame.",
+  "temporal_arc": [
+    {
+      "t_s": "0-4",
+      "description": "Visual onset; attention anchors to the snack-packet open."
+    },
+    {
+      "t_s": "5-22",
+      "description": "Sustained visual dominance across the cookie-stand and photo-framing cuts; DMN stays suppressed."
+    },
+    {
+      "t_s": "23-27",
+      "description": "Second visual peak on the densest cut sequence; limbic stays flat \u2014 engagement without investment."
+    },
+    {
+      "t_s": "28-29",
+      "description": "Brief somatomotor flicker, then ventral-attention spike on the static meme close-out \u2014 a small salience event."
+    }
+  ],
+  "neural_evidence": [
+    "Visual network peaks at 0.36 (t=4-5s and t=23-24s).",
+    "Default-mode network stays at 0.06 peak \u2014 strongly suppressed throughout.",
+    "Limbic network holds at 0.006 peak \u2014 essentially flat.",
+    "Ventral-attention takes top region only at t=29s (the meme close-out)."
+  ],
+  "inflection_moment": "t=29s \u2014 the first frame where ventral-attention overtakes visual, marking the shift from steady scroll to a brief novelty-detection response on the static meme.",
+  "falsification": {
+    "main_score": 0.881,
+    "control_score": 0.682,
+    "delta": 0.199,
+    "verdict": "anchored"
+  },
+  "scenario_lens": "consumer \u00b7 b2c \u00b7 social-feed consumption pattern",
+  "model_metadata": {
+    "model": "claude-opus-4-7",
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "elapsed_ms": 0
+  }
+}

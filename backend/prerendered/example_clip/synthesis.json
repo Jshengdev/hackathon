@@ -1,0 +1,99 @@
+{
+  "headline": "Sustained outward focus shifts from attention-led to motor-dominant; t=27s lever pulls limbic + frontoparietal in lockstep.",
+  "synthesis_paragraph": "The clip holds the subject in sustained outward focus. Across the opening window the dorsal-attention specialist tracked external targets while visual processing ran steady underneath; the default-mode specialist receded almost entirely, a signature consistent with engagement pulled into the present scene rather than internal narration. From roughly the twelfth second onward the somatomotor specialist took the lead, climbing further into the clip's second half \u2014 a pattern the swarm reads as motor observation or action-mirroring, the visual and motor circuits moving in tandem as though the body were rehearsing what the eyes followed. Around the twenty-seventh second the somatomotor signal crested sharply while the ventral-attention, limbic, and frontoparietal specialists peaked in concert, marking a discrete event boundary that pulled salience, affect, and cognitive control into the same window. The networks then held their coordinated configuration through the clip's resolution.",
+  "temporal_arc": [
+    {
+      "t_window": "0-11s",
+      "scene": "Subject enters frame and a continuous activity begins, with the subject roughly centered against a visible background.",
+      "brain_signature": "dorsal_attention dominant (~0.55-0.62); default_mode strongly suppressed",
+      "claim": "The dorsal-attention specialist reads this window as sustained, goal-directed orienting onto external targets, with the default-mode specialist confirming minimal mind-wandering. The configuration is consistent with active looking rather than passive viewing."
+    },
+    {
+      "t_window": "12-24s",
+      "scene": "Mid-clip continuous activity unfolds in the frame.",
+      "brain_signature": "somatomotor takes the lead (~0.68-0.72); visual elevated; dorsal_attention still engaged",
+      "claim": "Somatomotor overtakes dorsal-attention as the dominant network, and the somatomotor specialist reads this co-activation with visual and attention circuits as motor observation or action-mirroring. The pattern is consistent with watching coordinated movement rather than executing it."
+    },
+    {
+      "t_window": "25-30s",
+      "scene": "Late-clip activity concentrates around a single load-bearing moment near the twenty-seventh second.",
+      "brain_signature": "somatomotor crests (~0.81-0.84); ventral_attention, limbic, frontoparietal peak in concert",
+      "claim": "The ventral-attention specialist flags a discrete event boundary at t=27s; the limbic and frontoparietal specialists peak in the same window. The pipeline reads this as a salience + affect + control convergence \u2014 the clip's pivot point."
+    },
+    {
+      "t_window": "31-41s",
+      "scene": "Activity continues through the clip's resolution.",
+      "brain_signature": "somatomotor sustained-high (~0.83); default_mode still recessed",
+      "claim": "The somatomotor specialist remains dominant after the inflection, with default-mode still suppressed. The configuration holds rather than unwinds, consistent with continued external lock onto the unfolding scene."
+    }
+  ],
+  "neural_evidence": [
+    {
+      "network": "visual",
+      "what_it_processed": "Sustained visual processing throughout the clip, consistently engaged but outranked by somatomotor and dorsal-attention \u2014 consistent with visually guided action or active looking rather than passive viewing.",
+      "anchored": true,
+      "contribution": "The visual specialist's subordinate-but-steady role anchored the paragraph's framing of vision as supporting action observation. Its co-movement with somatomotor underwrites the action-mirroring read."
+    },
+    {
+      "network": "somatomotor",
+      "what_it_processed": "Sustained motor observation or action-mirroring, climbing across the clip and cresting at t=27s alongside visual and dorsal-attention engagement.",
+      "anchored": true,
+      "contribution": "Somatomotor is the load-bearing network of the clip. Its sustained dominance and late crest carry the verdict that the brain was tracking coordinated movement rather than executing it."
+    },
+    {
+      "network": "dorsal_attention",
+      "what_it_processed": "Sustained, goal-directed external orienting with active visual tracking; low default-mode confirms engagement was outward rather than internal.",
+      "anchored": true,
+      "contribution": "The dorsal-attention specialist anchors the opening window's character as top-down orienting. Combined with suppressed default-mode, it sets the engagement baseline against which the t=27s convergence reads as a true inflection."
+    },
+    {
+      "network": "ventral_attention",
+      "what_it_processed": "Moderate baseline salience with a discrete peak at t=27s, consistent with an event boundary or unexpected shift in the scene.",
+      "anchored": true,
+      "contribution": "The ventral-attention spike at t=27s is what the pipeline uses to localize the inflection moment in time. Without it, the late-clip somatomotor crest would lack a salience-event hook."
+    },
+    {
+      "network": "limbic",
+      "what_it_processed": "Moderate sustained affective engagement with a peak at t=27s; co-elevation with somatomotor is consistent with approach/reward rather than threat.",
+      "anchored": true,
+      "contribution": "Limbic's t=27s peak gives the inflection moment its affective shape. The specialist's caveat \u2014 that valence cannot be confirmed from limbic alone \u2014 keeps the synthesis observational rather than reverse-inferred."
+    },
+    {
+      "network": "frontoparietal",
+      "what_it_processed": "Sustained cognitive control during an externally-focused task with motor execution; peak at t=27s consistent with a decision point or task-switch requiring rule integration.",
+      "anchored": true,
+      "contribution": "Frontoparietal's t=27s crest is what makes the inflection a control-relevant moment, not just a sensory one. Its co-peak with limbic and ventral-attention is the structural basis for the convergence read."
+    },
+    {
+      "network": "default_mode",
+      "what_it_processed": "Strongly suppressed across the clip while sensory-motor and attention networks dominate \u2014 consistent with external lock onto a perceptual-motor task.",
+      "anchored": true,
+      "contribution": "Default-mode suppression is the negative evidence that disciplines every other claim: the brain was not in narrative or introspective mode. The paragraph's 'receded almost entirely' framing is the direct mirror of this signal."
+    }
+  ],
+  "inflection_moment": {
+    "t_s": 27,
+    "scene_event": "Late-clip activity concentrates around a single load-bearing beat near the twenty-seventh second, with the subject still centered in frame.",
+    "neural_event": "Somatomotor crests sharply (~0.84) while the ventral-attention, limbic, and frontoparietal specialists peak in concert; default-mode remains suppressed.",
+    "why_it_matters": "This is the only moment in the clip where salience, affect, and cognitive control converge on the same window while motor processing is at maximum. The pipeline treats this convergence as the clip's pivot \u2014 the event boundary that organizes everything before and after it."
+  },
+  "falsification": {
+    "delta": 0.0,
+    "verdict": "generic_plausible",
+    "explanation": "The main and control paragraph scores were identical (delta 0.0), so the paragraph cannot be claimed to specifically describe this clip's brain pattern over a generic externally-engaged one. The high per-region attribution scores indicate the paragraph faithfully captured the swarm readings (especially somatomotor, dorsal-attention, and default-mode), but those signatures \u2014 sustained external focus with suppressed default-mode \u2014 are common enough across action-observation clips that the description generalizes. The verdict is generic-plausible, not anchored."
+  },
+  "scenario_lens": {
+    "listenlabs": {
+      "shift_signature": "Somatomotor + dorsal-attention dominant with default-mode strongly recessed; limbic moderate with a discrete t=27s peak \u2014 an action-observation engagement signature, not a deliberative one.",
+      "argument_lever": "t=27s \u2014 the somatomotor crest landed the ventral-attention, limbic, and frontoparietal specialists in the same window, the single moment where salience, affect, and control moved together.",
+      "immunization_brief": "This clip lands by holding your attention outward and your motor system mirroring the action, then dropping a single beat that pulls salience, emotion, and control together. Notice when content asks your body to track before it asks your reasoning to weigh \u2014 that synchronized beat is the lever.",
+      "brain_card_summary": "Action-mirroring lock, t=27s convergence beat \u2014 body tracked before mind weighed."
+    }
+  },
+  "model_metadata": {
+    "model": "claude-opus-4-7",
+    "input_tokens": 9700,
+    "output_tokens": 3088,
+    "elapsed_ms": 47168
+  }
+}

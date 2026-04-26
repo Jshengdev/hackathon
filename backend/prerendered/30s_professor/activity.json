@@ -1,0 +1,776 @@
+{
+  "stimulus": null,
+  "atlas": "yeo7",
+  "fps": 1,
+  "n_timesteps": 59,
+  "n_vertices": 20484,
+  "frames": [
+    {
+      "t_s": 0,
+      "regions": {
+        "visual": 0.058174047619104385,
+        "somatomotor": 0.16208802163600922,
+        "dorsal_attention": 0.03593793883919716,
+        "ventral_attention": 0.0836309939622879,
+        "limbic": -0.08466512709856033,
+        "frontoparietal": 0.0841720700263977,
+        "default_mode": -0.07547827064990997
+      },
+      "top_region": "somatomotor"
+    },
+    {
+      "t_s": 1,
+      "regions": {
+        "visual": 0.019600555300712585,
+        "somatomotor": 0.1602330505847931,
+        "dorsal_attention": 0.00038373065763153136,
+        "ventral_attention": 0.08220138400793076,
+        "limbic": -0.08770712465047836,
+        "frontoparietal": 0.07780692726373672,
+        "default_mode": -0.05788673460483551
+      },
+      "top_region": "somatomotor"
+    },
+    {
+      "t_s": 2,
+      "regions": {
+        "visual": 0.03274664282798767,
+        "somatomotor": 0.0932975709438324,
+        "dorsal_attention": -0.007708823308348656,
+        "ventral_attention": 0.00673169270157814,
+        "limbic": -0.09423168003559113,
+        "frontoparietal": 0.026373164728283882,
+        "default_mode": -0.09374765306711197
+      },
+      "top_region": "somatomotor"
+    },
+    {
+      "t_s": 3,
+      "regions": {
+        "visual": 0.0423797182738781,
+        "somatomotor": 0.05349601060152054,
+        "dorsal_attention": 0.006893915124237537,
+        "ventral_attention": -0.023875419050455093,
+        "limbic": -0.09902691841125488,
+        "frontoparietal": 0.00032105346326716244,
+        "default_mode": -0.08971557766199112
+      },
+      "top_region": "somatomotor"
+    },
+    {
+      "t_s": 4,
+      "regions": {
+        "visual": 0.003328146180137992,
+        "somatomotor": -0.011250650510191917,
+        "dorsal_attention": -0.02501700073480606,
+        "ventral_attention": -0.0691889300942421,
+        "limbic": -0.09781328588724136,
+        "frontoparietal": -0.046654246747493744,
+        "default_mode": -0.10795793682336807
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 5,
+      "regions": {
+        "visual": -0.03632581979036331,
+        "somatomotor": -0.021870912984013557,
+        "dorsal_attention": -0.04389579966664314,
+        "ventral_attention": -0.06821516156196594,
+        "limbic": -0.09526325017213821,
+        "frontoparietal": -0.06194423511624336,
+        "default_mode": -0.09741868823766708
+      },
+      "top_region": "somatomotor"
+    },
+    {
+      "t_s": 6,
+      "regions": {
+        "visual": -0.05932026356458664,
+        "somatomotor": -0.05011950060725212,
+        "dorsal_attention": -0.07152576744556427,
+        "ventral_attention": -0.10248975455760956,
+        "limbic": -0.09668917208909988,
+        "frontoparietal": -0.1006503701210022,
+        "default_mode": -0.1224154382944107
+      },
+      "top_region": "somatomotor"
+    },
+    {
+      "t_s": 7,
+      "regions": {
+        "visual": -0.06291067600250244,
+        "somatomotor": -0.05386089161038399,
+        "dorsal_attention": -0.07871691882610321,
+        "ventral_attention": -0.1091187372803688,
+        "limbic": -0.08775284886360168,
+        "frontoparietal": -0.11245430260896683,
+        "default_mode": -0.10816293954849243
+      },
+      "top_region": "somatomotor"
+    },
+    {
+      "t_s": 8,
+      "regions": {
+        "visual": -0.04007445275783539,
+        "somatomotor": -0.03225916251540184,
+        "dorsal_attention": -0.07337111234664917,
+        "ventral_attention": -0.08428212255239487,
+        "limbic": -0.08433632552623749,
+        "frontoparietal": -0.08827174454927444,
+        "default_mode": -0.09118950366973877
+      },
+      "top_region": "somatomotor"
+    },
+    {
+      "t_s": 9,
+      "regions": {
+        "visual": -0.007559611462056637,
+        "somatomotor": -0.010690768249332905,
+        "dorsal_attention": -0.04395907744765282,
+        "ventral_attention": -0.05147133767604828,
+        "limbic": -0.06070970743894577,
+        "frontoparietal": -0.06103667989373207,
+        "default_mode": -0.0583718977868557
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 10,
+      "regions": {
+        "visual": 0.03263089060783386,
+        "somatomotor": 0.0037365006282925606,
+        "dorsal_attention": -0.023043742403388023,
+        "ventral_attention": -0.032364096492528915,
+        "limbic": -0.0542508102953434,
+        "frontoparietal": -0.03416900709271431,
+        "default_mode": -0.02974233590066433
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 11,
+      "regions": {
+        "visual": 0.036120474338531494,
+        "somatomotor": 0.00633612647652626,
+        "dorsal_attention": -0.029489081352949142,
+        "ventral_attention": -0.03950168192386627,
+        "limbic": -0.05044972896575928,
+        "frontoparietal": -0.0326465480029583,
+        "default_mode": -0.017707020044326782
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 12,
+      "regions": {
+        "visual": 0.03791438415646553,
+        "somatomotor": 0.030007943511009216,
+        "dorsal_attention": -0.025100987404584885,
+        "ventral_attention": -0.02688312903046608,
+        "limbic": -0.04582510143518448,
+        "frontoparietal": -0.022741906344890594,
+        "default_mode": -0.008959242142736912
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 13,
+      "regions": {
+        "visual": 0.040400393307209015,
+        "somatomotor": 0.06396383047103882,
+        "dorsal_attention": -0.014756210148334503,
+        "ventral_attention": -0.012621902860701084,
+        "limbic": -0.04045461118221283,
+        "frontoparietal": -0.0168344397097826,
+        "default_mode": 0.0016909209080040455
+      },
+      "top_region": "somatomotor"
+    },
+    {
+      "t_s": 14,
+      "regions": {
+        "visual": 0.04242250323295593,
+        "somatomotor": 0.0769452303647995,
+        "dorsal_attention": -0.007252407725900412,
+        "ventral_attention": -0.009942170232534409,
+        "limbic": -0.03947906568646431,
+        "frontoparietal": -0.010688853450119495,
+        "default_mode": 0.008192616514861584
+      },
+      "top_region": "somatomotor"
+    },
+    {
+      "t_s": 15,
+      "regions": {
+        "visual": 0.05918096750974655,
+        "somatomotor": 0.10278493165969849,
+        "dorsal_attention": 0.007775940932333469,
+        "ventral_attention": 0.00196051481179893,
+        "limbic": -0.035805802792310715,
+        "frontoparietal": -0.009770248085260391,
+        "default_mode": 0.009713629260659218
+      },
+      "top_region": "somatomotor"
+    },
+    {
+      "t_s": 16,
+      "regions": {
+        "visual": 0.10282152891159058,
+        "somatomotor": 0.11698005348443985,
+        "dorsal_attention": 0.038656461983919144,
+        "ventral_attention": -0.0027650289703160524,
+        "limbic": -0.024526888504624367,
+        "frontoparietal": -0.003937292378395796,
+        "default_mode": 0.04782440513372421
+      },
+      "top_region": "somatomotor"
+    },
+    {
+      "t_s": 17,
+      "regions": {
+        "visual": 0.1552470624446869,
+        "somatomotor": 0.15068690478801727,
+        "dorsal_attention": 0.06555823981761932,
+        "ventral_attention": 0.01320122741162777,
+        "limbic": -0.022199906408786774,
+        "frontoparietal": 0.015033886767923832,
+        "default_mode": 0.0635889321565628
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 18,
+      "regions": {
+        "visual": 0.18299490213394165,
+        "somatomotor": 0.15092439949512482,
+        "dorsal_attention": 0.09788577258586884,
+        "ventral_attention": 0.013659161515533924,
+        "limbic": -0.0027870016638189554,
+        "frontoparietal": 0.022317782044410706,
+        "default_mode": 0.0738404169678688
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 19,
+      "regions": {
+        "visual": 0.22172702848911285,
+        "somatomotor": 0.15647608041763306,
+        "dorsal_attention": 0.12312445789575577,
+        "ventral_attention": 0.014788005501031876,
+        "limbic": 0.007906194776296616,
+        "frontoparietal": 0.020340247079730034,
+        "default_mode": 0.08673709630966187
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 20,
+      "regions": {
+        "visual": 0.23964418470859528,
+        "somatomotor": 0.1475009322166443,
+        "dorsal_attention": 0.12208481132984161,
+        "ventral_attention": -0.0003613514709286392,
+        "limbic": 0.010100077837705612,
+        "frontoparietal": 0.010750302113592625,
+        "default_mode": 0.08465856313705444
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 21,
+      "regions": {
+        "visual": 0.24535247683525085,
+        "somatomotor": 0.1626652479171753,
+        "dorsal_attention": 0.13709361851215363,
+        "ventral_attention": 0.0045661525800824165,
+        "limbic": 0.016513243317604065,
+        "frontoparietal": 0.023377586156129837,
+        "default_mode": 0.11718052625656128
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 22,
+      "regions": {
+        "visual": 0.2174171656370163,
+        "somatomotor": 0.16839835047721863,
+        "dorsal_attention": 0.13086411356925964,
+        "ventral_attention": 0.0014941986883059144,
+        "limbic": 0.021655410528182983,
+        "frontoparietal": 0.03639093413949013,
+        "default_mode": 0.15016810595989227
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 23,
+      "regions": {
+        "visual": 0.20290815830230713,
+        "somatomotor": 0.1695030778646469,
+        "dorsal_attention": 0.11278408765792847,
+        "ventral_attention": -0.010105800814926624,
+        "limbic": 0.014978700317442417,
+        "frontoparietal": 0.020222438499331474,
+        "default_mode": 0.15209642052650452
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 24,
+      "regions": {
+        "visual": 0.1791442483663559,
+        "somatomotor": 0.16537335515022278,
+        "dorsal_attention": 0.10535208135843277,
+        "ventral_attention": -0.008704070001840591,
+        "limbic": 0.016610849648714066,
+        "frontoparietal": 0.021075990051031113,
+        "default_mode": 0.16089744865894318
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 25,
+      "regions": {
+        "visual": 0.17144493758678436,
+        "somatomotor": 0.15865552425384521,
+        "dorsal_attention": 0.1118243858218193,
+        "ventral_attention": -0.007153172977268696,
+        "limbic": 0.019875338301062584,
+        "frontoparietal": 0.0383034273982048,
+        "default_mode": 0.18114377558231354
+      },
+      "top_region": "default_mode"
+    },
+    {
+      "t_s": 26,
+      "regions": {
+        "visual": 0.15469908714294434,
+        "somatomotor": 0.14045818150043488,
+        "dorsal_attention": 0.10401494055986404,
+        "ventral_attention": -0.008597628213465214,
+        "limbic": 0.02524808794260025,
+        "frontoparietal": 0.04149800166487694,
+        "default_mode": 0.1812720149755478
+      },
+      "top_region": "default_mode"
+    },
+    {
+      "t_s": 27,
+      "regions": {
+        "visual": 0.16214148700237274,
+        "somatomotor": 0.10924295336008072,
+        "dorsal_attention": 0.13286437094211578,
+        "ventral_attention": -0.011842054314911366,
+        "limbic": 0.0417383573949337,
+        "frontoparietal": 0.05542353168129921,
+        "default_mode": 0.21702361106872559
+      },
+      "top_region": "default_mode"
+    },
+    {
+      "t_s": 28,
+      "regions": {
+        "visual": 0.18595024943351746,
+        "somatomotor": 0.08380166441202164,
+        "dorsal_attention": 0.18844373524188995,
+        "ventral_attention": 0.010158266872167587,
+        "limbic": 0.04178034886717796,
+        "frontoparietal": 0.0758633241057396,
+        "default_mode": 0.21930168569087982
+      },
+      "top_region": "default_mode"
+    },
+    {
+      "t_s": 29,
+      "regions": {
+        "visual": 0.22527402639389038,
+        "somatomotor": 0.05628904700279236,
+        "dorsal_attention": 0.21871252357959747,
+        "ventral_attention": 0.04832568019628525,
+        "limbic": 0.040913574397563934,
+        "frontoparietal": 0.0806175246834755,
+        "default_mode": 0.17633911967277527
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 30,
+      "regions": {
+        "visual": 0.28460457921028137,
+        "somatomotor": 0.03568495064973831,
+        "dorsal_attention": 0.2640259563922882,
+        "ventral_attention": 0.06908198446035385,
+        "limbic": 0.041356779634952545,
+        "frontoparietal": 0.08599197119474411,
+        "default_mode": 0.1607334315776825
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 31,
+      "regions": {
+        "visual": 0.35446998476982117,
+        "somatomotor": 0.041628919541835785,
+        "dorsal_attention": 0.32226693630218506,
+        "ventral_attention": 0.10117373615503311,
+        "limbic": 0.03721686080098152,
+        "frontoparietal": 0.10983781516551971,
+        "default_mode": 0.16837547719478607
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 32,
+      "regions": {
+        "visual": 0.40787774324417114,
+        "somatomotor": 0.07432908564805984,
+        "dorsal_attention": 0.3520031273365021,
+        "ventral_attention": 0.12967549264431,
+        "limbic": 0.04561105743050575,
+        "frontoparietal": 0.12071646004915237,
+        "default_mode": 0.1750713735818863
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 33,
+      "regions": {
+        "visual": 0.42125633358955383,
+        "somatomotor": 0.07597796618938446,
+        "dorsal_attention": 0.3767891824245453,
+        "ventral_attention": 0.14184702932834625,
+        "limbic": 0.054341722279787064,
+        "frontoparietal": 0.13167265057563782,
+        "default_mode": 0.18191814422607422
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 34,
+      "regions": {
+        "visual": 0.3784140944480896,
+        "somatomotor": 0.05832996964454651,
+        "dorsal_attention": 0.36740708351135254,
+        "ventral_attention": 0.14524903893470764,
+        "limbic": 0.059515733271837234,
+        "frontoparietal": 0.16194646060466766,
+        "default_mode": 0.19761723279953003
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 35,
+      "regions": {
+        "visual": 0.3812602162361145,
+        "somatomotor": 0.057590924203395844,
+        "dorsal_attention": 0.3715880811214447,
+        "ventral_attention": 0.1746041476726532,
+        "limbic": 0.05812601000070572,
+        "frontoparietal": 0.17626191675662994,
+        "default_mode": 0.17865298688411713
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 36,
+      "regions": {
+        "visual": 0.3813105821609497,
+        "somatomotor": 0.03321903198957443,
+        "dorsal_attention": 0.36589285731315613,
+        "ventral_attention": 0.16944000124931335,
+        "limbic": 0.05390189588069916,
+        "frontoparietal": 0.17610660195350647,
+        "default_mode": 0.15052562952041626
+      },
+      "top_region": "visual"
+    },
+    {
+      "t_s": 37,
+      "regions": {
+        "visual": 0.33573678135871887,
+        "somatomotor": 0.022317342460155487,
+        "dorsal_attention": 0.3435620665550232,
+        "ventral_attention": 0.16181282699108124,
+        "limbic": 0.03894516080617905,
+        "frontoparietal": 0.17504052817821503,
+        "default_mode": 0.11419005692005157
+      },
+      "top_region": "dorsal_attention"
+    },
+    {
+      "t_s": 38,
+      "regions": {
+        "visual": 0.3137165606021881,
+        "somatomotor": -0.00693392613902688,
+        "dorsal_attention": 0.33792373538017273,
+        "ventral_attention": 0.14787983894348145,
+        "limbic": 0.03111458569765091,
+        "frontoparietal": 0.16356544196605682,
+        "default_mode": 0.08555052429437637
+      },
+      "top_region": "dorsal_attention"
+    },
+    {
+      "t_s": 39,
+      "regions": {
+        "visual": 0.2726534903049469,
+        "somatomotor": -0.014767559245228767,
+        "dorsal_attention": 0.29875293374061584,
+        "ventral_attention": 0.13520196080207825,
+        "limbic": 0.026336634531617165,
+        "frontoparietal": 0.15699023008346558,
+        "default_mode": 0.06995967775583267
+      },
+      "top_region": "dorsal_attention"
+    },
+    {
+      "t_s": 40,
+      "regions": {
+        "visual": 0.23329076170921326,
+        "somatomotor": -0.006054717116057873,
+        "dorsal_attention": 0.26754969358444214,
+        "ventral_attention": 0.13206179440021515,
+        "limbic": 0.02260149084031582,
+        "frontoparietal": 0.156047984957695,
+        "default_mode": 0.06535278260707855
+      },
+      "top_region": "dorsal_attention"
+    },
+    {
+      "t_s": 41,
+      "regions": {
+        "visual": 0.17105941474437714,
+        "somatomotor": -0.022234300151467323,
+        "dorsal_attention": 0.2006262242794037,
+        "ventral_attention": 0.10618861019611359,
+        "limbic": 0.014313658699393272,
+        "frontoparietal": 0.14137506484985352,
+        "default_mode": 0.05596857890486717
+      },
+      "top_region": "dorsal_attention"
+    },
+    {
+      "t_s": 42,
+      "regions": {
+        "visual": 0.10395541042089462,
+        "somatomotor": -0.03595154732465744,
+        "dorsal_attention": 0.14664219319820404,
+        "ventral_attention": 0.08925864100456238,
+        "limbic": 0.006264746654778719,
+        "frontoparietal": 0.12583737075328827,
+        "default_mode": 0.037057820707559586
+      },
+      "top_region": "dorsal_attention"
+    },
+    {
+      "t_s": 43,
+      "regions": {
+        "visual": 0.04037293791770935,
+        "somatomotor": -0.054086629301309586,
+        "dorsal_attention": 0.09059588611125946,
+        "ventral_attention": 0.06860801577568054,
+        "limbic": -0.0023706634528934956,
+        "frontoparietal": 0.10033121705055237,
+        "default_mode": 0.01961567997932434
+      },
+      "top_region": "frontoparietal"
+    },
+    {
+      "t_s": 44,
+      "regions": {
+        "visual": -0.0164845809340477,
+        "somatomotor": -0.053728263825178146,
+        "dorsal_attention": 0.059281039983034134,
+        "ventral_attention": 0.06628233194351196,
+        "limbic": -0.009149804711341858,
+        "frontoparietal": 0.09529785811901093,
+        "default_mode": 0.011229117400944233
+      },
+      "top_region": "frontoparietal"
+    },
+    {
+      "t_s": 45,
+      "regions": {
+        "visual": -0.06468836963176727,
+        "somatomotor": -0.0686117485165596,
+        "dorsal_attention": 0.023346364498138428,
+        "ventral_attention": 0.04070622846484184,
+        "limbic": -0.018147185444831848,
+        "frontoparietal": 0.07053858786821365,
+        "default_mode": -0.013333817012608051
+      },
+      "top_region": "frontoparietal"
+    },
+    {
+      "t_s": 46,
+      "regions": {
+        "visual": -0.07918108254671097,
+        "somatomotor": -0.06596232950687408,
+        "dorsal_attention": -0.001025195699185133,
+        "ventral_attention": 0.027788711711764336,
+        "limbic": -0.02498835138976574,
+        "frontoparietal": 0.05485951155424118,
+        "default_mode": -0.027563298121094704
+      },
+      "top_region": "frontoparietal"
+    },
+    {
+      "t_s": 47,
+      "regions": {
+        "visual": -0.0772034078836441,
+        "somatomotor": -0.062474414706230164,
+        "dorsal_attention": -0.015929561108350754,
+        "ventral_attention": 0.010150916874408722,
+        "limbic": -0.03229447081685066,
+        "frontoparietal": 0.03538297489285469,
+        "default_mode": -0.03933732211589813
+      },
+      "top_region": "frontoparietal"
+    },
+    {
+      "t_s": 48,
+      "regions": {
+        "visual": -0.05897246673703194,
+        "somatomotor": -0.037434034049510956,
+        "dorsal_attention": -0.01769796572625637,
+        "ventral_attention": 0.010328870266675949,
+        "limbic": -0.030023612082004547,
+        "frontoparietal": 0.03927440568804741,
+        "default_mode": -0.019958999007940292
+      },
+      "top_region": "frontoparietal"
+    },
+    {
+      "t_s": 49,
+      "regions": {
+        "visual": -0.025707272812724113,
+        "somatomotor": 0.002021725522354245,
+        "dorsal_attention": -0.000292725715553388,
+        "ventral_attention": 0.015147794969379902,
+        "limbic": -0.0169727373868227,
+        "frontoparietal": 0.05309310182929039,
+        "default_mode": 0.02757083997130394
+      },
+      "top_region": "frontoparietal"
+    },
+    {
+      "t_s": 50,
+      "regions": {
+        "visual": -0.02972927689552307,
+        "somatomotor": 0.014461910352110863,
+        "dorsal_attention": -0.011020353063941002,
+        "ventral_attention": -0.01785178668797016,
+        "limbic": -0.004706982057541609,
+        "frontoparietal": 0.057492051273584366,
+        "default_mode": 0.08131682127714157
+      },
+      "top_region": "default_mode"
+    },
+    {
+      "t_s": 51,
+      "regions": {
+        "visual": -0.02572808787226677,
+        "somatomotor": 0.022147757932543755,
+        "dorsal_attention": -0.007047578692436218,
+        "ventral_attention": -0.02768803760409355,
+        "limbic": 0.011865050531923771,
+        "frontoparietal": 0.06339140981435776,
+        "default_mode": 0.11790324002504349
+      },
+      "top_region": "default_mode"
+    },
+    {
+      "t_s": 52,
+      "regions": {
+        "visual": -0.001815220806747675,
+        "somatomotor": 0.028963005170226097,
+        "dorsal_attention": 0.0005536423996090889,
+        "ventral_attention": -0.013835691846907139,
+        "limbic": 0.024694304913282394,
+        "frontoparietal": 0.07606597244739532,
+        "default_mode": 0.1344212144613266
+      },
+      "top_region": "default_mode"
+    },
+    {
+      "t_s": 53,
+      "regions": {
+        "visual": 0.004887378308922052,
+        "somatomotor": 0.03953702747821808,
+        "dorsal_attention": -0.0006205033278092742,
+        "ventral_attention": 0.02368086948990822,
+        "limbic": 0.03293772041797638,
+        "frontoparietal": 0.10686419904232025,
+        "default_mode": 0.15889036655426025
+      },
+      "top_region": "default_mode"
+    },
+    {
+      "t_s": 54,
+      "regions": {
+        "visual": 0.06863627582788467,
+        "somatomotor": 0.09544538706541061,
+        "dorsal_attention": 0.023838523775339127,
+        "ventral_attention": 0.12971757352352142,
+        "limbic": 0.0446152426302433,
+        "frontoparietal": 0.17128364741802216,
+        "default_mode": 0.15714243054389954
+      },
+      "top_region": "frontoparietal"
+    },
+    {
+      "t_s": 55,
+      "regions": {
+        "visual": 0.1202220469713211,
+        "somatomotor": 0.1639438420534134,
+        "dorsal_attention": 0.05162543058395386,
+        "ventral_attention": 0.25725293159484863,
+        "limbic": 0.04548388719558716,
+        "frontoparietal": 0.23012670874595642,
+        "default_mode": 0.11801978200674057
+      },
+      "top_region": "ventral_attention"
+    },
+    {
+      "t_s": 56,
+      "regions": {
+        "visual": 0.12046774476766586,
+        "somatomotor": 0.17273671925067902,
+        "dorsal_attention": 0.06738869845867157,
+        "ventral_attention": 0.2620447874069214,
+        "limbic": 0.035983264446258545,
+        "frontoparietal": 0.22854623198509216,
+        "default_mode": 0.08712287992238998
+      },
+      "top_region": "ventral_attention"
+    },
+    {
+      "t_s": 57,
+      "regions": {
+        "visual": 0.06569578498601913,
+        "somatomotor": 0.18948985636234283,
+        "dorsal_attention": 0.08388299494981766,
+        "ventral_attention": 0.3005580008029938,
+        "limbic": 0.011959557421505451,
+        "frontoparietal": 0.2698554992675781,
+        "default_mode": 0.06549996137619019
+      },
+      "top_region": "ventral_attention"
+    },
+    {
+      "t_s": 58,
+      "regions": {
+        "visual": -0.11661060154438019,
+        "somatomotor": 0.170329749584198,
+        "dorsal_attention": 0.07164929807186127,
+        "ventral_attention": 0.3467525541782379,
+        "limbic": -0.03777710348367691,
+        "frontoparietal": 0.3099488317966461,
+        "default_mode": 0.057297300547361374
+      },
+      "top_region": "ventral_attention"
+    }
+  ]
+}

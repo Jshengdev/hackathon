@@ -1,0 +1,107 @@
+{
+  "headline": "Sustained external visual lock with a t=22s shift to dorsal attention; falsification flat (delta 0.0, generic_plausible).",
+  "synthesis_paragraph": "The clip held the viewer in sustained external focus. Visual processing maintained a moderate hum across the first twenty-two seconds, parsing surfaces and geometry without face or social signals; the default-mode specialist receded almost entirely, consistent with attention locked outward rather than inward. Around t=22s the dominant signature shifted from visual to dorsal attention \u2014 the attention specialist's reading aligns with a transition from passive viewing toward more goal-directed scanning, though the magnitudes stayed modest. Somatomotor and limbic circuits remained near baseline throughout: no embodied movement simulation, no affective tagging. At t=30s the ventral attention specialist registered its single peak of the clip, marking a discrete event boundary against an otherwise monotonous stimulus. The arc is one of low-load external observation, capped by a brief salience flicker \u2014 no sustained deliberation, no emotional coloring, no inner narrative engaged.",
+  "temporal_arc": [
+    {
+      "t_window": "0-9s",
+      "scene": "Vision report is unavailable for this clip; the opening segment shows continuous external observation with no annotated events.",
+      "brain_signature": "Visual network dominant (rising 0.21 \u2192 0.30), default-mode suppressed.",
+      "claim": "The visual specialist's reading describes sustained processing of a static or slowly changing scene, and the activation profile matches: a steady ramp without sharp transients, consistent with the eye settling onto a stable external field."
+    },
+    {
+      "t_window": "9-17s",
+      "scene": "Middle segment of continuous engagement per the vision stub; no discrete events annotated.",
+      "brain_signature": "Visual network sustained at peak (0.30-0.33); dorsal attention idling beneath it.",
+      "claim": "The dorsal-attention specialist read this as moderate sustained attention without effortful search. The flat plateau in visual activation, paired with subdued frontoparietal, is consistent with passive viewing rather than active tracking."
+    },
+    {
+      "t_window": "17-22s",
+      "scene": "Late-middle segment; vision report shows no transition events.",
+      "brain_signature": "Visual decaying (0.27 \u2192 0.13); dorsal attention beginning to climb.",
+      "claim": "The visual signal sheds amplitude while dorsal attention rises \u2014 a handoff the swarm specialists characterized as light, intermittent attentional engagement rather than a deliberate task switch."
+    },
+    {
+      "t_window": "22-29s",
+      "scene": "Concluding segment of the clip per the vision stub.",
+      "brain_signature": "Dorsal attention takes the top slot (peak 0.20 at t=26s).",
+      "claim": "The dorsal-attention specialist's reading of brief attentional capture maps onto this window's dominance shift. Magnitudes remain modest, so this reads as orienting rather than effortful search."
+    },
+    {
+      "t_window": "29-30s",
+      "scene": "Final second of the clip.",
+      "brain_signature": "Ventral attention emerges as top network (0.14) \u2014 its only peak of the clip.",
+      "claim": "The ventral-attention specialist flagged this as a discrete event boundary against an otherwise predictable stimulus. The terminal salience flicker is the clip's clearest punctuation mark."
+    }
+  ],
+  "neural_evidence": [
+    {
+      "network": "visual",
+      "what_it_processed": "Sustained processing of a static or slowly changing scene with moderate engagement and no face/social signals.",
+      "anchored": true,
+      "contribution": "Visual dominance for the first twenty-two seconds is the load-bearing signal of the clip. The paragraph's external-lock framing rests on this region's sustained plateau."
+    },
+    {
+      "network": "somatomotor",
+      "what_it_processed": "Near-silent across the clip; mean essentially at baseline with a small terminal peak (0.106) at t=30s.",
+      "anchored": true,
+      "contribution": "Its silence corroborates the absence of embodied simulation or action mirroring. The terminal blip contributes to the multimodal punctuation at clip's end without implying movement content."
+    },
+    {
+      "network": "dorsal_attention",
+      "what_it_processed": "Moderate sustained attention with intermittent engagement; ascends to top-network status from t=22s onward.",
+      "anchored": true,
+      "contribution": "This region's late-clip dominance is what differentiates the second half from the first; the paragraph's handoff narrative is grounded in its trajectory."
+    },
+    {
+      "network": "ventral_attention",
+      "what_it_processed": "Extremely low baseline with a single modest peak at t=30s, consistent with one discrete unexpected event.",
+      "anchored": true,
+      "contribution": "This is the clip's only salience signal, and it carries the inflection moment. Without it, the clip would read as flat throughout."
+    },
+    {
+      "network": "limbic",
+      "what_it_processed": "Emotionally neutral throughout \u2014 no reward, threat, or personal-meaning tagging detected.",
+      "anchored": true,
+      "contribution": "Sustained limbic silence rules out an affective interpretation of the clip and supports the low-load characterization."
+    },
+    {
+      "network": "frontoparietal",
+      "what_it_processed": "Minimal cognitive control demand throughout, with a brief task-relevant flicker at t=30s.",
+      "anchored": true,
+      "contribution": "Its quietness underwrites the 'no sustained deliberation' verdict. The terminal flicker contributes to the multimodal salience event but does not indicate extended working-memory load."
+    },
+    {
+      "network": "default_mode",
+      "what_it_processed": "Suppressed throughout, anti-correlated with visual and dorsal attention dominance.",
+      "anchored": true,
+      "contribution": "Default-mode suppression is the structural counterpart to the external-lock reading. It is the clearest single piece of evidence that attention was not turned inward."
+    }
+  ],
+  "inflection_moment": {
+    "t_s": 22,
+    "scene_event": "Vision report is unavailable; the activity table shows the dominant network transitioning at this second.",
+    "neural_event": "The top-region signature shifts from visual (which had held for 22 consecutive seconds) to dorsal attention, with visual amplitude decaying and dorsal attention beginning a sustained climb.",
+    "why_it_matters": "This is the only structural pivot in the clip \u2014 the handoff from sustained passive viewing to light goal-directed scanning. It is the boundary the swarm's dorsal-attention specialist implicitly tracked when it described intermittent engagement."
+  },
+  "falsification": {
+    "delta": 0.0,
+    "verdict": "generic_plausible",
+    "explanation": "Main and control paragraph scores are identical, yielding zero delta. The paragraph's load-bearing claims \u2014 sustained visual dominance, default-mode suppression, limbic silence \u2014 are common across many low-arousal observational clips, so even strong per-region anchoring (limbic 1.0, ventral attention 0.95, default-mode 0.95) does not differentiate this clip's brain pattern from the control's. The result is honest: the description fits, but it could fit elsewhere too."
+  },
+  "scenario_lens": {
+    "ironside": {
+      "cognitive_load_index": 0.18,
+      "decision_quality": "engaged",
+      "risk_flag": "t=30s \u2014 coordinated somatomotor, ventral attention, and frontoparietal flicker against an otherwise flat baseline; salience specialist registered a discrete event the rest of the clip did not prepare the worker for.",
+      "training_target": "Dorsal attention stayed in the moderate-passive range across the full clip; deliberate-scanning practice would build sustained goal-directed attention rather than the intermittent orienting observed here."
+    }
+  },
+  "model_metadata": {
+    "model": "claude-opus-4-7",
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "elapsed_ms": 43817,
+    "input_tokens": 9380,
+    "output_tokens": 2813
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "headline": "Sustained dorsal-attention tracking with late visual peak \u2014 paragraph reads generic (delta 0.00).",
+  "synthesis_paragraph": "The worker moved through the industrial site with steady, outward-directed attention\u2014the dorsal-attention specialist tracking targets across the frame while default-mode stayed quiet, signaling focus pulled into the external world. For most of the half-minute the scene held little surprise: the ventral-attention circuit registered only a brief flicker around six seconds before settling back into low salience. The limbic specialist remained neutral throughout, consistent with attending to spatial and object features rather than affectively charged content. Somatomotor and auditory networks stayed near-silent until a faint spike at twenty-nine seconds hinted at a body-relevant cue. The frontoparietal circuit registered minimal control demand\u2014passive visual consumption, not active problem-solving. From roughly twenty-one seconds onward the visual specialist climbed and held, peaking near twenty-six seconds, while dorsal-attention sustained moderate engagement throughout\u2014the signature of deliberate, unhurried scanning across a familiar industrial scene.",
+  "temporal_arc": [
+    {
+      "t_window": "0-8s",
+      "scene": "Subject enters frame and settles into the industrial scene, roughly centered with background context visible.",
+      "brain_signature": "Dorsal-attention dominant (~0.11-0.13); default-mode suppressed.",
+      "claim": "The dorsal-attention specialist's reading of sustained external tracking aligns with the opening: attention pulled outward onto the scene, with no narrative or self-referential pull from default-mode."
+    },
+    {
+      "t_window": "9-13s",
+      "scene": "Continuous mid-clip activity; spatial relationships hold steady.",
+      "brain_signature": "Ventral-attention briefly leads (~0.05-0.08) before dorsal-attention reasserts.",
+      "claim": "The ventral-attention specialist read this window as a low-salience flicker\u2014a modest stimulus change that did not sustain capture, consistent with a routine shift in the scene rather than a reorienting event."
+    },
+    {
+      "t_window": "14-20s",
+      "scene": "Mid-to-late activity continues; subject remains the central figure.",
+      "brain_signature": "Dorsal-attention re-dominant and climbing (~0.06 \u2192 0.14).",
+      "claim": "Dorsal-attention re-took the lead as the clip progressed, matching the specialist's reading of deliberate visual search at moderate\u2014not peak\u2014effort."
+    },
+    {
+      "t_window": "21-29s",
+      "scene": "Late-clip activity through resolution at clip end.",
+      "brain_signature": "Visual network rises and dominates (~0.16 \u2192 0.26 peak at t=26s, easing to 0.14).",
+      "claim": "The visual specialist's spike at twenty-six seconds\u2014possibly camera movement, an object appearance, or text in frame\u2014lands while dorsal-attention sustains tracking, consistent with one salient moment inside an otherwise sparse industrial scene."
+    }
+  ],
+  "neural_evidence": [
+    {
+      "network": "visual",
+      "what_it_processed": "Low-to-moderate baseline with a salient peak around t=26s, consistent with sparse industrial imagery and one notable visual event.",
+      "anchored": true,
+      "contribution": "The visual specialist's late-clip rise supplied the clip's clearest sensory inflection. Its trajectory anchored the paragraph's claim that one moment stood out against an otherwise static scene."
+    },
+    {
+      "network": "somatomotor",
+      "what_it_processed": "Near-silent throughout, with a faint late-clip spike at t=29s suggesting a brief sound or body-relevant cue.",
+      "anchored": true,
+      "contribution": "Confirms the clip is not action- or speech-driven. The terminal flicker is the only motor/auditory contribution and is treated cautiously rather than as a load-bearing event."
+    },
+    {
+      "network": "dorsal_attention",
+      "what_it_processed": "Sustained moderate engagement across the clip, consistent with deliberate visual search or tracking at routine, non-peak effort.",
+      "anchored": true,
+      "contribution": "The load-bearing network of the clip. Its sustained dominance in activity_summary and high attribution match (0.95) is what gives the paragraph its through-line of unhurried, outward-directed attention."
+    },
+    {
+      "network": "ventral_attention",
+      "what_it_processed": "Low-salience baseline with a single modest flicker mid-clip; no sustained reorienting events.",
+      "anchored": true,
+      "contribution": "Anchors the paragraph's claim that the scene was largely predictable. The brief mid-clip flicker is named once and not over-weighted."
+    },
+    {
+      "network": "limbic",
+      "what_it_processed": "Sustained near-zero engagement; the scene was processed for spatial/object features without affective charge.",
+      "anchored": true,
+      "contribution": "Its quiet supports the observational register: the paragraph describes attention without importing emotional language the data does not warrant."
+    },
+    {
+      "network": "frontoparietal",
+      "what_it_processed": "Minimal cognitive-control demand throughout; no signature of active reasoning, decision-making, or task-switching.",
+      "anchored": true,
+      "contribution": "Frontoparietal's flat profile (attribution match 1.00) anchored the paragraph's framing as passive visual consumption rather than effortful problem-solving."
+    },
+    {
+      "network": "default_mode",
+      "what_it_processed": "Suppressed throughout, consistent with externally directed processing rather than self-referential or narrative thought.",
+      "anchored": true,
+      "contribution": "Default-mode's suppression (attribution match 1.00) is the anti-correlated counterpart to sustained dorsal-attention; together they anchor the clip's externally focused signature."
+    }
+  ],
+  "inflection_moment": {
+    "t_s": 26,
+    "scene_event": "Late-clip activity; vision report indicates a moment within the resolving phase of the scene, with the subject still centered.",
+    "neural_event": "Visual network reaches its clip maximum (~0.26) while dorsal-attention remains elevated and default-mode stays suppressed.",
+    "why_it_matters": "This is the only moment where the dominant network shifts decisively\u2014from sustained dorsal-attention tracking into visual-driven processing. It is the clip's load-bearing pivot: the one window where the brain signature names a specific event rather than a sustained state."
+  },
+  "falsification": {
+    "delta": 0.0,
+    "verdict": "generic_plausible",
+    "explanation": "Main and control paragraph scores are identical (delta 0.00), so the paragraph cannot be said to anchor specifically to this clip's brain pattern. While per-region attribution is high within-clip\u2014frontoparietal and default_mode at 1.00, dorsal- and ventral-attention at 0.95\u2014those signatures (sustained external attention with quiet default-mode and limbic) are common enough across clips that the paragraph reads as plausibly generic rather than clip-specific."
+  },
+  "scenario_lens": {
+    "ironside": {
+      "cognitive_load_index": 0.2,
+      "decision_quality": "engaged",
+      "risk_flag": "t=26s \u2014 visual specialist peaked while dorsal-attention sustained; salient event registered but no frontoparietal recruitment, so any decision-relevant cue here would rely on routine tracking rather than deliberate evaluation.",
+      "training_target": "Frontoparietal stayed below-baseline across the clip; deliberate-evaluation practice (pause-and-verify drills at salient visual changes) would target the gap between noticing and assessing."
+    }
+  },
+  "model_metadata": {
+    "model": "claude-opus-4-7",
+    "input_tokens": 9295,
+    "output_tokens": 2744,
+    "elapsed_ms": 43845
+  }
+}

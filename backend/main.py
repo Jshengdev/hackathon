@@ -492,10 +492,18 @@ async def get_per_vertex(clip_id: str):
 
 @app.post("/demo/k2-region")
 async def k2_region(payload: dict):
-    """Run K2 with a paper-grounded prompt for a given region at a timestamp.
+    """Return the per-network K2 reading for a given clip.
 
     Body: {"clip_id": str, "network": str, "t": int}
-    Returns: {network, text, cite, t}
+    Returns: {network, t, text, confidence, cite}
+
+    The reading is the same 30s-aggregated reading the swarm panel shows —
+    served straight from swarm_readings.json so the popup voice always
+    matches the swarm-status panel. The `t` field is echoed back for the
+    frontend, but is not used for lookup (a single reading covers the clip).
+    On a cache miss (swarm_readings not yet baked), we fall back to a live
+    K2 call using the same aggregate the swarm runner uses, so the response
+    is never silently a per-frame snapshot.
     """
     clip_id = (payload or {}).get("clip_id")
     network = (payload or {}).get("network")
@@ -514,33 +522,38 @@ async def k2_region(payload: dict):
     if not activity_path.exists():
         raise HTTPException(status_code=404, detail="clip not found")
 
-    # Cache lookup — k2_region_cache.json is baked during warmup with one entry
-    # per (network, t). Hits are instant; misses fall through to a live K2 call.
-    region_cache = read_cached(PRERENDERED_DIR, clip_id, "k2_region_cache") or {}
-    cached_entry = region_cache.get(f"{network}_t{t_int}")
-    if cached_entry and cached_entry.get("text"):
+    # Cache lookup — swarm_readings.json holds the 30s aggregate reading per
+    # network. Same fields the popup needs (rename reading → text).
+    swarm_cache = read_cached(PRERENDERED_DIR, clip_id, "swarm_readings") or {}
+    region_entry = (swarm_cache.get("regions") or {}).get(network)
+    if region_entry and region_entry.get("reading"):
         return {
             "network": network,
             "t": t_int,
-            "text": cached_entry.get("text", ""),
-            "confidence": cached_entry.get("confidence", ""),
-            "cite": cached_entry.get("cite"),
-            "raw": cached_entry.get("raw", cached_entry.get("text", "")),
+            "text": region_entry.get("reading", ""),
+            "confidence": region_entry.get("confidence", ""),
+            "cite": region_entry.get("cite"),
+            "frame_window": swarm_cache.get("frame_window"),
             "cached": True,
         }
 
+    # Live fallback — swarm_readings hasn't been baked yet. Use the SAME
+    # aggregate the swarm runner uses so the popup never reasons over a
+    # single 1s slice.
     try:
         activity = json.loads(activity_path.read_text(encoding="utf-8"))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"failed to parse activity.json: {e}")
-
     frames = activity.get("frames") or []
     if not frames:
         raise HTTPException(status_code=500, detail="activity.json has no frames")
-    frame = frames[t_int % len(frames)]
-    regions: dict = frame.get("regions") or {}
 
-    # Load the network's grounded system prompt.
+    from services.swarm_runner import _aggregate_per_network, _build_user_prompt
+    agg = _aggregate_per_network(frames)
+    stats = agg.get(network)
+    if not stats:
+        raise HTTPException(status_code=500, detail=f"no aggregate for network {network}")
+
     prompt_path = PROMPTS_DIR / f"{network}.md"
     if prompt_path.exists():
         system_prompt = prompt_path.read_text(encoding="utf-8")
@@ -549,20 +562,12 @@ async def k2_region(payload: dict):
             f"You are the {network} network. React in 1-2 sentences to your "
             "activation, grounded in published neuroscience."
         )
-    others = ", ".join(
-        f"{k}={v:.2f}" for k, v in regions.items() if k != network
-    )
-    user = (
-        f"Your activation: {regions.get(network, 0.0):.2f}.\n"
-        f"Other networks: {others}.\n"
-        f"Time: t={t_int}s in clip '{clip_id}'.\n"
-        "Output the three lines exactly as specified in your system prompt."
-    )
+    user = _build_user_prompt(clip_id, network, stats)
 
     try:
         text = await get_k2_client().chat(
             system_prompt, user, max_tokens=200,
-            tag=f"region:{network}_t{t_int}",
+            tag=f"region:{network}",
         )
     except Exception as e:
         return {

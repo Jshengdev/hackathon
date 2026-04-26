@@ -22,19 +22,6 @@ from services.session_cache import (
 logger = logging.getLogger(__name__)
 
 
-_NETWORKS: tuple[str, ...] = (
-    "visual",
-    "somatomotor",
-    "dorsal_attention",
-    "ventral_attention",
-    "limbic",
-    "frontoparietal",
-    "default_mode",
-)
-
-_PROMPTS_DIR = Path(__file__).parents[1] / "prompts"
-_K2_REGION_SEMAPHORE_LIMIT = 6
-# k2_region_cache is excluded — it's a popup-latency optimization; /demo/k2-region falls back to live K2 on miss.
 _REQUIRED_KEYS = ("vision_report", "swarm_readings", "empathy")
 
 _CONTROL_FOR = {
@@ -71,92 +58,6 @@ def _resolve_video_path(prerendered_dir: Path, clip_id: str) -> Path:
             return cand
     mp4s = list(clip_dir.glob("*.mp4"))
     return mp4s[0] if mp4s else clip_dir / f"{clip_id}.mp4"
-
-
-def _load_region_system_prompt(network: str) -> str:
-    path = _PROMPTS_DIR / f"{network}.md"
-    if path.exists():
-        return path.read_text(encoding="utf-8")
-    return (
-        f"You are the {network} network. React in 1-2 sentences to your "
-        "activation, grounded in published neuroscience."
-    )
-
-
-async def _run_k2_region(activity: dict, network: str, t: int, k2_client) -> dict:
-    """Mirror of backend/main.py:k2_region handler logic — DO NOT edit main.py."""
-    from services.orchestrator import _parse_observation
-
-    frames = activity.get("frames") or []
-    if not frames:
-        return {
-            "network": network,
-            "t": t,
-            "text": "[no frames]",
-            "confidence": "",
-            "cite": None,
-        }
-    frame = frames[t % len(frames)]
-    regions: dict = frame.get("regions") or {}
-
-    system_prompt = _load_region_system_prompt(network)
-    others = ", ".join(
-        f"{k}={v:.2f}" for k, v in regions.items() if k != network
-    )
-    user = (
-        f"Your activation: {regions.get(network, 0.0):.2f}.\n"
-        f"Other networks: {others}.\n"
-        f"Time: t={t}s.\n"
-        "Output the three lines exactly as specified in your system prompt."
-    )
-
-    try:
-        text = await k2_client.chat(system_prompt, user, max_tokens=200)
-    except Exception as e:
-        return {
-            "network": network,
-            "t": t,
-            "text": f"[K2 call failed: {e}]",
-            "confidence": "",
-            "cite": None,
-        }
-
-    parsed = _parse_observation(text)
-    cite = parsed.get("cite") or None
-    if cite:
-        cite = cite.strip()
-        if cite.startswith("[") and cite.endswith("]"):
-            cite = cite[1:-1].strip()
-
-    return {
-        "network": network,
-        "t": t,
-        "text": parsed.get("reading") or text.strip(),
-        "confidence": parsed.get("confidence") or "",
-        "cite": cite,
-    }
-
-
-async def _bake_k2_region_cache(activity: dict, k2_client) -> dict:
-    n_frames = len(activity.get("frames") or [])
-    if n_frames == 0:
-        return {}
-
-    sem = asyncio.Semaphore(_K2_REGION_SEMAPHORE_LIMIT)
-
-    async def _gated(network: str, t: int):
-        async with sem:
-            return await _run_k2_region(activity, network, t, k2_client)
-
-    tasks = [
-        _gated(net, t) for net in _NETWORKS for t in range(n_frames)
-    ]
-    results = await asyncio.gather(*tasks, return_exceptions=False)
-
-    cache: dict[str, dict] = {}
-    for entry in results:
-        cache[f"{entry['network']}_t{entry['t']}"] = entry
-    return cache
 
 
 async def _build_empathy(
@@ -280,7 +181,7 @@ def _load_control_activity(prerendered_dir: Path, scenario_name: str, fallback_c
 async def warmup_clip(prerendered_dir: Path, clip_id: str) -> dict:
     """Pre-bake all Layer 1 cache files for a clip if missing.
 
-    Order: vision_report → swarm_readings → k2_region_cache → empathy.
+    Order: vision_report → swarm_readings → empathy.
     """
     from services.k2_client import K2Client
     from services.swarm_runner import run_swarm
@@ -329,18 +230,11 @@ async def warmup_clip(prerendered_dir: Path, clip_id: str) -> dict:
             errors["swarm_readings"] = str(e)
             swarm_readings = {"clip_id": clip_id, "regions": {}}
 
-    # 3. k2_region_cache
-    if read_cached(prerendered_dir, clip_id, "k2_region_cache") is not None:
-        skipped.append("k2_region_cache")
-    else:
-        try:
-            region_cache = await _bake_k2_region_cache(activity, k2_client)
-            write_cached(prerendered_dir, clip_id, "k2_region_cache", region_cache)
-            completed.append("k2_region_cache")
-        except Exception as e:
-            errors["k2_region_cache"] = str(e)
-
-    # 4. empathy (full pipeline)
+    # 3. empathy (full pipeline)
+    # k2_region_cache step was removed — /demo/k2-region now serves the per-
+    # network reading directly from swarm_readings.json (already 30s-aggregated)
+    # so a separate per-frame cache would be redundant and would reason over
+    # 1-second slices instead of the full clip.
     if read_cached(prerendered_dir, clip_id, "empathy") is not None:
         skipped.append("empathy")
     else:

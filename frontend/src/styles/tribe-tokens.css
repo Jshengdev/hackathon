@@ -1,0 +1,173 @@
+/* =========================================================================
+   tribe-tokens.css
+   --------------------------------------------------------------------------
+   Visual tokens for the Caltech HackTech 2026 Empathy Layer demo,
+   reskinned to match TRIBE V2 (Meta FAIR) — pure-black canvas, smoke
+   typography, warm-heat activation map.
+
+   See: frontend/STYLE-TRIBE.md for the full style guide.
+   ========================================================================= */
+
+/* --------- Inter as Optimistic fallback ------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ----- Surface ----- */
+  --tribe-bg:            #000000;            /* hero canvas */
+  --tribe-bg-near:       #050505;            /* a hair off-black, for inset cards */
+  --tribe-bg-card:       #0a0a0a;            /* modal / control panel surface */
+  --tribe-bg-elevated:   #111111;            /* hover surface */
+
+  /* ----- Ink ----- */
+  --tribe-ink:           #ffffff;            /* headlines, primary text */
+  --tribe-ink-soft:      #e5e7eb;            /* secondary headlines */
+  --tribe-smoke:         #465a69;            /* TRIBE V2 body color (from styles.json) */
+  --tribe-smoke-soft:    #6b7280;            /* mid gray */
+  --tribe-mute:          #4b5563;            /* dim labels */
+  --tribe-mute-soft:     #374151;            /* very dim, for disabled */
+
+  /* ----- Hairlines ----- */
+  --tribe-hair:          rgba(255, 255, 255, 0.08);
+  --tribe-hair-strong:   rgba(255, 255, 255, 0.16);
+  --tribe-hair-faint:    rgba(255, 255, 255, 0.04);
+
+  /* ----- Accent (warm yellow, the TRIBE peak) ----- */
+  --tribe-accent:        #f9c850;            /* lemon, used sparingly for hover */
+  --tribe-accent-soft:   #ffd84a;
+  --tribe-accent-warm:   #f9a000;            /* deeper amber */
+  --tribe-accent-line:   rgba(249, 200, 80, 0.3);
+
+  /* ----- Activation colormap (deep red → orange → yellow → white) ----- */
+  --tribe-heat-1:        #1a0000;            /* sub-threshold */
+  --tribe-heat-2:        #5a1100;            /* low activation */
+  --tribe-heat-3:        #d83a00;            /* mid activation */
+  --tribe-heat-4:        #f9a000;            /* high activation */
+  --tribe-heat-5:        #ffd84a;            /* peak activation */
+  --tribe-heat-6:        #ffffff;            /* hot peak */
+
+  /* Composed gradient (consumable) */
+  --tribe-heat-gradient: linear-gradient(
+    90deg,
+    var(--tribe-heat-1) 0%,
+    var(--tribe-heat-2) 18%,
+    var(--tribe-heat-3) 42%,
+    var(--tribe-heat-4) 64%,
+    var(--tribe-heat-5) 82%,
+    var(--tribe-heat-6) 100%
+  );
+
+  /* ----- Failure / control accent (kept from earlier system) ----- */
+  --tribe-fail:          #fc7981;            /* pomegranate-400 */
+  --tribe-fail-soft:     rgba(252, 121, 129, 0.25);
+
+  /* ----- Typography ----- */
+  --tribe-font-display:  "Optimistic Display", "Inter", "Inter Display", system-ui, -apple-system, sans-serif;
+  --tribe-font-body:     "Optimistic Text", "Inter", system-ui, -apple-system, sans-serif;
+  --tribe-font-mono:     "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+
+  /* Type scale */
+  --tribe-hero-title:    clamp(48px, 6vw, 88px);
+  --tribe-hero-sub:      clamp(15px, 1.1vw, 18px);
+  --tribe-section-title: clamp(32px, 3.4vw, 48px);
+  --tribe-body:          16px;
+  --tribe-body-lh:       24px;
+  --tribe-label:         11px;
+  --tribe-mono-small:    10px;
+
+  /* Tracking (letter-spacing) */
+  --tribe-track-display: -0.025em;           /* tight on big type */
+  --tribe-track-body:    0;                  /* neutral */
+  --tribe-track-label:   0.18em;             /* loose, uppercase */
+
+  /* ----- Geometry ----- */
+  --tribe-r-pill:        9999px;
+  --tribe-r-card:        12px;
+  --tribe-r-soft:        8px;
+  --tribe-r-sharp:       4px;
+
+  --tribe-pad-pill:      8px 16px;
+  --tribe-pad-card:      24px;
+  --tribe-pad-section:   80px;
+
+  /* ----- Motion ----- */
+  --tribe-easing:        cubic-bezier(0.22, 1, 0.36, 1);
+  --tribe-easing-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --tribe-dur-fast:      120ms;
+  --tribe-dur-base:      240ms;
+  --tribe-dur-slow:      480ms;
+
+  /* ----- Shadows (very subtle on black; mostly we use hairlines) ----- */
+  --tribe-elev-1:        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+                         0 1px 12px rgba(0, 0, 0, 0.6);
+  --tribe-elev-2:        0 0 0 1px var(--tribe-hair),
+                         0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+/* --------- Global resets that pair with the tokens ------------------- */
+html,
+body,
+#app {
+  background: var(--tribe-bg);
+  color: var(--tribe-smoke);
+  font-family: var(--tribe-font-body);
+  font-size: var(--tribe-body);
+  line-height: var(--tribe-body-lh);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+}
+
+/* Selection */
+::selection {
+  background: var(--tribe-accent);
+  color: var(--tribe-bg);
+}
+
+/* Focus ring (keyboard) */
+:focus-visible {
+  outline: 1px solid var(--tribe-accent);
+  outline-offset: 2px;
+}
+
+/* Reusable token classes — cheap utility for quick adoption */
+.tribe-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--tribe-pad-pill);
+  border-radius: var(--tribe-r-pill);
+  border: 1px solid var(--tribe-hair);
+  background: transparent;
+  color: var(--tribe-ink);
+  font-family: var(--tribe-font-body);
+  font-size: 13px;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: border-color var(--tribe-dur-fast) var(--tribe-easing),
+              color var(--tribe-dur-fast) var(--tribe-easing),
+              background var(--tribe-dur-fast) var(--tribe-easing);
+}
+.tribe-pill:hover {
+  border-color: var(--tribe-accent);
+  color: var(--tribe-accent);
+}
+.tribe-pill[aria-pressed="true"],
+.tribe-pill.is-active {
+  border-color: var(--tribe-ink);
+  color: var(--tribe-ink);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tribe-label {
+  font-family: var(--tribe-font-body);
+  font-size: var(--tribe-label);
+  letter-spacing: var(--tribe-track-label);
+  text-transform: uppercase;
+  color: var(--tribe-smoke);
+}
+
+.tribe-mono {
+  font-family: var(--tribe-font-mono);
+  font-size: var(--tribe-mono-small);
+  color: var(--tribe-smoke-soft);
+}

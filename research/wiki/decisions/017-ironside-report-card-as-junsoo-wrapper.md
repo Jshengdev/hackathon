@@ -10,8 +10,8 @@ supports-decisions:
   - 010-b2c-primary-b2b-overlay-positioning.md
 cites-sources:
   - caltech/prd-final.md
-  - junsoo/report_card/PERSON_A_PIPELINE.md
-  - junsoo/report_card/PERSON_B_SYNTHESIS.md
+  - ../findings/2026-04-25-ironside-report-card-person-a.md
+  - ../findings/2026-04-25-ironside-report-card-person-b.md
   - junsoo/papers/prompts/ironside/report_card_synthesis.md
 cross-links:
   - 009-ironside-pipeline-mirror.md
@@ -70,13 +70,13 @@ Three reasons compound:
 ## What this opens
 
 - The 8 Ironside specialists are **functional re-groupings** of the existing 7 Yeo7 networks (`visual_attention` = visual + dorsal_attention; `threat_detection` = limbic + ventral_attention with stimulus context; `stress_response` = limbic HIGH + frontoparietal LOW dysregulation signature; etc.). TRIBE V2 output schema does not change. See `junsoo/papers/prompts/ironside/*.md` for the composite definitions.
-- Two-person parallel build is unblocked: Person A owns prompts + aggregator + smoke; Person B owns synthesis + integration. Hand-off contract is `per_action_activations.json` (locked schema in PERSON_A_PIPELINE.md).
+- Two-person parallel build is unblocked: Person A owns prompts + aggregator + smoke; Person B owns synthesis + integration. Hand-off contract is `per_action_activations.json` (locked schema in [`findings/2026-04-25-ironside-report-card-person-a.md`](../findings/2026-04-25-ironside-report-card-person-a.md)).
 - A reusable pattern emerges (filed at [`patterns/k2-reasoning-plus-instruct-synthesis.md`](../patterns/k2-reasoning-plus-instruct-synthesis.md)): pair a reasoning model with a fast instruct model when the same flow needs both deliberation AND structured output.
 
 ## What this closes
 
 - Path-A "swap input only, keep 7-network labels" is dropped — judges from Ironside reading the planning doc and seeing only generic Yeo7 names in the demo would surface the gap. The 8-specialist framing is now backed by real artifacts (the report card JSONs) at demo time.
-- 2-pass cross-talk is dropped from MVP scope — composite specialists + good synthesis prompt produce sufficient depth without doubling K2 calls per frame. Logged as a stretch goal in PERSON_B_SYNTHESIS.md.
+- 2-pass cross-talk is dropped from MVP scope — composite specialists + good synthesis prompt produce sufficient depth without doubling K2 calls per frame. Logged as a stretch goal in [`findings/2026-04-25-ironside-report-card-person-b.md`](../findings/2026-04-25-ironside-report-card-person-b.md).
 
 ## Reversibility
 

@@ -157,6 +157,8 @@ The PRD inherits from here. Every entry locked by Johnny with verifiable trace.
 | [`findings/lint-2026-04-25.md`](findings/lint-2026-04-25.md) | Karpathy lint pass — health summary, T1/T2 surface check, broken-link audit, suggested next questions |
 | [`findings/prd-builder-reading-order-verification.md`](findings/prd-builder-reading-order-verification.md) | Cold-load test of the 10-file PRD-builder reading order — verdict: ✅ sufficient |
 | [`findings/qa-2026-04-25-research-completeness.md`](findings/qa-2026-04-25-research-completeness.md) | Final QA — 25/25 concepts searchable, 51/51 files reachable, 4 orphans patched, process clean |
+| [`findings/2026-04-25-ironside-report-card-person-a.md`](findings/2026-04-25-ironside-report-card-person-a.md) | Work-split for the Ironside report-card build (Person A: prompts + aggregator + smoke) |
+| [`findings/2026-04-25-ironside-report-card-person-b.md`](findings/2026-04-25-ironside-report-card-person-b.md) | Work-split for the Ironside report-card build (Person B: synthesis + integration) |
 
 ---
 

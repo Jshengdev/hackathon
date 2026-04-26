@@ -6,7 +6,7 @@ Tests four things, no GPU / no network / no Cerebras key required:
     2. aggregate_per_action.py produces visibly different per-action region
        averages when fed a synthetic high-load action vs a synthetic low-load
        action (≥ 0.2 spread on at least 2 networks — matches the Definition
-       of Done bar in PERSON_A_PIPELINE.md).
+       of Done bar in research/wiki/findings/2026-04-25-ironside-report-card-person-a.md).
     3. The shared per_action_activations.json schema (Contract with Person B)
        validates against a fresh aggregator output.
     4. A synthetic ironside_report.json fixture passes schema validation —
@@ -60,6 +60,8 @@ ALLOWED_ARCHETYPES = (
     "panicked",
     "wandering",
     "routine_engaged",
+    "deliberating",
+    "stressed",
     "parse_failure",
 )
 

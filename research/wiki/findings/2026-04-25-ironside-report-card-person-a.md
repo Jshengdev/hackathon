@@ -1,8 +1,25 @@
-# Person A — Pipeline + Specialist Prompts
+---
+file-type: finding
+status: verified
+last-verified: 2026-04-25
+supports-decisions:
+  - ../decisions/017-ironside-report-card-as-junsoo-wrapper.md
+  - ../decisions/003-team-role-lanes-locked.md
+cites-sources:
+  - junsoo/report_card/aggregate_per_action.py
+  - junsoo/report_card/smoke_test.py
+  - junsoo/papers/prompts/ironside/
+cross-links:
+  - 2026-04-25-ironside-report-card-person-b.md
+  - ../decisions/017-ironside-report-card-as-junsoo-wrapper.md
+  - ../patterns/k2-reasoning-plus-instruct-synthesis.md
+---
+
+# Person A — Pipeline + Specialist Prompts (work-split, 2026-04-25)
 
 > Owner of: prompt authoring, video pre-render, action chunking, smoke test.
-> Sister doc: [PERSON_B_SYNTHESIS.md](./PERSON_B_SYNTHESIS.md)
-> Why this exists: extending swarm output to match the Ironside-doc spec (8 specialists, structured per-action report card). See `caltech/prd-final.md §6` and the Ironside Define/Develop/Showcase synthesis.
+> Sister doc: [`2026-04-25-ironside-report-card-person-b.md`](./2026-04-25-ironside-report-card-person-b.md)
+> Why this exists: extending swarm output to match the Ironside-doc spec (8 specialists, structured per-action report card). See `caltech/prd-final.md §6` and the Ironside Define/Develop/Showcase synthesis. Architectural choice locked in [Decision 017](../decisions/017-ironside-report-card-as-junsoo-wrapper.md).
 
 ## Your goal
 

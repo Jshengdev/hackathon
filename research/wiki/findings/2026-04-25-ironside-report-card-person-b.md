@@ -1,8 +1,27 @@
-# Person B — Synthesis + Integration
+---
+file-type: finding
+status: verified
+last-verified: 2026-04-25
+supports-decisions:
+  - ../decisions/017-ironside-report-card-as-junsoo-wrapper.md
+  - ../decisions/008-k2-think-as-speed-engine.md
+cites-sources:
+  - junsoo/report_card/run_specialists.py
+  - junsoo/report_card/synthesize.py
+  - junsoo/report_card/run_report_card.py
+  - junsoo/report_card/validate_schema.py
+  - junsoo/report_card/k2_caller.py
+cross-links:
+  - 2026-04-25-ironside-report-card-person-a.md
+  - ../decisions/017-ironside-report-card-as-junsoo-wrapper.md
+  - ../patterns/k2-reasoning-plus-instruct-synthesis.md
+---
+
+# Person B — Synthesis + Integration (work-split, 2026-04-25)
 
 > Owner of: K2 specialist runner, instruct-model JSON synthesis, schema validation, top-level driver.
-> Sister doc: [PERSON_A_PIPELINE.md](./PERSON_A_PIPELINE.md)
-> Why this exists: extending swarm output to match the Ironside-doc spec (8 specialists, structured per-action report card). See `caltech/prd-final.md §6` and the Ironside Define/Develop/Showcase synthesis.
+> Sister doc: [`2026-04-25-ironside-report-card-person-a.md`](./2026-04-25-ironside-report-card-person-a.md)
+> Why this exists: extending swarm output to match the Ironside-doc spec (8 specialists, structured per-action report card). See `caltech/prd-final.md §6` and the Ironside Define/Develop/Showcase synthesis. Architectural choice locked in [Decision 017](../decisions/017-ironside-report-card-as-junsoo-wrapper.md).
 
 ## Your goal
 

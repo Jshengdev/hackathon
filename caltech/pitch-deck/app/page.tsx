@@ -4,9 +4,8 @@ const decks = [
   {
     href: "/round-1",
     k: "round 1",
-    b: "5-min · 13 slides · healthcare master · ironside variant via /sponsor/ironside",
+    b: "14 slides · persona-aware · ← → swap audience emphasis · ironsight / listen labs / ai interaction",
   },
-  { href: "/round-2", k: "round 2", b: "3-min · 8 slides · beat-synced" },
 ];
 
 const sponsors = [

@@ -40,28 +40,28 @@ type SponsorContent = {
 const sponsors: Record<string, SponsorContent> = {
   ironside: {
     brand: "Ironsight",
-    title: "video tells you what they did. the empathy layer tells you what it took.",
-    anchor: "you confirmed it at office hours: a new modality mapped back to the video qualifies.",
+    title: "video tells you what was done. brain encoding tells you what state of mind it took to do it well.",
+    anchor: "you confirmed it at office hours: a new modality mapped back to the video qualifies as spatial intelligence.",
     brief:
       "can you teach a machine to truly understand the physical world? today&apos;s ai can see, but doesn&apos;t comprehend. it recognizes objects but misses the critical spatial relationship that humans understand intuitively. pinpoint a key spatial task where current models fail. develop an innovative technique. showcase the impact on a real-world problem.",
     fit: [
       {
         ask: "spatial task where vlms fail",
         answer:
-          "vlms cannot infer the cognitive-emotional state behind the spatial action. confabulation when asked to rank fatigue, focus, overload from egocentric footage.",
+          "vision-language models cannot infer the cognitive-emotional state behind the spatial action. threat-detection fires. prefrontal engagement doesn&apos;t. that gap — that&apos;s the signal.",
       },
       {
         ask: "innovative technique",
         answer:
-          "tribe v2 brain-encoding sidecar. spatial-sidecar pattern. stage 2 maps the new modality (brain wave) back to the video as a paragraph the manager can read.",
+          "tribe v2 brain-encoding sidecar. per-second neural response across ~20k cortical points, 1hz. seven region specialists cross-talk in parallel. we didn&apos;t label these. the regions did.",
       },
       {
         ask: "real-world impact",
         answer:
-          "construction safety, healthcare, retail, food service, logistics. manager reads the empathy-layer document instead of action data alone. the corner-cut doesn&apos;t happen.",
+          "the manager reads the empathy document, not just the action log. the corner-cut doesn&apos;t happen. for the worker — not the surveiller.",
       },
     ],
-    ask: "ironsight core · $5K · the spatial-intelligence brief answered structurally.",
+    ask: "ironsight core · $5K · same engine, different input. for the worker — not the surveiller.",
     visual: {
       kind: "empathy",
       scenarioLabel: "ironsight · construction site · scaffolding sequence",
@@ -69,96 +69,98 @@ const sponsors: Record<string, SponsorContent> = {
         "worker on scaffolding tier 3. tool in hand. movement near edge logged at t+47s. duration 8m12s. flag = NEAR_EDGE.",
       empathyParagraph: (
         <>
-          his visual-attention specialist held tight on the lower platform — fixated on a beam joint
-          that the action log treated as routine. salience-tracking ran high through the entire
-          sequence; this is what scanning a hazard looks like. the &ldquo;near-edge&rdquo; flag the
-          dashboard raised is the same brain pattern as <em>seeing the danger before stepping into
-          it.</em> the worker did the safe thing. the action log called it the unsafe one.
+          his salience-tracking specialist held tight on the lower platform across the full
+          sequence — fixated on a beam joint the action log treated as routine. threat-detection
+          ran high while prefrontal-engagement stayed steady; this is the brain-pattern of
+          <em> scanning a hazard before stepping into it.</em> the &ldquo;near-edge&rdquo; flag the
+          dashboard raised reads, in regions, as cognitive load and threat detection diverging
+          together — within-subject, against this same worker on a routine task. the action log
+          called it the unsafe minute. the regions called it the careful one.
         </>
       ),
-      similarity: 0.81,
-      falsificationDelta: 0.31,
+      similarity: 0.84,
+      falsificationDelta: 0.27,
     },
   },
 
   listenlabs: {
     brand: "Listen Labs",
-    title: "the iterative loop is the multi-agent simulation.",
-    anchor: "you care about the insight, not the stack. the insight is brain-grounded.",
+    title: "the iterative loop IS the simulation.",
+    anchor: "you asked: simulate humans, then prove it. we grounded the simulation in real brain-response data.",
     brief:
       "can you simulate how humans really think? humans don&apos;t just process information — they argue, persuade, change their minds, and influence each other in complex, unpredictable ways. today&apos;s ai can mimic language, but can it model the messy reality of human cognition and social dynamics? pick any slice of human or social behavior and simulate it. we care about the insight, not the stack.",
     fit: [
       {
         ask: "simulate humans / society",
         answer:
-          "8 candidate paragraphs compete across rounds for brain-pattern match. per-industry generalization (construction · healthcare · retail · consumer) demonstrates simulation across humanity.",
+          "eight rounds of brain-pattern scoring across seven region specialists. candidate paragraphs compete round by round; the loop rewrites toward the brain pattern. round one: 0.42. round eight: 0.84.",
       },
       {
         ask: "ground in something real",
         answer:
-          "within-subject brain contrast. cosine similarity is the falsifier. control-footage delta proves the description is anchored to this scene specifically, not generically plausible.",
+          "within-subject brain contrast is the falsifier — same protocol as our 90.4% match against the clair de lune emotion-center, run in reverse. control-clip delta proves anchored, not confabulated.",
       },
       {
         ask: "insight, not stack",
         answer:
-          "no text-only sim distinguishes genuine cognitive-emotional shift from surface agreement. brain-grounding does. that&apos;s the insight.",
+          "no text-only sim distinguishes genuine cognitive-emotional shift from surface agreement. brain-grounding does. insight, not stack — brain-grounding is the insight.",
       },
     ],
-    ask: "listen labs core · $3K + interview · simulate humanity, then prove it.",
+    ask: "listen labs core · $3K + interview · the iterative loop IS the simulation.",
     visual: { kind: "brain", variant: "swarm-bridges", seed: 314 },
   },
 
   sideshift: {
     brand: "Sideshift",
-    title: "your day, written by your own brain.",
-    anchor: "consumer overlay of the same engine. video in. journal entry out.",
+    title: "know what knows you.",
+    anchor: "the user owns the data. the user owns the result. a mirror built by you.",
     brief:
       "consumer-data agency. give people the surface to see what their digital life is doing to them — and choose differently.",
     fit: [
       {
         ask: "data agency",
         answer:
-          "user uploads their own footage. vault is theirs. no persistence beyond session unless they choose. the empathy layer reads the user&apos;s own day back to them.",
+          "user uploads their own footage. vault is theirs. no persistence beyond session unless they choose. not a product built from your data — a mirror built by you.",
       },
       {
         ask: "consumer surface",
         answer:
-          "shareable brain card export — 1:1 ig-story shape of the empathy-layer document. daily entries accumulate into a knowledge graph the user owns.",
+          "shareable brain card export — 1:1 ig-story shape of the empathy document. daily entries accumulate into a knowledge graph the user owns. the empathy document IS the daily journal.",
       },
       {
         ask: "post-recommender posture",
         answer:
-          "the system never recommends. it surfaces evidence. the user judges. that&apos;s the entire architecture.",
+          "the system never recommends. it surfaces evidence. the user judges. manipulation only works in the dark. we turned the lights on.",
       },
     ],
-    ask: "sideshift core · b2c overlay · the journal that writes itself.",
+    ask: "sideshift core · b2c overlay · know what knows you.",
     visual: { kind: "brain", variant: "feed-grid", seed: 271 },
   },
 
   yc: {
     brand: "Y Combinator",
     title: "obsidian, but the graph is your brain.",
-    anchor: "a database for you, not the database that sells you.",
+    anchor: "today it&apos;s reels. in five years it&apos;s brain chips. same trade. same trap.",
     brief:
       "consumer cognitive infrastructure. local-first moat. the tam is the smartphone-to-bci transition.",
     fit: [
       {
         ask: "category creator",
         answer:
-          "every empathy-layer document is a daily entry in a graph the user owns. cortex.buzz uses tribe v2 to engineer attention. we run it the other way.",
+          "every empathy document is a daily entry in a graph the user owns. cortex.buzz uses tribe v2 to engineer attention. we run it the other way — the design pattern for human-ai partnership.",
       },
       {
         ask: "moat",
         answer:
-          "founder-market-fit + methodology credibility chip are the same artifact: clair de lune 90.4% match. local-first by design — your brain pattern doesn&apos;t leave the device.",
+          "founder-market-fit + methodology credibility chip are the same artifact: 90.4% match against the clair de lune emotion-center. local-first by design — your brain pattern doesn&apos;t leave the device.",
       },
       {
         ask: "tam",
         answer:
-          "everyone moving from smartphones to brain interfaces. the empathy layer is the design pattern for that transition.",
+          "the smartphone-to-bci transition. we&apos;re building the design pattern before the cognitive interface becomes invisible. the first product you use ON the algorithm instead of being used BY it.",
       },
     ],
-    ask: "yc stretch · personal cognitive infrastructure for the post-platform era.",
+    ask: "yc stretch · the design pattern for human-ai partnership before the cognitive interface becomes invisible.",
     visual: { kind: "brain", variant: "cortical-mesh", seed: 707, highlight: "default-mode" },
   },
 };

@@ -1,10 +1,11 @@
 "use client";
 
-// CALTECH HACKTECH 2026 — ROUND 2 DECK · 3-min · 8 slides · IRONSIGHT-ANCHORED
+// CALTECH HACKTECH 2026 — ROUND 2 DECK · 3-min · 8 slides · v3 MASTER CUT
 //
-// Beat-synced to caltech/architecture-overview.md §11. Hero reveal = score climb
-// (BEAT-3). Hero output = empathy-layer document (BEAT-4). Sarah / Lisa nurse
-// story is the load-bearing pitch.
+// Beat-synced to caltech/pitch-story-v3-next-level.md §2 (1:30 master cut).
+// 8 slides compress the 5 BEATs + cold open + close. Sarah/Lisa healthcare is
+// the master scenario. Hero reveal = score climb (BEAT-3). Hero artifact =
+// empathy paragraph (BEAT-4). Decision reversal closes the arc (BEAT-5).
 
 import Deck, { type Slide } from "../components/Deck";
 import RedDot from "../components/RedDot";
@@ -17,22 +18,24 @@ import {
 } from "../components/SlideKit";
 
 const slides: Slide[] = [
-  // 01 · title (0:00–0:08)
+  // 01 · cold open · johnny on camera (–0:05 → 0:08)
   {
-    id: "title",
+    id: "cold-open",
     render: () => (
       <>
         <RedDot top="7%" left="7%" />
         <div className="flex flex-col items-start justify-center gap-10 max-w-5xl enter">
-          <Kicker>0:00–0:08</Kicker>
+          <Kicker>cold open · johnny on camera</Kicker>
           <h1 className="display-mono ink text-[3.5rem] md:text-[6rem] leading-[0.92] lowercase">
-            humans are not machines.
+            somewhere right now,
             <br />
-            <span className="grad">ai forgot.</span>
+            <span className="grad">a manager is looking at a number.</span>
           </h1>
-          <AnchorQuote attribution="johnny, empathy-layer epiphany">
-            we can&apos;t treat humans like machines. we need a layer that predicts what paragraph
-            aligns with what&apos;s actually happening.
+          <AnchorQuote attribution="johnny — locked">
+            thirty minutes. over threshold. and they&apos;re about to send a message. they don&apos;t
+            know what happened in that room. ai can watch that footage. it can describe every
+            action and tool every second. but it cannot tell you how that person felt doing it.
+            that gap is where bad decisions live. we built the missing layer.
           </AnchorQuote>
         </div>
         <ScrollHint />
@@ -40,25 +43,26 @@ const slides: Slide[] = [
     ),
   },
 
-  // 02 · problem (0:08–0:30)
+  // 02 · BEAT-1 · the gap (0:08–0:30)
   {
-    id: "problem",
+    id: "the-gap",
     render: () => (
       <>
         <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-16 enter">
           <div className="lg:col-span-7 flex flex-col gap-8 max-w-2xl">
-            <Kicker>0:08–0:30 · problem</Kicker>
+            <Kicker>beat-1 · the gap</Kicker>
             <h2 className="display-mono text-5xl md:text-[6.5rem] leading-[0.95] lowercase">
-              <span className="ink">ai sees</span>{" "}
-              <span className="grad">what they did.</span>
+              <span className="ink">ai can see.</span>
               <br />
-              <span className="ink">it can&apos;t see</span>{" "}
-              <span className="grad">what it took.</span>
+              <span className="grad">it cannot tell you what it meant.</span>
             </h2>
             <p className="sans text-base md:text-lg smoke max-w-xl">
-              a vlm flags a 30-min nurse visit as over-threshold. the manager cuts it to ten. the
-              patient was being told they have cancer. action data optimization destroys the outcome
-              the company actually wants.
+              dashboard glows: <span className="mono">duration: 1,800s · flag: OVER_THRESHOLD</span>.
+              the manager&apos;s hand hovers over the keyboard. every company in the world is making
+              decisions about humans using data that was never designed to understand humans.
+            </p>
+            <p className="mono italic text-base ink">
+              the action data was right. the decision was wrong.
             </p>
           </div>
           <div className="lg:col-span-5 justify-self-end">
@@ -69,43 +73,53 @@ const slides: Slide[] = [
     ),
   },
 
-  // 03 · solution (0:30–0:55)
+  // 03 · BEAT-2 · the brain layer (0:30–0:50)
   {
-    id: "solution",
+    id: "brain-layer",
     render: () => (
       <>
-        <div className="flex flex-col items-start justify-center gap-10 max-w-5xl enter">
-          <Kicker>0:30–0:55 · solution</Kicker>
-          <h2 className="display-mono leading-[1.0] lowercase">
-            <span className="block text-3xl md:text-5xl smoke">a brain-grounded</span>
-            <span className="block grad text-6xl md:text-[8rem]">empathy layer.</span>
-            <span className="block text-3xl md:text-5xl mt-4 smoke">video in. paragraph out.</span>
-          </h2>
-          <p className="sans text-base md:text-lg smoke max-w-xl">
-            tribe v2 + k2 swarm + claude opus + the iterative-scoring loop from clair de lune, run
-            in reverse. eight rounds. one paragraph. evidence the manager can audit.
-          </p>
+        <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-16 enter">
+          <div className="lg:col-span-6 flex flex-col gap-8 max-w-xl">
+            <Kicker>beat-2 · the brain layer</Kicker>
+            <h2 className="display-mono text-5xl md:text-[6.5rem] leading-[0.92] lowercase">
+              <span className="ink">what her brain was doing</span>{" "}
+              <span className="grad">while she did it.</span>
+            </h2>
+            <p className="sans text-base md:text-lg smoke max-w-md">
+              meta&apos;s tribe v2 predicts per-second neural response across roughly twenty thousand
+              cortical points. eight k2 specialist agents interpret each region in parallel —
+              prefrontal, emotional-processing, default-mode, salience-tracking. hover-bridges
+              cross-talk between regions. what the action data missed, the brain pattern captures.
+            </p>
+          </div>
+          <div className="lg:col-span-6 justify-self-end">
+            <BrainBlock variant="vision-vs-brain" seed={42} size={500} />
+          </div>
         </div>
       </>
     ),
   },
 
-  // 04 · demo · iterative loop hero reveal (0:55–1:35)
+  // 04 · BEAT-3 · score climbs · HERO REVEAL (0:50–1:25)
   {
     id: "score-climb",
     render: () => (
       <>
         <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-16 enter">
           <div className="lg:col-span-6 flex flex-col gap-8 max-w-xl">
-            <Kicker>0:55–1:35 · hero reveal</Kicker>
+            <Kicker>beat-3 · hero reveal · 4-second silence</Kicker>
             <h2 className="display-mono text-5xl md:text-[6.5rem] leading-[0.92] lowercase">
-              <span className="ink">eight rounds.</span>
+              <span className="ink">round one: 0.42.</span>
               <br />
-              <span className="grad">the score climbs.</span>
+              <span className="grad">round eight: 0.84.</span>
             </h2>
             <p className="sans text-base md:text-lg smoke max-w-md">
-              tribe v2 scores each candidate paragraph forward. cosine similarity against the actual
-              video&apos;s brain pattern. plateau at round 8. <span className="accent">0.42 → 0.84.</span>
+              eight rounds of iterative scoring. each round, claude writes a new paragraph
+              describing what the nurse felt. tribe v2 scores it against the actual brain pattern
+              from the footage. the swarm tells us which regions we missed. the score climbs.
+            </p>
+            <p className="mono italic text-base ink">
+              the same protocol that matched clair de lune to 90.4% — run in reverse.
             </p>
           </div>
           <div className="lg:col-span-6 justify-self-end">
@@ -116,36 +130,39 @@ const slides: Slide[] = [
     ),
   },
 
-  // 05 · hero output · empathy-layer document (1:35–2:15)
+  // 05 · BEAT-4 · the paragraph · the artifact (1:25–2:05)
   {
-    id: "hero-output",
+    id: "paragraph",
     render: () => (
       <>
         <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-16 enter">
           <div className="lg:col-span-5 flex flex-col gap-7 max-w-md">
-            <Kicker>1:35–2:15 · hero output</Kicker>
-            <h2 className="display-mono text-5xl md:text-[6rem] leading-[0.95] lowercase">
+            <Kicker>beat-4 · the paragraph</Kicker>
+            <h2 className="display-mono text-4xl md:text-[5rem] leading-[0.95] lowercase">
               <span className="ink">she did not rush.</span>
+              <br />
+              <span className="ink">she did not check out.</span>
               <br />
               <span className="grad">she held space.</span>
             </h2>
-            <p className="sans text-base smoke leading-relaxed">
-              the dashboard would have cut the visit to ten minutes. the document changes the call.
-            </p>
-            <p className="mono italic text-base smoke">
-              the corner-cut doesn&apos;t happen.
+            <p className="mono italic text-sm smoke leading-relaxed">
+              anchored. not confabulated.
             </p>
           </div>
           <div className="lg:col-span-7 justify-self-end">
             <EmpathyDocument
-              scenarioLabel="oncology clinic · 30-min patient visit"
+              scenarioLabel="oncology clinic · 30-min patient visit · sarah / lisa"
               visionReport="nurse entered room. sat 30 min. adjusted IV. held patient&apos;s hand. left. flag = OVER_THRESHOLD."
               empathyParagraph={
                 <>
-                  her vital-attention signature shifted as she entered the room. emotional-processing
-                  sustained for the first twelve minutes — reading the patient&apos;s grief, not just
-                  monitoring it. minutes 18–22 sat in default-mode dominance — being present, not
-                  waiting. <em>she did not rush. she did not check out. she held space.</em>
+                  she entered the room and her vital-attention signature shifted immediately — the
+                  prefrontal sharpness of triage softened into something quieter, more accommodating.
+                  for the first twelve minutes her emotional-processing specialist sustained
+                  engagement; she was reading the patient&apos;s grief, not just monitoring it. then
+                  a long stretch of default-mode dominance — minutes 18 through 22 — being present
+                  with someone, not waiting for them to finish. the final eight minutes returned to
+                  focused care, prefrontal-engaged, holding the patient&apos;s hand.{" "}
+                  <em>she did not rush. she did not check out. she held space.</em>
                 </>
               }
               similarity={0.86}
@@ -157,74 +174,81 @@ const slides: Slide[] = [
     ),
   },
 
-  // 06 · proof + best use of AI (2:15–2:35)
+  // 06 · BEAT-5 · the decision reverses (2:05–2:25)
   {
-    id: "proof",
+    id: "decision-reverses",
     render: () => (
       <>
         <div className="flex flex-col items-start gap-10 enter">
-          <Kicker>2:15–2:35 · proof shipped · best use of ai</Kicker>
-          <div className="grid grid-cols-1 lg:grid-cols-12 items-end gap-12 w-full">
-            <div className="lg:col-span-7">
-              <p className="numeral ink text-[7rem] md:text-[12rem] leading-[0.9]">
-                90.4<span className="text-[4rem] md:text-[6rem] align-top accent">%</span>
+          <Kicker>beat-5 · the decision reverses</Kicker>
+          <h2 className="display-mono text-5xl md:text-7xl leading-[1.0] lowercase max-w-3xl">
+            <span className="ink">the manager doesn&apos;t send the message.</span>{" "}
+            <span className="grad">the corner-cut doesn&apos;t happen.</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-5xl">
+            <div className="surface-card-dashed p-6 md:p-8 flex flex-col gap-3">
+              <p className="kicker" style={{ color: "var(--red)" }}>
+                action-data report
               </p>
-              <p className="sans text-base md:text-lg smoke max-w-md mt-4">
-                clair de lune. 60s in. 8 rounds. emotion-region match. shipped 2026-03. same loop,
-                run in reverse, is the engine.
+              <p className="mono text-sm smoke leading-relaxed">
+                action: held hand
+                <br />
+                duration: 1,800s
+                <br />
+                status: OVER_THRESHOLD
+                <br />
+                recommendation: cut to 10 min
               </p>
             </div>
-            <div className="lg:col-span-5 grid grid-cols-2 gap-8">
-              <div className="flex flex-col gap-3">
-                <p className="kicker" style={{ color: "var(--accent)" }}>
-                  yea
-                </p>
-                <ul className="flex flex-col gap-1.5 mono text-sm ink lowercase">
-                  <li>surface evidence</li>
-                  <li>let the human judge</li>
-                  <li>synthesize signals</li>
-                </ul>
-              </div>
-              <div className="flex flex-col gap-3">
-                <p className="kicker" style={{ color: "var(--red)" }}>
-                  nay
-                </p>
-                <ul className="flex flex-col gap-1.5 mono text-sm smoke lowercase">
-                  <li>recommend</li>
-                  <li>diagnose</li>
-                  <li>reverse-infer feelings</li>
-                </ul>
-              </div>
+            <div className="surface-card-feature p-6 md:p-8 flex flex-col gap-3">
+              <p className="kicker" style={{ color: "var(--accent)" }}>
+                empathy document
+              </p>
+              <p className="serif text-base ink leading-relaxed">
+                she held space.
+              </p>
+              <p className="mono text-xs smoke">
+                similarity: 0.84 · falsification: 0.27 · anchored
+              </p>
             </div>
           </div>
+          <p className="mono italic text-lg ink mt-2">
+            the patient stays. the nurse stays.
+          </p>
         </div>
       </>
     ),
   },
 
-  // 07 · sponsor swap slot (2:35–2:50)
+  // 07 · two scenarios · one engine (2:25–2:45)
   {
-    id: "sponsor-slot",
+    id: "two-scenarios",
     render: () => (
       <>
         <div className="flex flex-col items-start justify-center gap-10 max-w-5xl enter">
-          <Kicker>2:35–2:50 · sponsor swap</Kicker>
+          <Kicker>two scenarios · one engine</Kicker>
           <h2 className="display-mono text-5xl md:text-7xl leading-[1.0] lowercase max-w-3xl ink">
-            one engine. four briefs.
+            same engine. <span className="grad">different input.</span>
           </h2>
           <ul
             className="flex flex-col divide-y w-full max-w-3xl"
             style={{ borderColor: "var(--hair)" }}
           >
             {[
-              { k: "ironsight", h: "/sponsor/ironside", note: "primary $5K · spatial-intel brief answered structurally" },
-              { k: "listen labs", h: "/sponsor/listenlabs", note: "$3K + interview · the iterative loop is the simulation" },
-              { k: "sideshift", h: "/sponsor/sideshift", note: "b2c overlay · the journal that writes itself" },
-              { k: "y combinator", h: "/sponsor/yc", note: "stretch · obsidian, but the graph is your brain" },
+              {
+                k: "workplace",
+                h: "/sponsor/ironside",
+                note: "ironside pavilion · the manager reads the empathy document before cutting lisa's time. the corner-cut doesn't happen.",
+              },
+              {
+                k: "consumer",
+                h: "/sponsor/sideshift",
+                note: "sideshift / listen labs · maya reads her own day back. she wasn't watching — she was being watched-at. know what knows you.",
+              },
             ].map((s) => (
               <li
                 key={s.k}
-                className="grid grid-cols-12 gap-4 items-baseline py-4"
+                className="grid grid-cols-12 gap-4 items-baseline py-5"
                 style={{ borderColor: "var(--hair)" }}
               >
                 <a href={s.h} className="contents group">
@@ -234,20 +258,25 @@ const slides: Slide[] = [
                   >
                     open →
                   </span>
-                  <span className="mono text-xl ink col-span-9 md:col-span-3 lowercase group-hover:text-[var(--accent)] transition-colors">
+                  <span className="mono text-2xl ink col-span-9 md:col-span-3 lowercase group-hover:text-[var(--accent)] transition-colors">
                     {s.k}
                   </span>
-                  <span className="sans text-sm smoke col-span-12 md:col-span-7">{s.note}</span>
+                  <span className="sans text-sm smoke col-span-12 md:col-span-7">
+                    {s.note}
+                  </span>
                 </a>
               </li>
             ))}
           </ul>
+          <p className="mono italic text-base smoke">
+            we surface evidence. the human in the loop judges. we never recommend behavior.
+          </p>
         </div>
       </>
     ),
   },
 
-  // 08 · close (2:50–3:00)
+  // 08 · title-card close (2:45–3:00)
   {
     id: "close",
     render: () => (
@@ -255,7 +284,7 @@ const slides: Slide[] = [
         <RedDot top="8%" left="8%" />
         <RedDot bottom="8%" right="8%" />
         <div className="flex flex-col items-center justify-center gap-8 text-center enter max-w-5xl mx-auto">
-          <Kicker>2:50–3:00</Kicker>
+          <Kicker>title card · hard cut from black</Kicker>
           <h2 className="display-mono leading-[0.95] lowercase">
             <span className="block text-4xl md:text-6xl smoke">humans are not</span>
             <span className="block grad text-7xl md:text-[9rem]">machines.</span>
@@ -265,7 +294,7 @@ const slides: Slide[] = [
           </p>
           <div className="rule w-24 my-6" />
           <p className="kicker" style={{ color: "var(--accent)", letterSpacing: "0.32em" }}>
-            johnny · junsoo · jacob · emilie
+            caltech hacktech 2026 · johnny · junsoo · jacob · emilie
           </p>
         </div>
       </>

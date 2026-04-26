@@ -31,9 +31,8 @@
       </div>
       <h1>See what the brain is doing<br/>while it watches.</h1>
       <p class="sub">
-        Drop in a video clip — we'll match it against our prerendered TRIBE V2
-        neural predictions and walk you through what each cortical network is
-        seeing, second by second.
+        Drop in a video clip and we'll walk you through what each cortical
+        network is seeing, second by second.
       </p>
 
       <div

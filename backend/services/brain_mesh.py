@@ -124,13 +124,35 @@ class BrainMesh:
             }
 
     def _synthetic_labels(self) -> np.ndarray:
-        """Fallback: evenly partition vertices into 7 networks."""
-        n = len(self.vertices) if self.vertices is not None else 20484
-        labels = np.zeros(n, dtype=np.int32)
-        block = n // 8
-        for i in range(1, 8):
-            labels[(i - 1) * block: i * block] = i
-        return labels
+        """Fallback when the real Yeo7 atlas isn't available.
+
+        Assigns each vertex to its nearest of 7 seed points spread around
+        the brain volume so per-network centroids land in distinct spatial
+        locations. The earlier index-slab partition produced centroids that
+        clustered near the mesh center, making most regions visually
+        un-clickable when rendered as spheres.
+        """
+        if self.vertices is None:
+            return np.zeros(20484, dtype=np.int32)
+
+        verts = self.vertices.astype(np.float32)
+        mins = verts.min(axis=0)
+        maxs = verts.max(axis=0)
+        span = maxs - mins
+
+        seeds = np.array([
+            [mins[0] + 0.20 * span[0], mins[1] + 0.50 * span[1], mins[2] + 0.30 * span[2]],
+            [mins[0] + 0.50 * span[0], mins[1] + 0.85 * span[1], mins[2] + 0.55 * span[2]],
+            [mins[0] + 0.30 * span[0], mins[1] + 0.40 * span[1], mins[2] + 0.85 * span[2]],
+            [mins[0] + 0.70 * span[0], mins[1] + 0.40 * span[1], mins[2] + 0.85 * span[2]],
+            [mins[0] + 0.50 * span[0], mins[1] + 0.20 * span[1], mins[2] + 0.50 * span[2]],
+            [mins[0] + 0.50 * span[0], mins[1] + 0.65 * span[1], mins[2] + 0.30 * span[2]],
+            [mins[0] + 0.80 * span[0], mins[1] + 0.50 * span[1], mins[2] + 0.30 * span[2]],
+        ], dtype=np.float32)
+
+        d2 = ((verts[:, None, :] - seeds[None, :, :]) ** 2).sum(axis=2)
+        nearest = d2.argmin(axis=1).astype(np.int32)
+        return (nearest + 1).astype(np.int32)
 
     def to_dict(self) -> dict:
         return {

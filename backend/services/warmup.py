@@ -377,6 +377,8 @@ async def warmup_clip(prerendered_dir: Path, clip_id: str) -> dict:
 
 
 async def get_warmup_status(prerendered_dir: Path, clip_id: str) -> dict:
+    from services.swarm_runner import get_swarm_progress
+
     completed: list[str] = []
     pending: list[str] = []
     for key in _REQUIRED_KEYS:
@@ -385,8 +387,28 @@ async def get_warmup_status(prerendered_dir: Path, clip_id: str) -> dict:
             completed.append(key)
         else:
             pending.append(key)
+
+    # Merge in per-network swarm progress. If swarm_readings is already cached
+    # we synthesize a "done" state for all 7 networks straight from disk so a
+    # cache-hit warmup still drives the SwarmStatusPanel into its done state.
+    swarm_readings_progress: dict[str, dict] = {}
+    cached_swarm = read_cached(Path(prerendered_dir), clip_id, "swarm_readings")
+    if isinstance(cached_swarm, dict) and isinstance(cached_swarm.get("regions"), dict):
+        for net, reading in cached_swarm["regions"].items():
+            if not isinstance(reading, dict):
+                continue
+            swarm_readings_progress[net] = {
+                "state": "done",
+                "text": reading.get("reading", "") or "",
+                "confidence": reading.get("confidence", "") or "",
+                "cite": reading.get("cite"),
+            }
+    else:
+        swarm_readings_progress = get_swarm_progress(clip_id)
+
     return {
         "ready": len(pending) == 0,
         "completed": completed,
         "pending": pending,
+        "swarm_readings_progress": swarm_readings_progress,
     }

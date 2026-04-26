@@ -522,7 +522,7 @@ async def k2_region(payload: dict):
             "network": network,
             "t": t_int,
             "text": f"[K2 call failed: {e}]",
-            "confidence": "",
+            "confidence": "low",
             "cite": None,
             "stub": True,
             "error": str(e),
@@ -537,11 +537,25 @@ async def k2_region(payload: dict):
         if cite.startswith("[") and cite.endswith("]"):
             cite = cite[1:-1].strip()
 
+    # Normalize confidence to one of {high, medium, low}. K2 sometimes omits
+    # this line or emits a verbose phrase; pick the first known token if
+    # present, otherwise default to "medium" so the popup's confidence bar
+    # always renders rather than collapsing to a neutral mid-rail.
+    raw_conf = (parsed.get("confidence") or "").strip().lower()
+    if "high" in raw_conf:
+        confidence = "high"
+    elif "low" in raw_conf:
+        confidence = "low"
+    elif "medium" in raw_conf or "med" in raw_conf:
+        confidence = "medium"
+    else:
+        confidence = "medium"
+
     return {
         "network": network,
         "t": t_int,
         "text": parsed.get("reading") or text.strip(),
-        "confidence": parsed.get("confidence") or "",
+        "confidence": confidence,
         "cite": cite,
         "raw": text,
     }

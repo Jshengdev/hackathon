@@ -18,36 +18,69 @@
       </div>
     </div>
 
-    <!-- RIGHT: video -->
-    <div class="video-pane">
-      <video
-        ref="videoEl"
-        :src="videoSrc"
-        class="video"
-        playsinline
-        @timeupdate="onTimeUpdate"
-        @play="isPlaying = true"
-        @pause="isPlaying = false"
-        @loadedmetadata="onMeta"
-        @ended="onEnded"
-      />
+    <!-- RIGHT column: video on top, panels below -->
+    <div class="right-pane">
+      <div class="video-pane">
+        <video
+          ref="videoEl"
+          :src="videoSrc"
+          class="video"
+          playsinline
+          @timeupdate="onTimeUpdate"
+          @play="isPlaying = true"
+          @pause="isPlaying = false"
+          @loadedmetadata="onMeta"
+          @seeking="onSeeking"
+          @seeked="onSeeked"
+          @ended="onEnded"
+        />
 
-      <!-- Play/pause overlay -->
-      <button class="play-overlay" v-if="!hasStarted" @click="togglePlay">
-        <span class="play-icon">▶</span>
-        <span class="play-label">Play clip</span>
-      </button>
-
-      <!-- Bottom video bar (controls + scrubber) -->
-      <div class="video-bar">
-        <button class="vb-btn" @click="togglePlay">
-          {{ isPlaying ? '❚❚' : '▶' }}
+        <!-- Play/pause overlay -->
+        <button class="play-overlay" v-if="!hasStarted" @click="togglePlay">
+          <span class="play-icon">▶</span>
+          <span class="play-label">Play clip</span>
         </button>
-        <div class="vb-time">{{ fmtTime(currentTime) }} / {{ fmtTime(duration) }}</div>
-        <div class="scrubber" @click="onScrub">
-          <div class="scrubber-fill" :style="{ width: scrubPct }" />
+
+        <!-- Bottom video bar (controls + scrubber) -->
+        <div class="video-bar">
+          <button class="vb-btn" @click="togglePlay">
+            {{ isPlaying ? '❚❚' : '▶' }}
+          </button>
+          <div class="vb-time">{{ fmtTime(currentTime) }} / {{ fmtTime(duration) }}</div>
+          <div class="scrubber" @click="onScrub">
+            <div class="scrubber-fill" :style="{ width: scrubPct }" />
+          </div>
+          <span v-if="stimulus" class="stimulus-tag">“{{ stimulus }}”</span>
         </div>
-        <span v-if="stimulus" class="stimulus-tag">“{{ stimulus }}”</span>
+      </div>
+
+      <!-- Swarm rail: shows the 7 K2 specialists thinking + their readings -->
+      <div class="panels-rail">
+        <SwarmStatusPanel
+          :swarm-readings="swarmReadingsRef"
+          :active="swarmActiveRef"
+        />
+
+        <div class="panels-rail-row">
+          <IterativeLoop
+            v-if="trajectoryRounds.length > 0"
+            class="iter-loop"
+            :trajectory="trajectoryRounds"
+            :accent="iterativeAccent"
+            :round-ms="900"
+          />
+          <div v-else class="panel-loading">iterative loop loading…</div>
+
+          <AnalysisPanel
+            v-if="empathyData"
+            class="analysis-panel"
+            variant="with"
+            :data="analysisPanelData"
+            :accent-color="iterativeAccent"
+            :loop-meta="loopMeta"
+          />
+          <div v-else class="panel-loading">empathy loading…</div>
+        </div>
       </div>
     </div>
 
@@ -72,11 +105,20 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import BrainScene from '../components/BrainScene.vue'
 import RegionPopup from '../components/RegionPopup.vue'
-import { videoUrl, postK2Region } from '../api/index.js'
+import IterativeLoop from '../components/IterativeLoop.vue'
+import AnalysisPanel from '../components/AnalysisPanel.vue'
+import SwarmStatusPanel from '../components/SwarmStatusPanel.vue'
+import {
+  videoUrl,
+  postK2Region,
+  fetchIterativeTrajectory,
+  fetchEmpathyDocument,
+} from '../api/index.js'
 import { NETWORK_COLORS } from '../utils/colors.js'
+import { useSwarmProgress } from '../composables/useSwarmProgress.js'
 
 const props = defineProps({
   clipId:       { type: String, required: true },
@@ -92,6 +134,77 @@ const isPlaying   = ref(false)
 const hasStarted  = ref(false)
 
 const videoSrc = computed(() => videoUrl(props.clipId))
+
+// ── Swarm + iterative + empathy data ───────────────────────────────────────
+const {
+  swarmReadings: swarmReadingsRef,
+  active: swarmActiveRef,
+  start: startSwarmPolling,
+  stop: stopSwarmPolling,
+} = useSwarmProgress(500)
+const iterativeTrajectory = ref(null)  // { round_trajectory, final_score, ... }
+const empathyData = ref(null)          // EmpathyDocument
+
+const iterativeAccent = '#82e0aa'
+
+const trajectoryRounds = computed(() => {
+  const rt = iterativeTrajectory.value?.round_trajectory || []
+  return rt.map((r, i) => ({
+    round: r.round ?? i + 1,
+    score: typeof r.score === 'number' ? r.score : (r.cosine ?? 0),
+    paragraphExcerpt:
+      r.paragraph_excerpt
+      || r.paragraphExcerpt
+      || r.paragraph
+      || r.excerpt
+      || '',
+  }))
+})
+
+const loopMeta = computed(() => {
+  const rt = trajectoryRounds.value
+  return {
+    rounds: rt.length || 0,
+    finalScore:
+      iterativeTrajectory.value?.final_score
+      ?? (rt.length ? rt[rt.length - 1].score : 0),
+  }
+})
+
+// AnalysisPanel takes a flat dict; map EmpathyDocument fields onto its slots,
+// preferring the polished synthesis_document paragraph when present.
+const analysisPanelData = computed(() => {
+  const e = empathyData.value
+  if (!e) return {}
+  const synth = e.synthesis_document || {}
+  const polished = synth.synthesis_paragraph || e.polished_paragraph || ''
+  const summary = polished || e.best_paragraph || ''
+  const fals = e.falsification || {}
+  const verdict = fals.verdict || ''
+  const delta = typeof fals.delta === 'number' ? fals.delta.toFixed(3) : null
+  const neuralBits = []
+  // synthesis_document.neural_evidence is a list of {network, evidence} dicts.
+  if (Array.isArray(synth.neural_evidence) && synth.neural_evidence.length) {
+    for (const ev of synth.neural_evidence) {
+      if (ev?.evidence) {
+        neuralBits.push(`${(ev.network || '').replace(/_/g, ' ')}: ${ev.evidence}`)
+      }
+    }
+  }
+  if (verdict) neuralBits.push(`falsification: ${verdict}`)
+  if (delta != null) neuralBits.push(`Δ=${delta}`)
+  const inflection = synth.inflection_moment
+    ? (typeof synth.inflection_moment === 'string'
+        ? synth.inflection_moment
+        : synth.inflection_moment.description || '')
+    : ''
+  return {
+    summary,
+    emotional_assessment: synth.temporal_arc || '',
+    cognitive_processes: inflection,
+    neural_signatures: neuralBits.join(' · '),
+  }
+})
 
 const stimulus = computed(() => {
   const data = props.activityData
@@ -168,6 +281,16 @@ function onMeta() {
 function onEnded() {
   isPlaying.value = false
 }
+// Seeking events fire both on programmatic + scrubber jumps. Updating
+// currentTime synchronously snaps the brain to the seeked time even before
+// the video resumes — required so a pause-scrub-resume sequence keeps the
+// brain frame-accurate.
+function onSeeking() {
+  currentTime.value = videoEl.value?.currentTime || 0
+}
+function onSeeked() {
+  currentTime.value = videoEl.value?.currentTime || 0
+}
 function onScrub(ev) {
   const v = videoEl.value
   if (!v || !duration.value) return
@@ -193,8 +316,45 @@ function tick() {
   }
   rafId = requestAnimationFrame(tick)
 }
-onMounted(() => { tick() })
-onBeforeUnmount(() => { if (rafId) cancelAnimationFrame(rafId) })
+
+async function loadIterativeAndEmpathy() {
+  const cid = props.clipId
+  if (!cid) return
+  // Fetch in parallel; both are cached server-side after warmup.
+  const [iterRes, empathyRes] = await Promise.allSettled([
+    fetchIterativeTrajectory(cid),
+    fetchEmpathyDocument(cid),
+  ])
+  if (iterRes.status === 'fulfilled') {
+    iterativeTrajectory.value = iterRes.value
+  } else {
+    console.warn('iterative-trajectory load failed:', iterRes.reason)
+  }
+  if (empathyRes.status === 'fulfilled') {
+    empathyData.value = empathyRes.value
+  } else {
+    console.warn('empathy load failed:', empathyRes.reason)
+  }
+}
+
+onMounted(() => {
+  tick()
+  startSwarmPolling(props.clipId)
+  loadIterativeAndEmpathy()
+})
+
+watch(() => props.clipId, (id) => {
+  iterativeTrajectory.value = null
+  empathyData.value = null
+  stopSwarmPolling()
+  startSwarmPolling(id)
+  loadIterativeAndEmpathy()
+})
+
+onBeforeUnmount(() => {
+  if (rafId) cancelAnimationFrame(rafId)
+  stopSwarmPolling()
+})
 </script>
 
 <style scoped>
@@ -229,11 +389,56 @@ onBeforeUnmount(() => { if (rafId) cancelAnimationFrame(rafId) })
   z-index: 5;
 }
 
-.video-pane {
+.right-pane {
   flex: 1;
+  display: flex; flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.video-pane {
   position: relative;
   background: #000;
   display: flex; align-items: center; justify-content: center;
+  flex: 0 0 55%;
+  min-height: 0;
+}
+
+.panels-rail {
+  flex: 1 1 45%;
+  display: flex; flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px 56px;
+  background: #050510;
+  border-top: 1px solid #1a1a2a;
+  overflow-y: auto;
+  min-height: 0;
+}
+.panels-rail-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+.iter-loop, .analysis-panel {
+  min-width: 0;
+  min-height: 0;
+}
+.panel-loading {
+  background: rgba(10, 10, 25, 0.6);
+  border: 1px dashed #2a3a6a;
+  border-radius: 6px;
+  padding: 14px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #6677aa;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center;
+}
+@media (max-width: 1100px) {
+  .panels-rail-row { grid-template-columns: 1fr; }
 }
 
 .video {

@@ -21,7 +21,7 @@ cross-links:
 
 # K2 reasoning + instruct synthesis (split the model by job)
 
-**Use a reasoning model (K2 Think) for parallel hypothesis generation, then a fast instruct model (Llama-3.3-Instruct, Haiku) for the structured-JSON synthesis step. Don't let one model do both jobs — reasoning models burn their token budget thinking and emit truncated JSON.**
+**Use a reasoning model (K2 Think) for parallel hypothesis generation, then a fast instruct model (Llama-3.3-Instruct on the same Cerebras endpoint) for the structured-JSON synthesis step. Don't let one model do both jobs — reasoning models burn their token budget thinking and emit truncated JSON.**
 
 ## When to reach for it
 
@@ -58,7 +58,6 @@ The team's first fix was to **drop the structured-JSON requirement** (one-senten
    ┌─────────────────────────────────┐
    │ Round 2: synthesis              │
    │ MODEL = Llama-3.3-70B-Instruct  │
-   │         (or Claude Haiku)        │
    │   - sees all N observations     │
    │   - rubric + scoring schema     │
    │   - output: strict JSON         │
@@ -66,7 +65,7 @@ The team's first fix was to **drop the structured-JSON requirement** (one-senten
    └─────────────────────────────────┘
 ```
 
-Same Cerebras endpoint serves both — only the `model` field changes. No second API integration required for the primary path.
+Same Cerebras endpoint serves both — only the `model` field changes. One API key, no second integration.
 
 ## Real code (this repo)
 
@@ -81,33 +80,33 @@ class K2ReasoningClient:
         # ... 4× token-budget headroom; strips <think> wrappers
 
 class InstructClient:
-    """Cerebras Llama-3.3 (default) or Anthropic Haiku (fallback) — for JSON synthesis."""
+    """Cerebras Llama-3.3-70B-Instruct — for JSON synthesis."""
+    provider = "cerebras"
     def __init__(self, provider=None):
-        self.provider = provider or os.getenv("INSTRUCT_PROVIDER", "cerebras")
-        if self.provider == "cerebras":
-            self.model = os.getenv("INSTRUCT_MODEL", "llama-3.3-70b")
-        elif self.provider == "anthropic":
-            self.model = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+        # provider kwarg accepted for backwards compat; only "cerebras" works.
+        self.base_url = os.getenv("K2_BASE_URL", "https://api.cerebras.ai/v1")
+        self.api_key = os.getenv("K2_API_KEY", "")
+        self.model = os.getenv("INSTRUCT_MODEL", "llama-3.3-70b")
 ```
 
 `junsoo/report_card/synthesize.py` retries on parse failure once with feedback, then degrades to a schema-valid placeholder card with `archetype_state="parse_failure"` so the pipeline doesn't abort mid-render.
 
 ## Variants
 
-- **Same provider, two models.** Cheapest. Cerebras hosts both K2 Think and Llama-3.3-70B-Instruct; one API key, two `model` strings.
-- **Different providers.** Use when one provider has the better reasoning tier and another has the better structured-output tier. Costs an extra integration but improves reliability.
+- **Same provider, two models (this repo's choice).** Cerebras hosts both K2 Think and Llama-3.3-70B-Instruct; one API key, two `model` strings. Cheapest path; minimum integration surface.
+- **Different providers.** Possible if one provider has the better reasoning tier and another has the better structured-output tier (e.g. Cerebras K2 + Anthropic Haiku). Costs an extra integration and a second key. We removed this from the implementation in favor of single-provider simplicity but the pattern still supports it.
 - **Three-stage** (reasoning → instruct → schema validator). Add a third local-only step that re-prompts with feedback if Pydantic / jsonschema rejects. See [`robust-json-from-llms.md`](robust-json-from-llms.md).
 
 ## Why it works
 
 - **Right tool for right job.** Reasoning models are slow but deep; instruct models are fast and obedient. Don't ask the deep one to be fast or the fast one to be deep.
 - **Separates concerns the model can't separate alone.** A single prompt can't reliably gate "spend tokens reasoning" against "save tokens for output." Two prompts on two models can.
-- **Cheap fallback on the synthesis side.** Haiku ($0.80/MT input) is the most reliable JSON-emitter on the market and adds <1s of latency. Worth the budget if Cerebras-Llama hits rate limits mid-demo.
+- **One key, two models.** Cerebras serves both K2 Think and Llama-3.3-70B-Instruct on the same endpoint, so a single `K2_API_KEY` covers the whole pipeline — no second account/billing surface.
 
 ## Gotchas / failure modes
 
 - **`max_tokens` on the reasoning model still matters.** Even with the directive to "respond directly," K2 Think wants to think. Set `max_tokens = 4 × desired_output` and strip `<think>` wrappers post-hoc. (See `K2ReasoningClient.chat` for the exact pattern.)
-- **Instruct models still wrap JSON in markdown fences sometimes.** Strip ```` ```json ... ``` ```` before `json.loads`. (See `synthesize._strip_fences`.)
+- **Instruct models often wrap JSON in markdown fences AND add prose preamble/trailing.** A naive `^...```...$` regex misses prose-prefixed responses like `Here is the report:\n```json\n{...}\n```\nNote: ...`. Use a brace-balanced extractor that walks character-by-character, tracks string-vs-not-string state, and finds the first complete `{ ... }`. (See `synthesize._extract_json_object`.)
 - **`temperature=0.7` is fine for the reasoning step, but use `0.2–0.3` for the synthesis step.** Stochasticity hurts structured output more than it helps.
 - **Rate limits compound when fan-out is high.** With 8 specialists × N actions × 2 videos, you can hit Cerebras throttles. Cap parallel calls with a semaphore (default 4 in `run_specialists.py`).
 - **Don't import the live-swarm K2 client into junsoo/.** Copy what you need (~30 lines). Cross-lane imports re-create the dependency hell that lane discipline (Decision 003) is meant to prevent.

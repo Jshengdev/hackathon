@@ -32,7 +32,7 @@ Working `run_report_card.py` that takes Person A's per-action activations + 8 sp
 ✅ Yours
 - Specialist runner code (calls K2 in parallel, 8 specialists per action)
 - Report-card synthesis prompt (the rubric the instruct model follows)
-- Instruct-model integration (Llama-3.3-70B-Instruct via Cerebras, fallback Anthropic Haiku)
+- Instruct-model integration (Llama-3.3-70B-Instruct via Cerebras — single provider)
 - Top-level driver / CLI
 - JSON schema validator (reusable by Person A's smoke test)
 
@@ -117,29 +117,17 @@ This is the prompt the **instruct model** sees (NOT K2 Think — see B3 for why)
 **Why a different model than K2 Think:**
 `_bmad/brain-swarm/backend/services/orchestrator.py:26-32` documents the bug: K2 Think (reasoning model) burns its token budget reasoning through structured-JSON rubrics, returning truncated output. We must use a **fast instruct-tuned model** for this step.
 
-**Primary model:** **Llama-3.3-70B-Instruct on Cerebras**
-- Same Cerebras endpoint as K2 — just different `model` field
+**Single model:** **Llama-3.3-70B-Instruct on Cerebras**
+- Same Cerebras endpoint as K2 Think — just different `model` field
 - Free with the team's existing Cerebras key
 - Great structured-JSON output
-
-**Fallback:** **Anthropic Claude Haiku 4.5** (`claude-haiku-4-5-20251001`)
-- Use the user's `ANTHROPIC_API_KEY` env var
-- Cheap, fast, even better structured output
-- Useful if Cerebras Llama hits rate limits or is unavailable
 
 **Logic per action:**
 1. Build user message: 8 specialist observations + the per-action activations
 2. Call instruct model with `report_card_synthesis.md` as system prompt
-3. Parse JSON response
-4. On parse failure: retry once with feedback message ("your last response was not valid JSON: {error}. Return only valid JSON.")
+3. Parse JSON response (brace-balanced extractor strips fences/prose)
+4. On parse failure: retry once with category-tailored feedback (network errors retry the same prompt; parse/schema errors send the model a corrective hint)
 5. After 2 failures: log + return a placeholder report card with `archetype_state="parse_failure"` so the pipeline doesn't crash mid-render
-
-**Implementation hint:** wrap the model client in an interface so swapping primary/fallback is one config flag:
-```python
-class Synthesizer:
-    def __init__(self, model_provider: str = "cerebras"): ...
-    async def synthesize(self, specialist_outputs: dict, action: dict) -> dict: ...
-```
 
 ### B4 — Top-level driver (1.5 hrs)
 
@@ -149,8 +137,7 @@ class Synthesizer:
 ```bash
 python run_report_card.py \
     --activations prerendered/clip1/per_action_activations.json \
-    --out prerendered/clip1/ironside_report.json \
-    [--model cerebras|anthropic]
+    --out prerendered/clip1/ironside_report.json
 ```
 
 **Pipeline:**
@@ -235,7 +222,7 @@ Rules:
 
 | Risk | Mitigation |
 |---|---|
-| Cerebras Llama-3.3-Instruct unavailable / not enabled on team key | Fallback to Anthropic Haiku via `ANTHROPIC_API_KEY`. Test fallback path Day 1. |
+| Cerebras Llama-3.3-Instruct unavailable / not enabled on team key | Confirm with team that the Cerebras key has Llama-3.3-70B access. If not, request enablement from Cerebras (often same-day). No alternate-provider fallback in code — single Cerebras key is the only path. |
 | Instruct model returns invalid JSON | Retry-with-feedback once; placeholder on second failure; log for manual review |
 | K2 rate limits with 8 × N actions × 2 videos | Semaphore cap at 4 in-flight; pre-render is offline so total latency is fine |
 | Synthesis prompt too vague → flat scores | Iterate on rubric numerics. If scores cluster around 0.5 across actions, sharpen rubric with anchor examples ("attention_score ≥ 0.8 means: visual_attention reading explicitly cites a specific scene element AND prefrontal_engagement is mid-or-higher") |
@@ -247,7 +234,7 @@ Rules:
 
 **Day 1 AM:** B2 (synthesis prompt) — 1.5 hrs. Lock contract with Person A in 15 min before starting.
 **Day 1 PM:** B1 (specialist runner) — 2–3 hrs.
-**Day 2 AM:** B3 (synthesizer + model integration) — 3–4 hrs. Test fallback path early.
+**Day 2 AM:** B3 (synthesizer + model integration) — 3–4 hrs.
 **Day 2 PM:** B4 (driver) + B5 (validator) — 2 hrs.
 **Day 3:** Run end-to-end with Person A's outputs. Iterate synthesis prompt if scores are flat.
 

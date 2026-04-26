@@ -39,7 +39,7 @@ activity.json (Contract A from junsoo/aggregate.py)
    └──► [report-card pipeline — junsoo's lane]
            action_segments.json (manual) + aggregate_per_action.py
            → 8-specialist fan-out (K2 reasoning model)
-           → instruct-model JSON synthesis (Llama-3.3-70B-Instruct / Haiku)
+           → instruct-model JSON synthesis (Cerebras Llama-3.3-70B-Instruct)
            → ironside_report.json (per-action structured cards)
            Used in BEAT-3/4 of Ironside swap
 ```
@@ -63,7 +63,7 @@ Three reasons compound:
 
 **1. Lane discipline (Decision 003).** The orchestrator is Tech B's lane. Junsoo extending it would step on parallel work and risk breaking the live B2C demo mid-rebuild. The wrapper-side approach keeps both lanes shippable.
 
-**2. K2 Think token-budget regression already documented (Decision 008).** `orchestrator.py:26-32` documents that K2 Think (reasoning model) burns its entire token budget reasoning through a structured-JSON rubric, returning truncated output. The team simplified to one-sentence inline prompts to fix the live demo. Re-introducing JSON in the live orchestrator would re-create the bug. The junsoo wrapper sidesteps this by using a **fast instruct model** (Llama-3.3-70B-Instruct on Cerebras / Anthropic Haiku fallback) for the synthesis step, while keeping K2 Think for the specialist reasoning step. See [`patterns/k2-reasoning-plus-instruct-synthesis.md`](../patterns/k2-reasoning-plus-instruct-synthesis.md).
+**2. K2 Think token-budget regression already documented (Decision 008).** `orchestrator.py:26-32` documents that K2 Think (reasoning model) burns its entire token budget reasoning through a structured-JSON rubric, returning truncated output. The team simplified to one-sentence inline prompts to fix the live demo. Re-introducing JSON in the live orchestrator would re-create the bug. The junsoo wrapper sidesteps this by using **Cerebras Llama-3.3-70B-Instruct** (same Cerebras endpoint as K2 Think, just a different model param) for the synthesis step while keeping K2 Think for the specialist reasoning step. See [`patterns/k2-reasoning-plus-instruct-synthesis.md`](../patterns/k2-reasoning-plus-instruct-synthesis.md).
 
 **3. Demo derisk.** The live B2C swarm depends on real-time K2 latency at demo time. The Ironside artifact is **pre-rendered** offline before the demo (per the pre-render workflow at `junsoo/colab_prerender.ipynb`). Two pipelines with different reliability profiles serve different demo beats: live for B2C "Reels brain", canned for Ironside swap. If either fails on stage, the other still ships.
 

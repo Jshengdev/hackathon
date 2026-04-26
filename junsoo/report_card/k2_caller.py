@@ -1,27 +1,24 @@
 """Junsoo-side K2 caller for the Ironside report-card pipeline.
 
 Adapted from _bmad/brain-swarm/backend/services/k2_client.py — copied (not
-imported) to keep the junsoo/ slice self-contained. Two callers:
+imported) to keep the junsoo/ slice self-contained. Two callers, same Cerebras
+endpoint, different model param:
 
     K2ReasoningClient   -> K2 Think (reasoning model) for specialist observations.
                            Strips <think>...</think> wrappers, applies token-budget
                            headroom, asks for direct answer.
 
-    InstructClient      -> Cerebras Llama-3.3-70B-Instruct (or fallback) for the
-                           structured-JSON synthesis step. NO reasoning model
-                           here — that's the bug documented in
-                           orchestrator.py:26-32. Instruct models give us clean
-                           JSON without burning tokens on chain-of-thought.
+    InstructClient      -> Cerebras Llama-3.3-70B-Instruct for the structured-JSON
+                           synthesis step. NO reasoning model here — that's the
+                           bug documented in orchestrator.py:26-32. Instruct
+                           models give us clean JSON without burning tokens on
+                           chain-of-thought.
 
 Env vars (shared with the live swarm so a single .env works for both):
-    K2_API_KEY              required, Cerebras key
-    K2_BASE_URL             default https://api.cerebras.ai/v1
-    K2_MODEL                default k2-think-v2 (used by K2ReasoningClient)
-    INSTRUCT_MODEL          default llama-3.3-70b (used by InstructClient on the
-                            same Cerebras endpoint)
-    INSTRUCT_PROVIDER       'cerebras' (default) or 'anthropic'
-    ANTHROPIC_API_KEY       required if INSTRUCT_PROVIDER=anthropic
-    ANTHROPIC_MODEL         default claude-haiku-4-5-20251001
+    K2_API_KEY      required (Cerebras)
+    K2_BASE_URL     default https://api.cerebras.ai/v1
+    K2_MODEL        default k2-think-v2 (used by K2ReasoningClient)
+    INSTRUCT_MODEL  default llama-3.3-70b (used by InstructClient — same endpoint)
 """
 from __future__ import annotations
 
@@ -110,25 +107,29 @@ class K2ReasoningClient:
 
 
 class InstructClient:
-    """Instruct-tuned model for structured JSON synthesis.
+    """Cerebras Llama-3.3-70B-Instruct for structured-JSON synthesis.
 
-    Default: Cerebras Llama-3.3-70B (same endpoint as K2, different model param).
-    Fallback: Anthropic Claude Haiku 4.5 (set INSTRUCT_PROVIDER=anthropic).
+    Same endpoint as K2 (api.cerebras.ai); different model param. Reasoning
+    model is wrong here — see orchestrator.py:26-32 for the K2 Think token-
+    budget bug.
+
+    `provider` kwarg is accepted for backwards compatibility with earlier
+    callers but only "cerebras" is supported. Other values raise.
     """
 
-    def __init__(self, provider: str | None = None) -> None:
-        self.provider = (provider or os.getenv("INSTRUCT_PROVIDER", "cerebras")).lower()
-        self.timeout = float(os.getenv("INSTRUCT_TIMEOUT", "60.0"))
+    provider = "cerebras"
 
-        if self.provider == "cerebras":
-            self.base_url = os.getenv("K2_BASE_URL", "https://api.cerebras.ai/v1")
-            self.api_key = os.getenv("K2_API_KEY", "")
-            self.model = os.getenv("INSTRUCT_MODEL", "llama-3.3-70b")
-        elif self.provider == "anthropic":
-            self.api_key = os.getenv("ANTHROPIC_API_KEY", "")
-            self.model = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
-        else:
-            raise ValueError(f"Unknown INSTRUCT_PROVIDER: {self.provider!r}")
+    def __init__(self, provider: str | None = None) -> None:
+        if provider is not None and provider.lower() != "cerebras":
+            raise ValueError(
+                f"Only 'cerebras' is supported (got {provider!r}). "
+                "Anthropic fallback was removed — set up a separate K2 key if "
+                "you need redundancy."
+            )
+        self.base_url = os.getenv("K2_BASE_URL", "https://api.cerebras.ai/v1")
+        self.api_key = os.getenv("K2_API_KEY", "")
+        self.model = os.getenv("INSTRUCT_MODEL", "llama-3.3-70b")
+        self.timeout = float(os.getenv("INSTRUCT_TIMEOUT", "60.0"))
 
     async def chat_json(
         self,
@@ -139,15 +140,10 @@ class InstructClient:
         """Returns raw response text (caller parses + retries on JSON failure)."""
         if not self.api_key:
             raise RuntimeError(
-                f"No API key for INSTRUCT_PROVIDER={self.provider}. "
-                f"Set {'K2_API_KEY' if self.provider == 'cerebras' else 'ANTHROPIC_API_KEY'}."
+                "K2_API_KEY not set in environment / .env — required by "
+                "InstructClient (Cerebras endpoint serves the instruct model)."
             )
 
-        if self.provider == "cerebras":
-            return await self._cerebras_chat(system, user, max_tokens)
-        return await self._anthropic_chat(system, user, max_tokens)
-
-    async def _cerebras_chat(self, system: str, user: str, max_tokens: int) -> str:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             resp = await client.post(
                 f"{self.base_url}/chat/completions",
@@ -167,22 +163,3 @@ class InstructClient:
             )
             resp.raise_for_status()
             return resp.json()["choices"][0]["message"]["content"]
-
-    async def _anthropic_chat(self, system: str, user: str, max_tokens: int) -> str:
-        # Lazy import: only required if user opts into anthropic provider
-        try:
-            from anthropic import AsyncAnthropic
-        except ImportError as e:
-            raise RuntimeError(
-                "anthropic package not installed. Run: pip install anthropic"
-            ) from e
-
-        client = AsyncAnthropic(api_key=self.api_key)
-        msg = await client.messages.create(
-            model=self.model,
-            max_tokens=max_tokens,
-            system=system,
-            messages=[{"role": "user", "content": user}],
-        )
-        # Concatenate text blocks
-        return "".join(block.text for block in msg.content if hasattr(block, "text"))

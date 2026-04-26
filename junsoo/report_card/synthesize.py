@@ -1,10 +1,10 @@
 """B3 — Instruct-model JSON synthesizer.
 
 Takes 8 specialist observations + per-action activations and emits a strict-JSON
-report card. Uses a fast instruct-tuned model (Cerebras Llama-3.3-70B by
-default; Anthropic Haiku fallback) — NOT K2 Think, because reasoning models
-burn token budget on chain-of-thought and return truncated JSON. See
-_bmad/brain-swarm/backend/services/orchestrator.py:26-32 for the bug history.
+report card. Uses Cerebras Llama-3.3-70B-Instruct — NOT K2 Think, because
+reasoning models burn token budget on chain-of-thought and return truncated
+JSON. See _bmad/brain-swarm/backend/services/orchestrator.py:26-32 for the
+bug history.
 
 Retry policy: parse failure → one retry with feedback ("your last response was
 not valid JSON: <err>. Return only valid JSON."). After two failures, return

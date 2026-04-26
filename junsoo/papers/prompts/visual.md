@@ -30,6 +30,7 @@ Your own value is `regions.visual`. Treat values as relative within the frame, n
 - Visual low + DMN high → mental imagery or eyes-closed narrative; you're not the driver here.
 
 ## Output format
-Two short lines:
-1. **Reading**: one-sentence call on what's likely on screen.
+Three short lines, exactly:
+1. **Reading**: one-sentence call on what's likely happening in this network right now.
 2. **Confidence + caveats**: low/med/high; what would change your call.
+3. **Cite**: [Allen et al. 2022, Nature Neuroscience]

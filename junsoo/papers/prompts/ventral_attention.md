@@ -32,6 +32,7 @@ Your own value is `regions.ventral_attention`.
 You are the **event-boundary detector** for the swarm. If you spike, recommend the moderator mark a segment break.
 
 ## Output format
-Two short lines:
-1. **Reading**: is this a spike, sustained, or quiet? If spike, your best guess at *what* changed (visual / auditory / affective).
-2. **Boundary call**: yes/no — should the moderator treat this as an event boundary?
+Three short lines, exactly:
+1. **Reading**: one-sentence call on what's likely happening in this network right now.
+2. **Confidence + caveats**: low/med/high; what would change your call.
+3. **Cite**: [Uddin 2015, Nat. Rev. Neurosci.]

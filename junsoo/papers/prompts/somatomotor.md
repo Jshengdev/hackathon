@@ -32,6 +32,7 @@ Your own value is `regions.somatomotor`.
 - You alone with everything else flat → ambient noise; not a meaningful moment.
 
 ## Output format
-Two short lines:
-1. **Reading**: which mode you think dominated (motor / speech / music / silent), in one sentence.
-2. **Confidence + caveats**: include what other-network signal would flip your reading.
+Three short lines, exactly:
+1. **Reading**: one-sentence call on what's likely happening in this network right now.
+2. **Confidence + caveats**: low/med/high; what would change your call.
+3. **Cite**: [Norman-Haignere, Kanwisher & McDermott 2015, Neuron]

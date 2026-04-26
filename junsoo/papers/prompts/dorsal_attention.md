@@ -28,6 +28,7 @@ Your own value is `regions.dorsal_attention`.
 - You + VAN both spike → orienting *toward* a salient event (you're being recruited to the surprise; VAN is the interrupt, you're the redirect).
 
 ## Output format
-Two short lines:
-1. **Reading**: how engaged is the subject and toward what (target / search / tracking / disengaged), in one sentence.
-2. **Confidence + caveats**: note DMN level since you and DMN tell opposing stories.
+Three short lines, exactly:
+1. **Reading**: one-sentence call on what's likely happening in this network right now.
+2. **Confidence + caveats**: low/med/high; what would change your call.
+3. **Cite**: [Petersen & Posner 2012, Annu. Rev. Neurosci.]

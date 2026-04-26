@@ -228,6 +228,18 @@ WS   /ws                   ← per-tick broadcast at 1 Hz:
                                 network_activations{7}, top_region, speech[0..N] }
 ```
 
+**Speech message shape (region vs moderator):**
+
+Region-type speech messages now include a `cite` field with the modern review-paper reference grounding that network's voice. The orchestrator parses K2's 3-line output (Reading / Confidence / Cite) into separate fields so the frontend can style citations distinctly. Moderator messages keep the original 2-field shape (freeform synthesis sentence).
+
+```json
+// type: "region"
+{ "network": "visual", "text": "Bright onset...", "confidence": "high; ...",
+  "cite": "[Allen et al. 2022, Nature Neuroscience]", "t": 4, "type": "region" }
+// type: "moderator"
+{ "network": "moderator", "text": "...", "t": 4, "type": "moderator" }
+```
+
 ---
 
 ## 7. Troubleshooting

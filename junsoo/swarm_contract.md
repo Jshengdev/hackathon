@@ -96,7 +96,8 @@ Source: `_bmad/brain-swarm/backend/services/orchestrator.py:run_frame` puts mess
 
 **Per-message shape on the queue (and inside WS `speech[]`):**
 ```json
-{ "network": "visual", "text": "...", "t": 4, "type": "region" }
+{ "network": "visual", "text": "...", "confidence": "...",
+  "cite": "[Allen et al. 2022, Nature Neuroscience]", "t": 4, "type": "region" }
 { "network": "moderator", "text": "...", "t": 4, "type": "moderator" }
 ```
 
@@ -104,6 +105,8 @@ Rules:
 - `type` is `"region"` for per-network voices, `"moderator"` for synthesis. Frontend uses this to style differently.
 - `network` for moderator messages is the literal string `"moderator"` (frontend key for color lookup).
 - `t` is the tick that produced the message; *not* the wall-clock time the WS pushed it (K2 latency may push delivery later than `t`).
+- **Region messages include `cite` and `confidence`** — the orchestrator parses K2's 3-line output (Reading / Confidence + caveats / Cite) from each `junsoo/papers/prompts/<network>.md`. `text` is the Reading line only; `confidence` and `cite` are split out so the frontend can render the paper reference (e.g. `[Allen et al. 2022, Nature Neuroscience]`) next to the narration. Both fall back to empty strings if K2's output deviates from the 3-line format.
+- Moderator messages do **not** carry `cite`/`confidence` — its prompt is freeform.
 
 ---
 

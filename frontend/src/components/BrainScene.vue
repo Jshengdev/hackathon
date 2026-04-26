@@ -457,19 +457,30 @@ let perVertexBuf = null               // Float32Array [n_frames × n_vertices]
 let perVertexNFrames = 0
 
 async function loadVertexWeights() {
+  // Served from /static/ — NOT /brain/ — because vite's dev proxy forwards
+  // every /brain/* request to the backend (where these files don't live).
   try {
-    const manifestRes = await fetch('/brain/vertex_weights.json')
+    const manifestRes = await fetch('/static/brain/vertex_weights.json')
     if (!manifestRes.ok) {
       console.warn('vertex_weights.json missing — falling back to legacy region paint')
       return
     }
     const manifest = await manifestRes.json()
-    const binRes = await fetch('/brain/vertex_weights.bin')
+    const binRes = await fetch('/static/brain/vertex_weights.bin')
     if (!binRes.ok) {
       console.warn('vertex_weights.bin missing — falling back to legacy region paint')
       return
     }
     const buf = await binRes.arrayBuffer()
+    const expectedBytes = manifest.n_vertices * manifest.n_networks * 4
+    if (buf.byteLength !== expectedBytes) {
+      console.warn(
+        `vertex_weights.bin size mismatch: got ${buf.byteLength} bytes, expected ${expectedBytes} ` +
+        `(n_vertices=${manifest.n_vertices} × n_networks=${manifest.n_networks} × 4). ` +
+        `Falling back to legacy region paint.`,
+      )
+      return
+    }
     vertexWeights = new Float32Array(buf)
     networkOrder = manifest.network_order
     nVerticesWeights = manifest.n_vertices

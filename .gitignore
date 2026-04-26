@@ -47,13 +47,17 @@ junsoo/prerendered/**/*.pkl
 junsoo/prerendered/**/*.meta.json
 
 # brain-swarm slice — local Python build artifacts, venv, runtime data, model cache
-_bmad/brain-swarm/backend/__pycache__/
-_bmad/brain-swarm/backend/services/__pycache__/
-_bmad/brain-swarm/backend/.venv/
-_bmad/brain-swarm/backend/data/
-_bmad/brain-swarm/backend/cache/
-_bmad/brain-swarm/frontend/node_modules/
-_bmad/brain-swarm/frontend/dist/
+backend/__pycache__/
+backend/services/__pycache__/
+backend/.venv/
+backend/data/
+backend/cache/
+frontend/node_modules/
+frontend/dist/
+
+# Runtime cache files written by demo endpoints (LLM responses)
+backend/prerendered/*/vision_report.json
+backend/prerendered/*/comparison.json
 junsoo/report_card/__pycache__/
 
 caltech/engine/__pycache__/

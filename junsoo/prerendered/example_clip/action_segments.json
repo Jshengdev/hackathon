@@ -1,5 +1,0 @@
-[
-  {"start_t": 0,  "end_t": 12, "action": "approach scaffolding (routine)"},
-  {"start_t": 12, "end_t": 25, "action": "pick up drill (routine)"},
-  {"start_t": 25, "end_t": 42, "action": "begin overhead drilling (novel angle)"}
-]

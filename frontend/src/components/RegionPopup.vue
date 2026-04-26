@@ -62,9 +62,9 @@ const props = defineProps({
   text:       { type: String,  default: '' },
   confidence: { type: String,  default: '' },
   cite:       { type: String,  default: '' },
-  raw:        { type: [String, Object], default: '' },
   t:          { type: Number,  default: null },
-  runtimeSec: { type: Number,  default: 8.2 },
+  // Real K2 call latency in seconds. Null = unknown → footer shows just `t=Ns`.
+  runtimeSec: { type: Number,  default: null },
   accentColor:{ type: String,  default: '#aaaaaa' },
 })
 

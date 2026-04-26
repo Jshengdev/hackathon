@@ -35,4 +35,4 @@ Each `<slug>.md` is a reusable architectural pattern extracted from ≥ 1 projec
 
 ## Index
 
-See [Patterns section of `index.md`](../index.md#patterns--cross-project-architectural-primitives). Current 7: two-stage-llm-compile, robust-json-from-llms, per-item-parallel-llm-evaluation, localize-and-zoom, spatial-sidecar, grounded-citation, witnessed-dissent.
+See [Patterns section of `index.md`](../index.md#patterns--cross-project-architectural-primitives). Current 8: two-stage-llm-compile, robust-json-from-llms, per-item-parallel-llm-evaluation, localize-and-zoom, spatial-sidecar, grounded-citation, witnessed-dissent, k2-reasoning-plus-instruct-synthesis.

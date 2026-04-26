@@ -23,9 +23,6 @@ npm-debug.log*
 # Local-only Claude state (don't sync chat history across machines)
 .claude/projects/
 
-# BMad output artifacts (regenerated)
-_bmad-output/
-
 # Nested project workspace — tracked in its own repo (Jshengdev/feesh)
 feesh/
 
@@ -58,3 +55,6 @@ _bmad/brain-swarm/backend/cache/
 _bmad/brain-swarm/frontend/node_modules/
 _bmad/brain-swarm/frontend/dist/
 junsoo/report_card/__pycache__/
+
+caltech/engine/__pycache__/
+junsoo/brain/__pycache__/

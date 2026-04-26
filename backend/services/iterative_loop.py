@@ -176,6 +176,17 @@ async def run_iterative_loop(
         if not isinstance(candidate, str):
             candidate = str(candidate)
 
+        # synthesize() returns a "[empathy_synthesis ... error: ...]" string
+        # when the moderator K2 call fails (timeout, parse error, etc).
+        # Skip the round entirely instead of recording it as a 0-score garbage
+        # entry in the trajectory — keeps best_paragraph from prior rounds
+        # intact and stops error strings from leaking into the demo UI.
+        if candidate.lstrip().startswith("[") and "error" in candidate[:100].lower():
+            print(f"[iterative_loop] skipping round {round_idx} — synthesize failed: {candidate[:80]}")
+            # Don't reset prior_score / prior_paragraph — let the next round
+            # retry from the same refinement context.
+            continue
+
         score, attribution = await evaluate_paragraph(candidate, swarm_readings)
 
         round_trajectory.append({

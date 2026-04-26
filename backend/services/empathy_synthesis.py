@@ -26,7 +26,10 @@ except Exception:  # pragma: no cover - fail-soft if module missing
 _PROMPTS_DIR = Path(__file__).parents[1] / "prompts"
 _SYSTEM_PROMPT_PATH = _PROMPTS_DIR / "moderator_synthesis.md"
 _MAX_TOKENS = 600
-_TIMEOUT_S = 120.0
+# K2's moderator endpoint can take 2-4 min under load (longer prompt + larger
+# output than evaluator calls). 120s was guaranteeing failures during fresh
+# bakes — bumped to 300s after observing 9/9 moderator calls timing out.
+_TIMEOUT_S = 300.0
 
 _NETWORKS: tuple[str, ...] = (
     "visual",

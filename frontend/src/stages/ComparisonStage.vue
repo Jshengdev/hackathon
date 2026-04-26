@@ -12,7 +12,8 @@
       />
     </div>
 
-    <!-- RIGHT: stacked panels -->
+    <!-- RIGHT: stacked panels with the iterative loop sandwiched IN BETWEEN —
+         physically anchoring "the loop refines INTO the with-TRIBE result". -->
     <div class="panels-pane">
       <div class="panel-slot">
         <AnalysisPanel
@@ -20,6 +21,14 @@
           :data="comparison?.without_tribe || {}"
         />
       </div>
+
+      <div class="loop-slot">
+        <IterativeLoop
+          :trajectory="trajectory"
+          :accent="dominantColor"
+        />
+      </div>
+
       <div class="panel-slot">
         <AnalysisPanel
           variant="with"
@@ -45,8 +54,22 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import BrainScene from '../components/BrainScene.vue'
 import AnalysisPanel from '../components/AnalysisPanel.vue'
+import IterativeLoop from '../components/IterativeLoop.vue'
 import { fetchComparison } from '../api/index.js'
 import { NETWORK_COLORS } from '../utils/colors.js'
+
+// Mock iterative-loop trajectory until the engine's EmpathyDocument JSON wires
+// up. Shape matches caltech/engine/runner.py EmpathyDocument.round_trajectory.
+const trajectory = [
+  { round: 1, score: 0.42, paragraphExcerpt: 'Worker walked through the area, observing materials and tools.' },
+  { round: 2, score: 0.58, paragraphExcerpt: 'She entered the scaffolding zone and surveyed the workspace.' },
+  { round: 3, score: 0.65, paragraphExcerpt: 'She moved through the scaffolding with deliberate pace.' },
+  { round: 4, score: 0.71, paragraphExcerpt: 'She moved through the scaffolding, attention drifting between tasks.' },
+  { round: 5, score: 0.79, paragraphExcerpt: 'She moved through the scaffolding like someone with split focus.' },
+  { round: 6, score: 0.81, paragraphExcerpt: 'She moved through the scaffolding like someone whose mind was already elsewhere.' },
+  { round: 7, score: 0.83, paragraphExcerpt: 'She moved through the scaffolding like someone whose attention had already left for the day.' },
+  { round: 8, score: 0.84, paragraphExcerpt: 'She moved through the scaffolding like someone whose attention had already left for the day, body still here, mind clocked out.' },
+]
 
 const props = defineProps({
   clipId:       { type: String, required: true },
@@ -125,13 +148,23 @@ onBeforeUnmount(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 56px 18px 18px 18px;
-  gap: 14px;
+  padding: 56px 16px 16px 16px;
+  gap: 12px;
 }
 
+/* Each AnalysisPanel gets equal vertical share. min-height floor of 160px
+   guarantees the body has room for Summary + Emotional Assessment +
+   Cognitive Processes even at 720p; at 1080p flex grow lifts each to ~280-320px. */
 .panel-slot {
-  flex: 1 1 50%;
-  min-height: 0;
+  flex: 1 1 0;
+  min-height: 160px;
+}
+
+/* IterativeLoop: prefer its natural ~341px height, but allow shrinking down
+   to ~260px on small viewports so the panel-slot floors win. */
+.loop-slot {
+  flex: 0 1 auto;
+  min-height: 260px;
 }
 
 .cmp-header {

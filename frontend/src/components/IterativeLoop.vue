@@ -171,8 +171,10 @@ const props = defineProps({
   accent:     { type: String, default: '#82e0aa' },
   autoplay:   { type: Boolean, default: true },
   roundMs:    { type: Number, default: 1100 },
-  loop:       { type: Boolean, default: true }, // restart the visual cycle once converged
-  pauseAfterMs: { type: Number, default: 1800 }, // hold on the converged frame this long before re-looping
+  // Once the trajectory reaches its last round, settle and stay there.
+  // Set true ONLY for marketing demos that need an endless animation.
+  loop:       { type: Boolean, default: false },
+  pauseAfterMs: { type: Number, default: 1800 }, // only used when loop=true
 })
 
 const currentIndex = ref(0)

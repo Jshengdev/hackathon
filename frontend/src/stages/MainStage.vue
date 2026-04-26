@@ -69,13 +69,10 @@
         </div>
       </div>
 
-      <!-- Swarm rail: shows the 7 K2 specialists thinking + their readings -->
+      <!-- Iterative loop + analysis panel — per-region detail lives in
+           the click-to-popup, so the always-on swarm rail is dropped to
+           give these two more room. -->
       <div class="panels-rail">
-        <SwarmStatusPanel
-          :swarm-readings="swarmReadingsRef"
-          :active="swarmActiveRef"
-        />
-
         <div class="panels-rail-row">
           <IterativeLoop
             v-if="trajectoryRounds.length > 0"
@@ -83,6 +80,7 @@
             :trajectory="trajectoryRounds"
             :accent="iterativeAccent"
             :round-ms="900"
+            :loop="false"
           />
           <div v-else class="panel-loading">iterative loop loading…</div>
 
@@ -125,7 +123,6 @@ import BrainScene from '../components/BrainScene.vue'
 import RegionPopup from '../components/RegionPopup.vue'
 import IterativeLoop from '../components/IterativeLoop.vue'
 import AnalysisPanel from '../components/AnalysisPanel.vue'
-import SwarmStatusPanel from '../components/SwarmStatusPanel.vue'
 import {
   videoUrl,
   postK2Region,
@@ -164,9 +161,10 @@ const empathyData = ref(null)          // EmpathyDocument
 
 const iterativeAccent = '#82e0aa'
 
+const MAX_ROUNDS = 3
 const trajectoryRounds = computed(() => {
   const rt = iterativeTrajectory.value?.round_trajectory || []
-  return rt.map((r, i) => ({
+  return rt.slice(0, MAX_ROUNDS).map((r, i) => ({
     round: r.round ?? i + 1,
     score: typeof r.score === 'number' ? r.score : (r.cosine ?? 0),
     paragraphExcerpt:
@@ -425,15 +423,15 @@ onBeforeUnmount(() => {
   position: relative;
   background: #000;
   display: flex; align-items: center; justify-content: center;
-  flex: 0 0 55%;
+  flex: 0 0 45%;
   min-height: 0;
 }
 
 .panels-rail {
-  flex: 1 1 45%;
+  flex: 1 1 55%;
   display: flex; flex-direction: column;
   gap: 8px;
-  padding: 8px 10px 56px;
+  padding: 12px 14px 56px;
   background: #050510;
   border-top: 1px solid #1a1a2a;
   overflow-y: auto;

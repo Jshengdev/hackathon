@@ -41,6 +41,9 @@ import falsification from "./slides/11-falsification";
 import twoScenarios from "./slides/12-two-scenarios";
 import pavilionMap from "./slides/13-pavilion-map";
 import close from "./slides/14-close";
+import swarmArchitecture from "./slides/15-swarm-architecture";
+import websiteArchitecture from "./slides/16-website-architecture";
+import simulationArchitecture from "./slides/17-simulation-architecture";
 
 // IRONSIGHT — story-led, concrete-first, worker-on-stage.
 // Reasoning: this audience thinks in physical scenes. Lead with the
@@ -51,19 +54,21 @@ import close from "./slides/14-close";
 // gap · win-win for workers, managers, and the company".)
 const IRONSIGHT_ORDER: Slide[] = [
   title,
-  stakes,        // concrete: three industries, construction lands hardest
-  hook,          // the black box managers are using to manage humans
-  thesis,        // the inversion
-  tribeV2,       // what unlocked it
-  architecture,  // the engine
-  swarmDetail,   // the seven specialists doing the work
-  proof,         // construction · spatial intel
-  heroOutput,    // construction sim + AMY
-  twoScenarios,  // laziness vs high-stress · the call changes
-  scoreClimb,    // the rigor (8 rounds)
-  falsification, // the rigor 2 (cosine doesn't lie)
-  pavilionMap,
-  close,         // empowerment win-win
+  stakes,             // concrete: three industries, construction lands hardest
+  hook,               // the black box managers are using to manage humans
+  thesis,             // the inversion
+  tribeV2,            // what unlocked it
+  architecture,       // the engine (top-down list)
+  swarmArchitecture,  // visual diagram of the swarm pipeline (overview)
+  simulationArchitecture, // deep-dive into stage 2 swarm simulation
+  swarmDetail,        // the seven specialists doing the work
+  proof,              // construction · spatial intel
+  heroOutput,         // construction sim + AMY
+  twoScenarios,       // laziness vs high-stress · the call changes
+  scoreClimb,         // the rigor (8 rounds)
+  falsification,      // the rigor 2 (cosine doesn't lie)
+  websiteArchitecture, // what we shipped (visual diagram of the site)
+  close,              // empowerment win-win
 ];
 
 // LISTEN LABS — concept-led, simulation-first, autonomy-stake.
@@ -77,19 +82,21 @@ const IRONSIGHT_ORDER: Slide[] = [
 // iterative loop IS the simulation · reclaim autonomy".)
 const LISTEN_LABS_ORDER: Slide[] = [
   title,
-  hook,          // taste isn't yours · the visceral
-  tribeV2,       // the conceptual unlock — substrate of human simulation
-  swarmDetail,   // the swarm IS the simulation (load-bearing)
-  scoreClimb,    // 8 rounds of iterative simulation
-  thesis,        // the inversion · same machinery in reverse
-  stakes,        // briefly · consumer is the lead industry here
-  proof,         // Reels · the visible flatline
-  heroOutput,    // Maya sim + AMY
-  architecture,  // the full pipeline
+  hook,                // taste isn't yours · the visceral
+  tribeV2,             // the conceptual unlock — substrate of human simulation
+  swarmDetail,         // the swarm IS the simulation (load-bearing)
+  swarmArchitecture,   // visual: the swarm pipeline as a single image
+  simulationArchitecture, // deep-dive: 8 agents · ~24 thought processes
+  scoreClimb,          // 8 rounds of iterative simulation
+  thesis,              // the inversion · same machinery in reverse
+  stakes,              // briefly · consumer is the lead industry here
+  proof,               // Reels · the visible flatline
+  heroOutput,          // Maya sim + AMY
+  architecture,        // the full pipeline (list)
+  websiteArchitecture, // what we shipped
   falsification,
   twoScenarios,
-  pavilionMap,
-  close,         // generation autonomy
+  close,               // generation autonomy
 ];
 
 // AI INTERACTION (best-of-ai) — value-led, taste-first, philosophy-up-front.
@@ -102,19 +109,21 @@ const LISTEN_LABS_ORDER: Slide[] = [
 // yours".)
 const AI_INTERACTION_ORDER: Slide[] = [
   title,
-  thesis,        // lead with the philosophy / the inversion
-  hook,          // convergence is killing creativity
-  stakes,        // design / taste leads
+  thesis,              // lead with the philosophy / the inversion
+  hook,                // convergence is killing creativity
+  stakes,              // design / taste leads
   tribeV2,
   architecture,
-  proof,         // autumn leaves vs. your design
-  heroOutput,    // design sim + AMY
+  swarmArchitecture,   // visual: how the engine works under the hood
+  simulationArchitecture, // deep-dive: agent simulation · why k2 is load-bearing
+  proof,               // autumn leaves vs. your design
+  heroOutput,          // design sim + AMY
   swarmDetail,
   scoreClimb,
   falsification,
   twoScenarios,
-  pavilionMap,
-  close,         // taste persists beyond AI
+  websiteArchitecture, // what we shipped
+  close,               // taste persists beyond AI
 ];
 
 const SLIDES_BY_PERSONA: Record<Persona, Slide[]> = {

@@ -16,46 +16,60 @@ import ScrollHint from "../../components/ScrollHint";
 export default function TitleContent() {
   return (
     <>
-      <div className="flex flex-col items-start justify-center gap-10 max-w-5xl enter">
-        <Kicker>caltech hacktech 2026 · ironsight · listen labs · ai interaction</Kicker>
-        <h1 className="display-mono leading-[0.95] lowercase">
-          <span className="block ink text-[3rem] md:text-[5.5rem]">
-            the way we use ai
-          </span>
-          <span className="block grad text-[3rem] md:text-[5.5rem] mt-1">
-            is killing what makes us human.
-          </span>
-        </h1>
-        <p className="sans text-base md:text-xl smoke max-w-2xl leading-relaxed">
-          convergence is the price of personalization. the empathy layer is the
-          missing piece — what closes the gap between humans and the machines
-          we built. how ai stops replacing us and starts interacting with us.
-        </p>
-        <div
-          className="flex items-center gap-3 mt-2"
-          style={{
-            padding: "8px 14px",
-            border: "1px solid var(--oat-border)",
-            borderRadius: 999,
-            background: "color-mix(in srgb, var(--accent) 6%, transparent)",
-          }}
-        >
-          <span
-            className="mono"
+      <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-12 enter w-full">
+        <div className="lg:col-span-7 flex flex-col items-start gap-8 max-w-2xl">
+          <Kicker>caltech hacktech 2026 · ironsight · listen labs · ai interaction</Kicker>
+          <h1 className="display-mono leading-[0.95] lowercase">
+            <span className="block ink text-[2.75rem] md:text-[4.5rem]">
+              the way we use ai
+            </span>
+            <span className="block grad text-[2.75rem] md:text-[4.5rem] mt-1">
+              is killing what makes us human.
+            </span>
+          </h1>
+          <p className="sans text-base md:text-xl smoke leading-relaxed">
+            the empathy layer that gives vision-language models human-centered
+            data — so the people managing them stop deciding with half the
+            picture.
+          </p>
+          <div
+            className="flex items-center gap-3 mt-2"
             style={{
-              color: "var(--accent)",
-              fontSize: 12,
-              letterSpacing: "0.18em",
+              padding: "8px 14px",
+              border: "1px solid var(--oat-border)",
+              borderRadius: 999,
+              background: "color-mix(in srgb, var(--accent) 6%, transparent)",
             }}
           >
-            ← →
-          </span>
-          <span
-            className="kicker"
-            style={{ color: "var(--ink)" }}
-          >
-            press to swap audience emphasis · top-right shows current
-          </span>
+            <span
+              className="mono"
+              style={{
+                color: "var(--accent)",
+                fontSize: 12,
+                letterSpacing: "0.18em",
+              }}
+            >
+              ← →
+            </span>
+            <span
+              className="kicker"
+              style={{ color: "var(--ink)" }}
+            >
+              press to swap audience emphasis · top-right shows current
+            </span>
+          </div>
+        </div>
+        <div className="lg:col-span-5 flex items-center justify-center">
+          <img
+            src="/images/amy-logo.png"
+            alt="amy — short for amygdala"
+            className="w-full h-auto"
+            style={{
+              borderRadius: 12,
+              boxShadow:
+                "rgba(0, 0, 0, 0.10) 0px 1px 1px, rgba(0, 0, 0, 0.04) 0px -1px 1px inset",
+            }}
+          />
         </div>
       </div>
       <ScrollHint />

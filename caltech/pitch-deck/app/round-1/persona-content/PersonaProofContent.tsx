@@ -17,29 +17,25 @@ export default function PersonaProofContent() {
 
   if (persona === "ironsight") {
     return (
-      <div className="lg:col-span-7 flex flex-col gap-8 max-w-xl">
+      <div className="lg:col-span-7 flex flex-col gap-7 max-w-xl">
         <Kicker>proof · construction · spatial intel</Kicker>
-        <h2 className="display-mono text-5xl md:text-[6.5rem] leading-[0.92] lowercase">
+        <h2 className="display-mono text-5xl md:text-[6rem] leading-[0.92] lowercase">
           <span className="ink">camera saw motion.</span>
           <br />
           <span className="grad">brain saw threat.</span>
         </h2>
         <p className="sans text-base md:text-lg smoke max-w-md leading-relaxed">
-          the vision model alone described what happened:{" "}
+          vision alone said{" "}
           <span className="mono ink">
             &quot;worker walked across platform, paused, continued.&quot;
           </span>{" "}
-          with the cortical layer added, the same scene resolves differently:
-          threat-detection sustained at peak for 40 minutes. attention narrowed.
-          memory networks lit on the second-floor edge.
-        </p>
-        <p className="mono italic text-base ink">
-          the camera couldn&apos;t see the hazard. the brain pattern did.
+          with the cortical layer: threat-detection peaked 40 minutes straight.
         </p>
         <p className="sans text-sm smoke max-w-md leading-relaxed">
-          that&apos;s spatial intelligence — not more pixels, but a new modality
-          layered onto the camera. the worker&apos;s experience becomes spatial
-          data.
+          falsification here = same paragraph against a different worker&apos;s
+          footage scores low. the reading belongs to <em>this</em> site, not to
+          construction in general. that&apos;s the spatial-intel claim Ironsight
+          asked for — backed by a cosine number, not a vibe.
         </p>
       </div>
     );
@@ -47,27 +43,19 @@ export default function PersonaProofContent() {
 
   if (persona === "listen-labs") {
     return (
-      <div className="lg:col-span-7 flex flex-col gap-8 max-w-xl">
+      <div className="lg:col-span-7 flex flex-col gap-7 max-w-xl">
         <Kicker>proof · the algorithm un-blackboxed</Kicker>
-        <h2 className="display-mono text-5xl md:text-[6.5rem] leading-[0.92] lowercase">
+        <h2 className="display-mono text-5xl md:text-[6rem] leading-[0.92] lowercase">
           <span className="ink">five reels in.</span>
           <br />
           <span className="grad">your taste flatlines.</span>
         </h2>
         <p className="sans text-base md:text-lg smoke max-w-md leading-relaxed">
-          we fed five instagram reels through the engine. by reel three the
-          default-mode network — the part of you that&apos;s just <em>you</em>{" "}
-          — was firing in the same convergent pattern as ten thousand other
-          18-year-olds. the algorithm steers toward a shared average; the user
-          stops contributing to their own taste.
+          by reel three the default-mode network — the part of you that&apos;s
+          just <em>you</em> — converges with 10,000 other 18-year-olds.
         </p>
         <p className="mono italic text-base ink">
           you can finally see the loop you&apos;ve been inside.
-        </p>
-        <p className="sans text-sm smoke max-w-md leading-relaxed">
-          this is what &quot;simulating humanity&quot; looks like when it&apos;s
-          grounded in brains, not text. neurons fire. the loop iterates. the
-          divergent thought becomes available again.
         </p>
       </div>
     );
@@ -75,26 +63,19 @@ export default function PersonaProofContent() {
 
   // best-of-ai (default · ai interaction · creativity-emphasis · not sexy)
   return (
-    <div className="lg:col-span-7 flex flex-col gap-8 max-w-xl">
+    <div className="lg:col-span-7 flex flex-col gap-7 max-w-xl">
       <Kicker>proof · design · taste persists beyond ai</Kicker>
-      <h2 className="display-mono text-5xl md:text-[6.5rem] leading-[0.92] lowercase">
+      <h2 className="display-mono text-5xl md:text-[6rem] leading-[0.92] lowercase">
         <span className="ink">autumn leaves</span>{" "}
         <span className="grad">vs. your design.</span>
       </h2>
       <p className="sans text-base md:text-lg smoke max-w-md leading-relaxed">
-        feed the engine a reference: a video of autumn leaves, something smooth,
-        something you want your design to feel like. then feed it your draft.
-        the cosine similarity between the two brain patterns tells you whether
-        you got the feeling across — before any human sees it. taste, made
-        measurable.
+        feed amy a reference (autumn leaves, smooth, the feeling you&apos;re
+        chasing). feed it your draft. the cosine between brain patterns tells
+        you if it lands — before any human sees it.
       </p>
       <p className="mono italic text-base ink">
-        a tool to translate a feeling into a design without losing the feeling.
-      </p>
-      <p className="sans text-sm smoke max-w-md leading-relaxed">
-        ai stops generating-for-you and starts simulating-for-you. you keep the
-        divergent thought. the engine just shows you whether your work lands the
-        way you intended.
+        feeling, made measurable.
       </p>
     </div>
   );

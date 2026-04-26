@@ -18,15 +18,9 @@ export default function HookContent() {
             <span className="ink">your taste is your taste.</span>
           </h2>
           <p className="sans text-base md:text-lg smoke max-w-xl leading-relaxed">
-            algorithmic personalization sells you convenience. the price is
-            your privacy — and eventually your humanity. the things you consume
-            aren&apos;t things you chose. you converge to the best average they
-            engineered for.
-          </p>
-          <p className="sans text-sm smoke max-w-xl leading-relaxed">
-            writers using chatgpt all converge to the same essay. a manager
-            chatgpts the best way to organize their team and slots every worker
-            into the same one-size-fits-all box. you can&apos;t see any of it.
+            algorithmic personalization sells you convenience at the price of
+            your privacy — and your humanity. you converge to the best average
+            they engineered for, and you can&apos;t see any of it.
           </p>
         </div>
         <div className="lg:col-span-5 justify-self-end">

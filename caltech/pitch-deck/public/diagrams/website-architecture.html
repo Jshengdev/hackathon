@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>amy · website architecture</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #faf9f7;
+    color: #000000;
+    font-family: 'Roobert', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px 60px;
+  }
+  header {
+    width: 100%;
+    max-width: 920px;
+    margin-bottom: 24px;
+  }
+  .kicker {
+    font-family: 'Space Mono', 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.32em;
+    text-transform: lowercase;
+    color: #01418d;
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-family: 'Space Mono', 'JetBrains Mono', monospace;
+    font-size: 38px;
+    font-weight: 600;
+    letter-spacing: -1.2px;
+    line-height: 0.98;
+    margin: 0 0 12px;
+    text-transform: lowercase;
+    color: #000000;
+  }
+  h1 .grad { color: #01418d; }
+  p.lead {
+    font-size: 14.5px; line-height: 1.55; color: #55534e;
+    margin: 0; max-width: 780px;
+  }
+  .diagram-wrap {
+    width: 100%; max-width: 920px; margin-top: 16px;
+  }
+  svg { display: block; width: 100%; height: auto; }
+  .layer-card { fill: #ffffff; stroke: #dad4c8; stroke-width: 1; }
+  .layer-card-feat { fill: #ffffff; stroke: #01418d; stroke-width: 1.5; }
+  .layer-tag {
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.28em;
+    fill: #01418d; text-transform: lowercase;
+  }
+  .layer-title {
+    font-family: 'Space Mono', monospace; font-size: 17px; font-weight: 600;
+    fill: #000000; letter-spacing: -0.3px; text-transform: lowercase;
+  }
+  .layer-detail {
+    font-family: 'Roobert', sans-serif; font-size: 12.5px;
+    fill: #55534e;
+  }
+  .layer-spec {
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    fill: #55534e;
+  }
+  .pill {
+    fill: #ffffff; stroke: #6da6e8; stroke-width: 1;
+  }
+  .pill-text {
+    font-family: 'Space Mono', monospace; font-size: 10.5px;
+    fill: #01418d; text-anchor: middle;
+  }
+  .arrow { fill: none; stroke: #9f9b93; stroke-width: 1.4; }
+  .arrow-bidir { fill: none; stroke: #9f9b93; stroke-width: 1.4; stroke-dasharray: 3 3; }
+  .arrow-label {
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.18em;
+    fill: #55534e; text-transform: lowercase;
+  }
+  .annotation {
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.18em;
+    fill: #55534e; text-transform: lowercase;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">amy · website architecture</div>
+  <h1>browser → frontend → <span class="grad">backend → swarm → external apis.</span></h1>
+  <p class="lead">five-stage vue 3 dashboard talks to a fastapi backend. backend orchestrates the k2 swarm, claude opus, qwen vision, and the cpu-only falsifier — all reading pre-rendered tribe v2 brain artifacts off disk for stage reliability.</p>
+</header>
+
+<div class="diagram-wrap">
+<svg viewBox="0 0 800 1180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Website architecture">
+  <defs>
+    <marker id="ah" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L9,5 L0,10 z" fill="#9f9b93" />
+    </marker>
+    <marker id="ah-rev" markerWidth="10" markerHeight="10" refX="0" refY="5" orient="auto">
+      <path d="M9,0 L0,5 L9,10 z" fill="#9f9b93" />
+    </marker>
+  </defs>
+
+  <!-- LAYER 1 · Browser -->
+  <g transform="translate(280, 20)">
+    <rect class="layer-card" width="240" height="56" rx="8" />
+    <text x="20" y="22" class="layer-tag">layer 1 · client</text>
+    <text x="20" y="44" class="layer-title">browser</text>
+  </g>
+  <line class="arrow" x1="400" y1="80" x2="400" y2="120" marker-end="url(#ah)" />
+
+  <!-- LAYER 2 · Frontend (Vue 3) -->
+  <g transform="translate(40, 130)">
+    <rect class="layer-card-feat" width="720" height="200" rx="8" />
+    <text x="20" y="26" class="layer-tag">layer 2 · frontend · vue 3 + vite + three.js</text>
+    <text x="20" y="50" class="layer-title">5 stages · single-page dashboard</text>
+
+    <!-- 5 stage pills in a row -->
+    <g transform="translate(20, 80)">
+      <rect class="pill" width="120" height="36" rx="6" />
+      <text x="60" y="22" class="pill-text">landing</text>
+    </g>
+    <g transform="translate(150, 80)">
+      <rect class="pill" width="120" height="36" rx="6" />
+      <text x="60" y="22" class="pill-text">loading</text>
+    </g>
+    <g transform="translate(280, 80)">
+      <rect class="pill" width="120" height="36" rx="6" />
+      <text x="60" y="22" class="pill-text">main</text>
+    </g>
+    <g transform="translate(410, 80)">
+      <rect class="pill" width="160" height="36" rx="6" />
+      <text x="80" y="22" class="pill-text">iterative-reveal</text>
+    </g>
+    <g transform="translate(580, 80)">
+      <rect class="pill" width="160" height="36" rx="6" />
+      <text x="80" y="22" class="pill-text">empathy-document</text>
+    </g>
+
+    <text x="20" y="148" class="layer-detail">brainscene renders ~20K vertices on fsaverage5 mesh @ 30fps</text>
+    <text x="20" y="166" class="layer-detail">empathy-document stage embeds amy chat · iterative-reveal animates the score climb</text>
+    <text x="20" y="190" class="annotation">cream + blueberry palette · clay-inspired tokens · matches the pitch deck</text>
+  </g>
+
+  <!-- arrow with REST + WS labels -->
+  <line class="arrow" x1="350" y1="330" x2="350" y2="380" marker-end="url(#ah)" />
+  <line class="arrow-bidir" x1="450" y1="380" x2="450" y2="330" marker-end="url(#ah-rev)" />
+  <text x="295" y="357" class="arrow-label">rest</text>
+  <text x="460" y="357" class="arrow-label">ws · /ws</text>
+
+  <!-- LAYER 3 · Backend (FastAPI) -->
+  <g transform="translate(40, 390)">
+    <rect class="layer-card-feat" width="720" height="170" rx="8" />
+    <text x="20" y="26" class="layer-tag">layer 3 · backend · fastapi</text>
+    <text x="20" y="50" class="layer-title">orchestration + warmup + ws events</text>
+    <text x="20" y="78" class="layer-spec">/demo/match  ·  /demo/clips  ·  /demo/activity/{id}</text>
+    <text x="20" y="98" class="layer-spec">/demo/vision-report/{id}  ·  /demo/empathy/{id}  ·  /demo/iterative-trajectory/{id}</text>
+    <text x="20" y="118" class="layer-spec">/demo/falsification/{id}  ·  /demo/k2-region  ·  /demo/warmup-status/{id}</text>
+    <text x="20" y="138" class="layer-spec">/brain/mesh  ·  /ws (per-frame swarm events)</text>
+    <text x="20" y="160" class="annotation">backgroundtask pre-bakes 5 layer-1 jsons on /demo/match</text>
+  </g>
+
+  <line class="arrow" x1="400" y1="560" x2="400" y2="610" marker-end="url(#ah)" />
+
+  <!-- LAYER 4 · Services -->
+  <g transform="translate(40, 620)">
+    <rect class="layer-card" width="720" height="160" rx="8" />
+    <text x="20" y="26" class="layer-tag">layer 4 · services</text>
+    <text x="20" y="50" class="layer-title">internal pipeline orchestration</text>
+
+    <text x="20" y="80" class="layer-spec">vision_client   →   qwen3-vl via openrouter</text>
+    <text x="20" y="100" class="layer-spec">swarm_runner   →   k2 specialists (7 parallel)</text>
+    <text x="20" y="120" class="layer-spec">empathy_synthesis · iterative_loop   →   k2 moderator + evaluators</text>
+    <text x="20" y="140" class="layer-spec">empathy_polish · empathy_chat (amy)   →   anthropic opus 4.7</text>
+    <text x="400" y="80" class="layer-spec">falsification         →   embedding proxy (cpu)</text>
+    <text x="400" y="100" class="layer-spec">k2_client             →   cerebras / k2think.ai</text>
+    <text x="400" y="120" class="layer-spec">warmup, session_cache  →   bake + serve</text>
+  </g>
+
+  <line class="arrow" x1="400" y1="780" x2="400" y2="820" marker-end="url(#ah)" />
+
+  <!-- LAYER 5 · Data (pre-rendered) -->
+  <g transform="translate(40, 830)">
+    <rect class="layer-card" width="720" height="120" rx="8" />
+    <text x="20" y="26" class="layer-tag">layer 5 · data · prerendered/&lt;clip_id&gt;/</text>
+    <text x="20" y="50" class="layer-title">tribe v2 baked offline · disk-served at runtime</text>
+    <text x="20" y="78" class="layer-spec">activity.json  ·  vision_report.json  ·  swarm_readings.json</text>
+    <text x="20" y="98" class="layer-spec">empathy.json  ·  iterative_trajectory.json  ·  falsification.json  ·  k2_region_cache.json</text>
+  </g>
+
+  <line class="arrow" x1="400" y1="950" x2="400" y2="990" marker-end="url(#ah)" />
+
+  <!-- LAYER 6 · External APIs -->
+  <g transform="translate(40, 1000)">
+    <rect class="layer-card" width="720" height="120" rx="8" />
+    <text x="20" y="26" class="layer-tag">layer 6 · external apis</text>
+    <text x="20" y="50" class="layer-title">third-party model surfaces</text>
+    <text x="20" y="78" class="layer-spec">k2 think (cerebras · ifm-prefixed key) · openrouter → qwen3-vl</text>
+    <text x="20" y="98" class="layer-spec">anthropic → claude opus 4.7 · meta tribe v2 (offline pre-bake only)</text>
+  </g>
+
+  <text x="40" y="1158" class="annotation">runtime path never invokes tribe v2 · activity.json on disk is the canonical brain artifact</text>
+</svg>
+</div>
+
+</body>
+</html>

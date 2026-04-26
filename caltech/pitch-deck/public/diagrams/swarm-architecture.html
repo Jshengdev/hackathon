@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>amy · swarm agent architecture</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #faf9f7;
+    color: #000000;
+    font-family: 'Roobert', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px 60px;
+  }
+  header { width: 100%; max-width: 920px; margin-bottom: 24px; }
+  .kicker {
+    font-family: 'Space Mono', 'JetBrains Mono', monospace;
+    font-size: 10.5px; letter-spacing: 0.32em;
+    text-transform: lowercase; color: #01418d; margin: 0 0 10px;
+  }
+  h1 {
+    font-family: 'Space Mono', 'JetBrains Mono', monospace;
+    font-size: 38px; font-weight: 600; letter-spacing: -1.2px;
+    line-height: 0.98; margin: 0 0 12px;
+    text-transform: lowercase; color: #000000;
+  }
+  h1 .grad { color: #01418d; }
+  p.lead {
+    font-size: 14.5px; line-height: 1.55; color: #55534e;
+    margin: 0; max-width: 800px;
+  }
+  .diagram-wrap { width: 100%; max-width: 920px; margin-top: 16px; }
+  svg { display: block; width: 100%; height: auto; }
+
+  .stage-card { fill: #ffffff; stroke: #dad4c8; stroke-width: 1; }
+  .stage-card-feat { fill: #ffffff; stroke: #01418d; stroke-width: 1.5; }
+  .stage-card-inner { fill: #faf9f7; stroke: #dad4c8; stroke-width: 0.8; stroke-dasharray: 3 3; }
+  .stage-num {
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.28em;
+    fill: #01418d; text-transform: lowercase;
+  }
+  .stage-title {
+    font-family: 'Space Mono', monospace; font-size: 17px; font-weight: 600;
+    fill: #000000; letter-spacing: -0.3px; text-transform: lowercase;
+  }
+  .stage-spec {
+    font-family: 'Space Mono', monospace; font-size: 11px; fill: #55534e;
+  }
+  .stage-detail {
+    font-family: 'Roobert', sans-serif; font-size: 12.5px; fill: #55534e;
+  }
+  .arrow { fill: none; stroke: #9f9b93; stroke-width: 1.4; }
+  .arrow-warm { fill: none; stroke: #c44569; stroke-width: 1.4; stroke-dasharray: 4 4; }
+  .specialist {
+    fill: #ffffff; stroke: #6da6e8; stroke-width: 1;
+  }
+  .annotation {
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.18em;
+    fill: #55534e; text-transform: lowercase;
+  }
+  .number-big {
+    font-family: 'Space Mono', monospace; font-size: 28px;
+    fill: #000000; font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">amy · swarm agent architecture</div>
+  <h1>video in. <span class="grad">paragraph out.</span></h1>
+  <p class="lead">qwen3-vl baseline on top, tribe v2 multimodal brain encoder predicts cortical activation, k2 specialist swarm simulates how each region reacts and iteratively scores against the brain pattern via cosine similarity, moderator synthesizes one observational document, falsifier verifies the signal is anchored to the scene.</p>
+</header>
+
+<div class="diagram-wrap">
+<svg viewBox="0 0 800 1620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Swarm agent architecture">
+  <defs>
+    <marker id="ah" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L9,5 L0,10 z" fill="#9f9b93" />
+    </marker>
+    <marker id="ah-warm" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L9,5 L0,10 z" fill="#c44569" />
+    </marker>
+  </defs>
+
+  <!-- INPUT -->
+  <g transform="translate(280, 20)">
+    <rect class="stage-card" width="240" height="56" rx="8" />
+    <text x="20" y="22" class="stage-num">input</text>
+    <text x="20" y="44" class="stage-title">video clip · any domain</text>
+  </g>
+  <line class="arrow" x1="400" y1="80" x2="400" y2="120" marker-end="url(#ah)" />
+
+  <!-- STAGE 1A · QWEN3-VL -->
+  <g transform="translate(40, 130)">
+    <rect class="stage-card" width="340" height="100" rx="8" />
+    <text x="20" y="26" class="stage-num">stage 1a · vision</text>
+    <text x="20" y="50" class="stage-title">qwen3-vl</text>
+    <text x="20" y="72" class="stage-spec">openrouter · qwen3-vl-235b-a22b-instruct</text>
+    <text x="20" y="90" class="stage-detail">scene description · actions · spatial relations</text>
+  </g>
+
+  <!-- STAGE 1B · TRIBE V2 (more technical) -->
+  <g transform="translate(420, 130)">
+    <rect class="stage-card" width="340" height="160" rx="8" />
+    <text x="20" y="26" class="stage-num">stage 1b · brain encoder</text>
+    <text x="20" y="50" class="stage-title">tribe v2 · meta fair</text>
+    <text x="20" y="74" class="stage-spec">multimodal brain-encoder · BOLD prediction</text>
+    <text x="20" y="92" class="stage-detail">trained on real fMRI from ~25 subjects across</text>
+    <text x="20" y="108" class="stage-detail">thousands of hours of naturalistic video</text>
+    <text x="20" y="128" class="stage-spec">~20K vertices · fsaverage5 cortical mesh</text>
+    <text x="20" y="146" class="stage-spec">1Hz · HRF-modeled hemodynamic 5s lag</text>
+  </g>
+
+  <line class="arrow" x1="210" y1="230" x2="210" y2="320" marker-end="url(#ah)" />
+  <line class="arrow" x1="590" y1="290" x2="590" y2="320" marker-end="url(#ah)" />
+
+  <!-- STAGE 2 · K2 SWARM (now contains iterative loop INSIDE) -->
+  <g transform="translate(40, 330)">
+    <rect class="stage-card-feat" width="720" height="430" rx="8" />
+    <text x="20" y="26" class="stage-num">stage 2 · k2 swarm · cerebras · ~1,300 tok/s · 8 in parallel</text>
+    <text x="20" y="54" class="stage-title">8 specialists · one per cortical region in the activation JSON</text>
+
+    <!-- 8 specialist pills row -->
+    <g transform="translate(20, 80)">
+      <rect class="specialist" width="78" height="32" rx="4" />
+      <text x="39" y="20" text-anchor="middle" class="stage-spec">visual</text>
+    </g>
+    <g transform="translate(108, 80)">
+      <rect class="specialist" width="80" height="32" rx="4" />
+      <text x="40" y="20" text-anchor="middle" class="stage-spec">auditory</text>
+    </g>
+    <g transform="translate(198, 80)">
+      <rect class="specialist" width="100" height="32" rx="4" />
+      <text x="50" y="20" text-anchor="middle" class="stage-spec">somatomotor</text>
+    </g>
+    <g transform="translate(308, 80)">
+      <rect class="specialist" width="92" height="32" rx="4" />
+      <text x="46" y="20" text-anchor="middle" class="stage-spec">dorsal-attn</text>
+    </g>
+    <g transform="translate(410, 80)">
+      <rect class="specialist" width="92" height="32" rx="4" />
+      <text x="46" y="20" text-anchor="middle" class="stage-spec">ventral-attn</text>
+    </g>
+    <g transform="translate(512, 80)">
+      <rect class="specialist" width="68" height="32" rx="4" />
+      <text x="34" y="20" text-anchor="middle" class="stage-spec">limbic</text>
+    </g>
+    <g transform="translate(590, 80)">
+      <rect class="specialist" width="100" height="32" rx="4" />
+      <text x="50" y="20" text-anchor="middle" class="stage-spec">frontoparietal</text>
+    </g>
+    <g transform="translate(20, 122)">
+      <rect class="specialist" width="78" height="32" rx="4" />
+      <text x="39" y="20" text-anchor="middle" class="stage-spec">DMN</text>
+    </g>
+
+    <!-- specialist process description -->
+    <text x="20" y="180" class="stage-detail">each specialist runs a simulation of how its region reacts to the</text>
+    <text x="20" y="198" class="stage-detail">video + qwen3-vl description, then generates its own understanding</text>
+    <text x="20" y="216" class="stage-detail">of how high-signal each cue is — confidence + citation per reading.</text>
+
+    <!-- INNER: cosine similarity + iterative loop -->
+    <g transform="translate(20, 240)">
+      <rect class="stage-card-inner" width="680" height="170" rx="6" />
+      <text x="14" y="22" class="stage-num">stage 2b · iterative loop · plateau exit</text>
+      <text x="14" y="46" class="stage-title">↻ k2 swarm-as-evaluator · cosine similarity scoring</text>
+      <text x="14" y="68" class="stage-detail">specialists score the candidate paragraph against the actual TRIBE JSON</text>
+      <text x="14" y="86" class="stage-detail">numbers via cosine similarity in the 7-dim Yeo7 projection space</text>
+      <text x="14" y="106" class="stage-detail">moderator rewrites using per-region miss attribution · plateau exit</text>
+
+      <text x="14" y="138" class="stage-num">3 rounds · score climb</text>
+      <text x="200" y="148" class="number-big">0.71 → 0.84</text>
+      <text x="14" y="160" class="annotation">simulating how thoughts flow through a person's head — the brain's own re-grounding loop</text>
+    </g>
+  </g>
+
+  <!-- self-loop arrow (showing iterative inside stage 2) -->
+  <path class="arrow-warm" d="M 760 590 Q 790 590 790 540 Q 790 510 770 510" marker-end="url(#ah-warm)" />
+  <text x="700" y="540" class="annotation">↻ × 3</text>
+
+  <line class="arrow" x1="400" y1="760" x2="400" y2="810" marker-end="url(#ah)" />
+
+  <!-- STAGE 3 · MODERATOR -->
+  <g transform="translate(40, 820)">
+    <rect class="stage-card" width="720" height="120" rx="8" />
+    <text x="20" y="26" class="stage-num">stage 3 · synthesis</text>
+    <text x="20" y="50" class="stage-title">moderator · combines vision report + 8 specialist readings</text>
+    <text x="20" y="74" class="stage-spec">writes one document · observational, not diagnostic</text>
+    <text x="20" y="98" class="stage-detail">forbidden-phrase guardrails · regex post-flight on every output</text>
+  </g>
+
+  <line class="arrow" x1="400" y1="940" x2="400" y2="990" marker-end="url(#ah)" />
+
+  <!-- STAGE 4 · FALSIFICATION (compact, less highlighted, framed for data ingestion) -->
+  <g transform="translate(40, 1000)">
+    <rect class="stage-card" width="720" height="100" rx="8" />
+    <text x="20" y="26" class="stage-num">stage 4 · falsification · quick check</text>
+    <text x="20" y="50" class="stage-title">tracks paragraph score against control footage</text>
+    <text x="20" y="72" class="stage-spec">embedding-proxy cosine · same scoring pattern as stage 2b evaluator</text>
+    <text x="20" y="90" class="stage-detail">important for the data-ingestion stage — confirms signal is anchored</text>
+  </g>
+
+  <line class="arrow" x1="400" y1="1100" x2="400" y2="1150" marker-end="url(#ah)" />
+
+  <!-- OUTPUT · empathy doc + AMY (rich use cases) -->
+  <g transform="translate(40, 1160)">
+    <rect class="stage-card-feat" width="720" height="280" rx="8" />
+    <text x="20" y="26" class="stage-num">output · empathy document + amy (interrogable)</text>
+    <text x="20" y="52" class="stage-title">brain-grounded paragraph · semantic reads of cortical signal</text>
+
+    <text x="20" y="84" class="stage-detail">reports are no longer just <tspan font-style="italic">what they did</tspan> — they surface:</text>
+    <text x="40" y="106" class="stage-spec">·  what they saw (visual + dorsal-attn signature)</text>
+    <text x="40" y="126" class="stage-spec">·  what they experienced (limbic + DMN signature)</text>
+    <text x="40" y="146" class="stage-spec">·  current stress / cognitive-load level (frontoparietal + ventral-attn)</text>
+    <text x="40" y="166" class="stage-spec">·  semantic readings inferred from brain-region patterns</text>
+    <text x="40" y="186" class="stage-spec">·  per-region attribution + round-by-round trajectory</text>
+
+    <text x="20" y="218" class="stage-detail"><tspan font-style="italic">amy chat</tspan> · viewers ask follow-ups · opus 4.7 hedges every claim</text>
+    <text x="20" y="236" class="stage-detail">to a network + timestamp from the trace · interpretive, not clinical</text>
+
+    <text x="20" y="262" class="annotation">tribe v2: open-source on huggingface · cc-by-nc-4.0 · k2 think on cerebras inference cloud</text>
+  </g>
+</svg>
+</div>
+
+</body>
+</html>

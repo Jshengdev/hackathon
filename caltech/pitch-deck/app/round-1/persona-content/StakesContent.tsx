@@ -8,16 +8,22 @@ import { Kicker } from "../../components/SlideKit";
 
 const INDUSTRIES = [
   {
-    k: "design / taste",
-    v: "a loud professor. a stressful lecture hall. the environment shapes how you think and what you can learn — but no system measures it. design and packaging shape humans, and we ship them blind.",
+    k: "construction",
+    v: "managers optimize for sheer productivity. the brain pattern shows sustained cortisol the camera can't see. optimize emotions, not minutes.",
+    img: "/images/construction-workers.jpg",
+    imgAlt: "construction workers on site",
   },
   {
-    k: "construction",
-    v: "managers optimize for sheer productivity. the model shows which brain regions fired most often during the work — and they map to higher cortisol, sustained stress. optimize emotions, not minutes.",
+    k: "healthcare",
+    v: "a nurse spends 30 minutes with a dying patient. the dashboard sees an overrun. the action was right; the decision was wrong.",
+    img: "/images/hospital-handholding.jpg",
+    imgAlt: "patient hand-holding moment",
   },
   {
     k: "consumer",
-    v: "the platforms engineer which parts of your brain fire to keep you scrolling — and you can’t adjust the weights. you can’t even see them. we democratize that access.",
+    v: "the platforms engineer which parts of your brain fire to keep you scrolling — and you can't adjust the weights. you can't even see them.",
+    img: "/images/hospital-lobby.jpg",
+    imgAlt: "busy modern workplace lobby",
   },
 ];
 
@@ -35,13 +41,33 @@ export default function StakesContent() {
         {INDUSTRIES.map((c) => (
           <div
             key={c.k}
-            className="surface-card flex flex-col gap-3"
-            style={{ padding: "24px 28px" }}
+            className="surface-card flex flex-col overflow-hidden"
+            style={{ padding: 0 }}
           >
-            <p className="kicker" style={{ color: "var(--accent)" }}>
-              {c.k}
-            </p>
-            <p className="mono text-sm smoke leading-relaxed">{c.v}</p>
+            <div
+              style={{
+                width: "100%",
+                height: 160,
+                overflow: "hidden",
+              }}
+            >
+              <img
+                src={c.img}
+                alt={c.imgAlt}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            </div>
+            <div className="flex flex-col gap-3" style={{ padding: "20px 24px 24px" }}>
+              <p className="kicker" style={{ color: "var(--accent)" }}>
+                {c.k}
+              </p>
+              <p className="mono text-sm smoke leading-relaxed">{c.v}</p>
+            </div>
           </div>
         ))}
       </div>

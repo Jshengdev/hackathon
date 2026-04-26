@@ -76,7 +76,7 @@ function initThree() {
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
   renderer.setSize(W, H)
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.setClearColor(0x050510, 1)
+  renderer.setClearColor(0x000000, 1)
   container.value.appendChild(renderer.domElement)
 
   labelRenderer = new CSS2DRenderer()
@@ -87,22 +87,37 @@ function initThree() {
   container.value.appendChild(labelRenderer.domElement)
 
   scene = new THREE.Scene()
-  scene.fog = new THREE.FogExp2(0x050510, 0.0025)
+  // Black fog — fades the swarm wanderers into the void without tinting the
+  // foreground brain (TRIBE V2 hero is on pure-black, no atmospheric tint).
+  scene.fog = new THREE.FogExp2(0x000000, 0.0025)
 
+  // Lateral right-hemisphere view by default — matches TRIBE V2's hero render
+  // angle. fsaverage5 mesh sits in MNI mm space, so the right hemi's lateral
+  // surface faces +X.
   camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 1000)
-  camera.position.set(0, 40, 230)
-  camera.lookAt(0, 10, 0)
+  camera.position.set(220, 30, 0)
+  camera.lookAt(0, 0, 0)
 
   controls = new OrbitControls(camera, renderer.domElement)
   controls.enableDamping = true
   controls.dampingFactor = 0.07
   controls.minDistance = 60
   controls.maxDistance = 500
+  controls.target.set(0, 0, 0)
 
-  scene.add(new THREE.AmbientLight(0x223355, 2.5))
-  const sun = new THREE.DirectionalLight(0xffffff, 1.8)
-  sun.position.set(120, 180, 100)
-  scene.add(sun)
+  // Lighting tuned for cortical-tissue read: low neutral ambient, warm key
+  // from upper-front (mimics studio light on a phantom brain), cool back-rim
+  // for silhouette separation against the black bg.
+  scene.add(new THREE.AmbientLight(0x303030, 0.55))
+  const key = new THREE.DirectionalLight(0xfff0e0, 1.35)
+  key.position.set(180, 220, 120)
+  scene.add(key)
+  const rim = new THREE.DirectionalLight(0xff9966, 0.45)
+  rim.position.set(-140, 60, -120)
+  scene.add(rim)
+  const fill = new THREE.DirectionalLight(0xb0c8e0, 0.25)
+  fill.position.set(-60, -40, 100)
+  scene.add(fill)
 
   raycaster = new THREE.Raycaster()
   renderer.domElement.addEventListener('click', onCanvasClick)
@@ -116,17 +131,20 @@ function buildBrainMesh(data) {
   const vertices = new Float32Array(data.vertices)
   const indices = new Uint32Array(data.faces)
 
-  // Bilateral central-fissure cue: vertices very near the x=0 plane get a
-  // darker base color, suggesting the longitudinal fissure between hemispheres.
-  // fsaverage5 is in MNI mm; the midline shows up well within ±2.5 mm.
+  // Light cortical-tissue base — vertex colors give every triangle the warm
+  // off-white of a phantom brain. Lighting (in initThree) supplies the
+  // gyri/sulci shading; activation patches blend over this base via
+  // applyRegionLevelsToMesh.
+  // Bilateral central-fissure cue is preserved: vertices near x=0 darken
+  // slightly to suggest the longitudinal fissure between hemispheres.
   const colors = new Float32Array(N * 3)
   for (let i = 0; i < N; i++) {
     const x = vertices[i * 3]
     const fissure = Math.max(0, 1 - Math.abs(x) / 2.5)  // 1 at midline → 0 outside
-    const base = 0.05 - fissure * 0.035                 // darken at midline
-    colors[i * 3]     = Math.max(0.02, base)
-    colors[i * 3 + 1] = Math.max(0.02, base)
-    colors[i * 3 + 2] = Math.max(0.06, 0.13 - fissure * 0.06)
+    const dim = fissure * 0.18
+    colors[i * 3]     = 0.82 - dim
+    colors[i * 3 + 1] = 0.78 - dim
+    colors[i * 3 + 2] = 0.72 - dim
   }
 
   const geo = new THREE.BufferGeometry()
@@ -135,18 +153,14 @@ function buildBrainMesh(data) {
   geo.setIndex(new THREE.BufferAttribute(indices, 1))
   geo.computeVertexNormals()
 
-  // MeshStandardMaterial with high roughness reads as organic tissue, not a
-  // glossy sphere. Slight emissive on top of vertexColors keeps active regions
-  // visible against the dark backdrop.
+  // MeshStandardMaterial: high roughness + zero metalness reads as cortical
+  // tissue under the warm key light. No emissive, no transparency — the heat
+  // colormap is purely vertex-color driven.
   const mat = new THREE.MeshStandardMaterial({
     vertexColors: true,
-    side: THREE.DoubleSide,
-    roughness: 0.85,
-    metalness: 0.05,
-    emissive: 0x1a1a32,
-    emissiveIntensity: 0.18,
-    transparent: true,
-    opacity: 0.92,
+    side: THREE.FrontSide,
+    roughness: 0.92,
+    metalness: 0.0,
   })
 
   brainMesh = new THREE.Mesh(geo, mat)
@@ -167,11 +181,13 @@ function buildBrainMesh(data) {
 
 // ── Atmosphere halo (greenchain's atmosphere/rim/halo gradient stack) ──────
 function buildAtmosphere(brainR) {
+  // Subtle warm glow halo (matches the bottom-light feel of TRIBE V2's hero).
+  // Kept very low opacity so the lateral cortex silhouette stays clean.
   const geo = new THREE.SphereGeometry(brainR * 1.18, 48, 36)
   atmosphereMat = new THREE.MeshBasicMaterial({
-    color: 0x6da9ff,
+    color: 0xff9966,
     transparent: true,
-    opacity: 0.05,
+    opacity: 0.025,
     side: THREE.BackSide,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
@@ -318,40 +334,75 @@ function buildWanderers(n = N_WANDERERS) {
 }
 
 // ── Coloring helpers ───────────────────────────────────────────────────────
-// Fire colormap: dark navy → purple → red → orange → yellow
+// TRIBE V2 heat colormap: deep red (low) → orange → yellow → white (peak).
+// Stops match the reference at /tmp/tribev2-ref/section-2.png.
 function activationToRGB(t, out) {
   const tt = Math.max(0, Math.min(1, t))
-  if (tt < 0.35) {
-    const s = tt / 0.35
-    out[0] = 0.05 + s * 0.50;  out[1] = 0.05 - s * 0.04;  out[2] = 0.13 + s * 0.52
+  if (tt < 0.20) {
+    const s = tt / 0.20
+    out[0] = 0.10 + s * 0.25; out[1] = 0.0;             out[2] = 0.0
+  } else if (tt < 0.45) {
+    const s = (tt - 0.20) / 0.25
+    out[0] = 0.35 + s * 0.50; out[1] = 0.07 + s * 0.16; out[2] = 0.0
   } else if (tt < 0.70) {
-    const s = (tt - 0.35) / 0.35
-    out[0] = 0.55 + s * 0.45;  out[1] = 0.01 + s * 0.20;  out[2] = 0.65 - s * 0.65
+    const s = (tt - 0.45) / 0.25
+    out[0] = 0.85 + s * 0.13; out[1] = 0.23 + s * 0.40; out[2] = 0.0
+  } else if (tt < 0.90) {
+    const s = (tt - 0.70) / 0.20
+    out[0] = 0.98;            out[1] = 0.63 + s * 0.22; out[2] = 0.0 + s * 0.29
   } else {
-    const s = (tt - 0.70) / 0.30
-    out[0] = 1.0;               out[1] = 0.21 + s * 0.79;  out[2] = 0.0 + s * 0.08
+    const s = (tt - 0.90) / 0.10
+    out[0] = 0.98 + s * 0.02; out[1] = 0.85 + s * 0.15; out[2] = 0.29 + s * 0.71
   }
 }
 
+// Cheap deterministic per-vertex noise — gives the activation patches a
+// non-uniform, splotchy look so each region doesn't paint as one flat blob.
+function vertNoise(x, y, z) {
+  const s = Math.sin(x * 12.9898 + y * 78.233 + z * 43.563) * 43758.5453
+  return s - Math.floor(s)
+}
+
+// Cortical base color — kept in sync with buildBrainMesh's initial fill.
+const BASE_R = 0.82, BASE_G = 0.78, BASE_B = 0.72
+
 // Apply a per-network level dictionary to the mesh's vertex-color buffer.
+// Heat colormap blends OVER the light cortical base — low activation leaves
+// the cortex visible; high activation paints with TRIBE heat patches.
 function applyRegionLevelsToMesh(levels) {
   if (!brainMesh || !meshNetworks.value) return
   const colors = brainMesh.geometry.attributes.color.array
+  const positions = brainMesh.geometry.attributes.position.array
   const tmp = [0, 0, 0]
-  // First, fill base color for all verts
+  // Reset to base cortex (preserves the bilateral fissure cue baked at build).
   for (let i = 0; i < colors.length; i += 3) {
-    colors[i] = 0.05; colors[i + 1] = 0.05; colors[i + 2] = 0.13
+    const x = positions[i]
+    const fissure = Math.max(0, 1 - Math.abs(x) / 2.5)
+    const dim = fissure * 0.18
+    colors[i]     = BASE_R - dim
+    colors[i + 1] = BASE_G - dim
+    colors[i + 2] = BASE_B - dim
   }
   for (const [name, meta] of Object.entries(meshNetworks.value)) {
     const lvl = levels[name] ?? 0
-    activationToRGB(lvl, tmp)
+    if (lvl < 0.05) continue  // leave base cortex visible at very low activity
     const idxs = meta.vertex_indices
     if (!idxs) continue
     for (let k = 0; k < idxs.length; k++) {
       const v = idxs[k]
-      colors[v * 3]     = tmp[0]
-      colors[v * 3 + 1] = tmp[1]
-      colors[v * 3 + 2] = tmp[2]
+      const px = positions[v * 3]
+      const py = positions[v * 3 + 1]
+      const pz = positions[v * 3 + 2]
+      // Per-vertex jitter on activation (±20%) for the splotchy TRIBE look.
+      const noise = 0.8 + 0.4 * vertNoise(px, py, pz)
+      const lvlMod = Math.max(0, Math.min(1, lvl * noise))
+      activationToRGB(lvlMod, tmp)
+      // Blend strength rises with activation — quiet regions show base cortex
+      // peeking through; hot regions saturate to full heat.
+      const blend = Math.min(1, lvl * 1.4)
+      colors[v * 3]     = colors[v * 3]     + (tmp[0] - colors[v * 3])     * blend
+      colors[v * 3 + 1] = colors[v * 3 + 1] + (tmp[1] - colors[v * 3 + 1]) * blend
+      colors[v * 3 + 2] = colors[v * 3 + 2] + (tmp[2] - colors[v * 3 + 2]) * blend
     }
   }
   brainMesh.geometry.attributes.color.needsUpdate = true
@@ -452,16 +503,17 @@ function tweenCameraTo(targetPos, targetLookAt, ms = 1000) {
 function applyLayout(layout) {
   if (!camera || !controls) return
   if (layout === 'left-half') {
-    // Pull camera back & slightly to the right so the brain feels centered
-    // within the left half of the screen
+    // Lateral right-hemi view, biased so the brain reads as centered within
+    // the left half of the screen (slight off-axis pull to the right).
     tweenCameraTo(
-      new THREE.Vector3(40, 35, 220),
-      new THREE.Vector3(0, 10, 0),
+      new THREE.Vector3(210, 25, 60),
+      new THREE.Vector3(0, 0, 0),
     )
   } else {
+    // Pure lateral right-hemisphere view — matches TRIBE V2 hero angle.
     tweenCameraTo(
-      new THREE.Vector3(0, 40, 230),
-      new THREE.Vector3(0, 10, 0),
+      new THREE.Vector3(220, 30, 0),
+      new THREE.Vector3(0, 0, 0),
     )
   }
 }
@@ -501,7 +553,7 @@ function animate() {
   // dead even with all-zero activations. Subtle 4s breath cycle.
   if (atmosphereMat) {
     const breath = (Math.sin(now * 0.001 * Math.PI / 2) + 1) / 2
-    atmosphereMat.opacity = 0.04 + breath * 0.05
+    atmosphereMat.opacity = 0.018 + breath * 0.018
   }
   if (orbitGroup) {
     orbitGroup.rotation.y = now * 0.00008
@@ -525,11 +577,9 @@ function animate() {
       if (atmosphereMat) {
         let peak = 0
         for (const v of Object.values(levels)) if (v > peak) peak = v
-        atmosphereMat.opacity = Math.min(0.25, atmosphereMat.opacity + peak * 0.06)
-        // Tint atmosphere toward the top region's color
-        const top = frame.top_region
-        const topMesh = top && regionMeshes[top]
-        if (topMesh) atmosphereMat.color.set(topMesh.mesh.material.color)
+        // Cap halo at a low maximum so the brain silhouette never gets a
+        // bright halo overlay — TRIBE V2's brain reads against pure black.
+        atmosphereMat.opacity = Math.min(0.06, atmosphereMat.opacity + peak * 0.02)
       }
       updateAgentEdges()
       updateRegionEdges(levels)
@@ -718,7 +768,19 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   position: relative;
-  background: #050510;
+  background: #000000;
+}
+.scene-container::after {
+  /* Warm bottom glow — matches the lit-from-below feel of the TRIBE V2 hero */
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgba(255, 160, 90, 0.12) 0%,
+    transparent 55%
+  );
 }
 
 .hud {

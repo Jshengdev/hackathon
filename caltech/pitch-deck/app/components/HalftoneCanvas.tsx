@@ -179,16 +179,21 @@ function makeSketch(variant: HalftoneVariant, seed: number, canvasSize: number, 
     // ===== Shape sources =====
 
     function drawPortrait(g: ReturnType<typeof p.createGraphics>, w: number, h: number) {
+      // p5 typings under-declare bezierVertex (claims 2-5 args, real signature is 6 for 2D).
+      // Cast to any for the curve calls only.
+      const gAny = g as unknown as {
+        bezierVertex: (...args: number[]) => void;
+      };
       g.fill(0, 220);
       // head
       g.ellipse(w / 2, h * 0.45, w * 0.5, h * 0.62);
       // hair
       g.beginShape();
       g.vertex(w * 0.27, h * 0.4);
-      g.bezierVertex(w * 0.27, h * 0.16, w * 0.73, h * 0.16, w * 0.73, h * 0.4);
-      g.bezierVertex(w * 0.78, h * 0.55, w * 0.7, h * 0.65, w * 0.65, h * 0.66);
-      g.bezierVertex(w * 0.62, h * 0.5, w * 0.38, h * 0.5, w * 0.35, h * 0.66);
-      g.bezierVertex(w * 0.3, h * 0.65, w * 0.22, h * 0.55, w * 0.27, h * 0.4);
+      gAny.bezierVertex(w * 0.27, h * 0.16, w * 0.73, h * 0.16, w * 0.73, h * 0.4);
+      gAny.bezierVertex(w * 0.78, h * 0.55, w * 0.7, h * 0.65, w * 0.65, h * 0.66);
+      gAny.bezierVertex(w * 0.62, h * 0.5, w * 0.38, h * 0.5, w * 0.35, h * 0.66);
+      gAny.bezierVertex(w * 0.3, h * 0.65, w * 0.22, h * 0.55, w * 0.27, h * 0.4);
       g.endShape(g.CLOSE);
       // shoulders
       g.fill(0, 180);

@@ -5,6 +5,9 @@
 </template>
 
 <script setup>
+// `persona` prop is kept for backward-compat with callers (EmpathyDocumentStage
+// passes either 'workplace' or 'consumer') but the styling no longer branches
+// on it. amy is a single brand: one cream theme with blueberry accent.
 defineProps({
   persona: {
     type: String,
@@ -17,22 +20,19 @@ defineProps({
 <style scoped>
 .persona-shell {
   min-height: 100vh;
-  background: #050510;
-  color: #d0d8ee;
+  background: var(--warm-cream);
+  color: var(--warm-charcoal);
+  font-family: var(--font-sans), 'DM Sans', system-ui, sans-serif;
+  /* Single Amy theme — children inherit blueberry accent + display-font serif */
+  --accent: var(--blueberry-800);
+  --accent-soft: var(--blueberry-300);
+  --serif: var(--font-display), 'Roboto', system-ui, sans-serif;
 }
-.persona-workplace {
-  --accent:      #5b6b8a;
-  --accent-soft: #2a3a52;
-  --serif:       'Crimson Pro', Georgia, serif;
-}
-.persona-consumer {
-  --accent:      #bb8fce;
-  --accent-soft: #4a3458;
-  --serif:       'Crimson Pro', Georgia, serif;
-}
+/* Persona variants are intentionally no-ops — kept as empty rule blocks so the
+   class hooks still exist for future per-mode tweaks if we ever bring them back. */
+.persona-workplace,
+.persona-consumer,
 .persona-pavilion {
-  --accent:      #4ecdc4;
-  --accent-soft: #1a4a48;
-  --serif:       'Inter', system-ui, sans-serif;
+  /* no-op — single Amy theme */
 }
 </style>

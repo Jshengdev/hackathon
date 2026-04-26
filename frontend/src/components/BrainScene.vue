@@ -1192,7 +1192,7 @@ onBeforeUnmount(() => {
   pointer-events: none;
   background: radial-gradient(
     ellipse at 50% 100%,
-    rgba(255, 160, 90, 0.12) 0%,
+    rgba(245, 161, 66, 0.10) 0%,
     transparent 55%
   );
 }
@@ -1203,13 +1203,16 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 .top-region {
-  font-size: 12px; color: #ffcc66;
-  text-transform: uppercase; letter-spacing: 1.5px;
-  text-shadow: 0 0 6px rgba(255, 204, 102, 0.4);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--activation-hot);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 6px rgba(245, 161, 66, 0.4);
 }
 .frame-counter {
+  font-family: var(--font-mono);
   font-size: 11px;
-  color: #556688;
-  font-family: 'JetBrains Mono', monospace;
+  color: var(--warm-silver);
 }
 </style>

@@ -103,11 +103,51 @@ function onRevealDone() {
 }
 </script>
 
+<style>
+:root {
+  /* Color tokens — Clay-inspired */
+  --clay-black: #000000;
+  --pure-white: #ffffff;
+  --warm-cream: #faf9f7;
+  --warm-silver: #9f9b93;
+  --warm-charcoal: #55534e;
+  --border-light: #eee9df;
+  --oat-border: #dad4c8;
+  --blueberry-800: #01418d;
+  --blueberry-600: #0a5dbf;
+  --blueberry-300: #6da6e8;
+  --red: #fc7981;
+  --red-soft: #ff9aa1;
+  --activation-cool: var(--blueberry-800);
+  --activation-warm: #c44569;
+  --activation-hot: #f5a142;
+
+  /* Radii — Clay scale */
+  --r-sharp: 4px;
+  --r-standard: 8px;
+  --r-card: 12px;
+  --r-feature: 24px;
+  --r-section: 40px;
+  --r-pill: 9999px;
+
+  /* Shadow — Clay signature multi-layer */
+  --elev-1:
+    rgba(0, 0, 0, 0.10) 0px 1px 1px,
+    rgba(0, 0, 0, 0.04) 0px -1px 1px inset,
+    rgba(0, 0, 0, 0.05) 0px -0.5px 1px;
+
+  /* Fonts (loaded via Google Fonts in index.html) */
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-display: 'Roboto', sans-serif;
+}
+</style>
+
 <style scoped>
 .app-root {
   width: 100vw; height: 100vh;
   position: relative;
-  background: #050510;
+  background: var(--warm-cream);
   overflow: hidden;
 }
 .app-root.stage-empathy-document {
@@ -121,21 +161,21 @@ function onRevealDone() {
   position: fixed;
   bottom: 14px; left: 14px;
   display: flex; align-items: center; gap: 6px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
-  color: #556688;
+  color: var(--warm-silver);
   z-index: 200;
   pointer-events: none;
 }
 .dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: #1f2a4a;
+  background: var(--oat-border);
   transition: background 0.3s ease, box-shadow 0.3s ease;
 }
-.dot.past   { background: #2a3a6a; }
+.dot.past   { background: var(--blueberry-300); }
 .dot.active {
-  background: #4ecdc4;
-  box-shadow: 0 0 6px #4ecdc4;
+  background: var(--blueberry-800);
+  box-shadow: 0 0 6px var(--blueberry-800);
 }
 .stage-name {
   margin-left: 6px;

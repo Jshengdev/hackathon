@@ -27,12 +27,13 @@
     <div class="hero">
       <div class="brand-line">
         <span class="brand-dot" />
-        TRIBE&nbsp;V2 ·  brain-swarm demo
+        amy · short for amygdala · the empathy layer
       </div>
-      <h1>See what the brain is doing<br/>while it watches.</h1>
+      <h1>see what your brain<br/>is feeling.</h1>
       <p class="sub">
-        Drop in a video clip and we'll walk you through what each cortical
-        network is seeing, second by second.
+        amy reads each cortical network second-by-second. drop in a 30s clip and
+        watch the brain light up — grounded in real neural signal, not invented
+        emotion.
       </p>
 
       <div
@@ -125,26 +126,26 @@ function onFileChange(ev) {
 .landing {
   position: relative;
   width: 100vw; height: 100vh;
-  background: #050510;
+  background: var(--warm-cream);
   display: flex; align-items: center; justify-content: center;
   overflow: hidden;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: #d0d8ee;
+  font-family: var(--font-sans), 'DM Sans', system-ui, sans-serif;
+  color: var(--warm-charcoal);
 }
 
 .bg-grid {
   position: absolute; inset: 0;
   background-image:
-    linear-gradient(rgba(120, 160, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 160, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
   background-size: 48px 48px;
   pointer-events: none;
   mask-image: radial-gradient(circle at center, #000 30%, transparent 75%);
 }
 .bg-glow {
   position: absolute; inset: 0;
-  background: radial-gradient(circle at 30% 40%, rgba(78, 205, 196, 0.10), transparent 50%),
-              radial-gradient(circle at 70% 60%, rgba(187, 143, 206, 0.10), transparent 50%);
+  background: radial-gradient(circle at 30% 40%, rgba(1, 65, 141, 0.05), transparent 50%),
+              radial-gradient(circle at 70% 60%, rgba(1, 65, 141, 0.04), transparent 50%);
   pointer-events: none;
 }
 
@@ -166,11 +167,11 @@ function onFileChange(ev) {
   transform-box: fill-box;
 }
 .landing-orbital--outer {
-  stroke: rgba(180, 200, 255, 0.10);
+  stroke: rgba(1, 65, 141, 0.10);
   animation: orbit-spin 60s linear infinite;
 }
 .landing-orbital--inner {
-  stroke: rgba(180, 200, 255, 0.06);
+  stroke: rgba(1, 65, 141, 0.06);
   animation: orbit-spin 35s linear infinite reverse;
 }
 @keyframes orbit-spin {
@@ -182,8 +183,8 @@ function onFileChange(ev) {
 .landing-vignette {
   position: absolute; inset: 0;
   background: radial-gradient(circle at 50% 50%,
-    rgba(130, 224, 170, 0.08) 0%,
-    rgba(130, 224, 170, 0) 55%);
+    rgba(1, 65, 141, 0.05) 0%,
+    rgba(1, 65, 141, 0) 55%);
   pointer-events: none;
 }
 
@@ -195,17 +196,18 @@ function onFileChange(ev) {
 }
 
 .brand-line {
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 11px; letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: #6677aa;
+  color: var(--warm-charcoal);
   display: inline-flex; align-items: center; gap: 8px;
   margin-bottom: 24px;
   font-weight: 500;
 }
 .brand-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: #4ecdc4;
-  box-shadow: 0 0 8px #4ecdc4;
+  background: var(--blueberry-800);
+  box-shadow: 0 0 6px rgba(1, 65, 141, 0.40);
   animation: pulse 2s ease-in-out infinite;
 }
 @keyframes pulse {
@@ -214,37 +216,47 @@ function onFileChange(ev) {
 }
 
 h1 {
+  font-family: var(--font-display), 'Roboto', system-ui, sans-serif;
   font-size: 44px;
   font-weight: 600;
   line-height: 1.1;
-  color: #f0f4ff;
-  letter-spacing: -1px;
+  color: var(--clay-black);
+  letter-spacing: -0.02em;
   margin-bottom: 18px;
 }
 
 .sub {
+  font-family: var(--font-sans), 'DM Sans', system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.55;
-  color: #aab4cc;
+  color: var(--warm-charcoal);
   margin-bottom: 36px;
 }
 
 .dropzone {
-  border: 1.5px dashed #2a3a6a;
-  border-radius: 10px;
+  border: 2px dashed var(--oat-border);
+  border-radius: var(--r-card);
   padding: 38px 24px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: rgba(10, 10, 28, 0.5);
+  background: var(--pure-white);
+  box-shadow: var(--elev-1);
 }
 .dropzone:hover, .dropzone.is-dragging {
-  border-color: #4ecdc4;
-  background: rgba(20, 28, 48, 0.7);
+  border-color: var(--blueberry-800);
+  background: rgba(1, 65, 141, 0.04);
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(78, 205, 196, 0.12);
+  box-shadow: var(--elev-1), 0 8px 24px rgba(1, 65, 141, 0.10);
 }
-.dropzone.is-loading { cursor: wait; border-color: #f7dc6f; }
-.dropzone.has-error  { border-color: #ff6b6b; }
+.dropzone.is-loading {
+  cursor: wait;
+  border-color: var(--blueberry-600);
+  background: rgba(10, 93, 191, 0.05);
+}
+.dropzone.has-error {
+  border-color: var(--red);
+  background: rgba(252, 121, 129, 0.05);
+}
 
 .dz-content {
   display: flex; flex-direction: column;
@@ -252,32 +264,34 @@ h1 {
 }
 .dz-icon {
   width: 44px; height: 44px;
-  border: 1.5px solid #4ecdc4;
+  border: 1.5px solid var(--blueberry-800);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; color: #4ecdc4;
+  font-size: 18px; color: var(--blueberry-800);
   margin-bottom: 8px;
 }
-.dz-icon.error { border-color: #ff6b6b; color: #ff6b6b; }
+.dz-icon.error { border-color: var(--red); color: var(--red); }
 
 .dz-title {
+  font-family: var(--font-sans), 'DM Sans', system-ui, sans-serif;
   font-size: 15px; font-weight: 500;
-  color: #f0f4ff;
+  color: var(--clay-black);
 }
 .dz-sub {
-  font-size: 12px; color: #6677aa;
+  font-family: var(--font-mono), 'DM Mono', monospace;
+  font-size: 12px; color: var(--warm-silver);
 }
 .dz-sub code {
-  font-family: 'JetBrains Mono', monospace;
-  background: rgba(78, 205, 196, 0.08);
+  font-family: var(--font-mono), 'DM Mono', monospace;
+  background: rgba(1, 65, 141, 0.08);
   padding: 1px 6px; border-radius: 3px;
-  color: #4ecdc4;
+  color: var(--blueberry-800);
 }
 
 .spinner {
   width: 32px; height: 32px;
-  border: 2.5px solid rgba(247, 220, 111, 0.15);
-  border-top-color: #f7dc6f;
+  border: 2.5px solid rgba(1, 65, 141, 0.15);
+  border-top-color: var(--blueberry-600);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-bottom: 4px;
@@ -286,17 +300,17 @@ h1 {
 
 .hint {
   margin-top: 20px;
-  font-size: 11px; color: #556688;
+  font-size: 11px; color: var(--warm-silver);
   display: flex; align-items: center; gap: 8px; justify-content: center;
 }
 .hint .key {
-  background: #1a1a2a; padding: 2px 7px;
-  border-radius: 3px; border: 1px solid #2a3a6a;
+  background: var(--pure-white); padding: 2px 7px;
+  border-radius: 3px; border: 1px solid var(--oat-border);
   text-transform: uppercase; letter-spacing: 1px;
-  color: #99a3bb; font-size: 9.5px;
+  color: var(--warm-charcoal); font-size: 9.5px;
 }
 .hint code {
-  font-family: 'JetBrains Mono', monospace;
-  color: #aab4cc;
+  font-family: var(--font-mono), 'DM Mono', monospace;
+  color: var(--warm-charcoal);
 }
 </style>

@@ -54,7 +54,7 @@ import { computed } from 'vue'
 const props = defineProps({
   variant:     { type: String, default: 'without' },  // 'without' | 'with'
   data:        { type: Object, default: () => ({}) },
-  accentColor: { type: String, default: '#82e0aa' },
+  accentColor: { type: String, default: '#f5a142' },
   loopMeta:    {
     type: Object,
     default: () => ({ rounds: 8, finalScore: 0.84 }),
@@ -75,7 +75,7 @@ const glowStyle = computed(() => ({
 }))
 
 const brandDotStyle = computed(() => {
-  const color = props.variant === 'with' ? props.accentColor : '#6677aa'
+  const color = props.variant === 'with' ? props.accentColor : '#9f9b93'
   return {
     background: color,
     boxShadow: `0 0 8px ${color}`,
@@ -91,14 +91,14 @@ const hasContent = computed(() => {
 <style scoped>
 .panel {
   height: 100%;
-  background: rgba(10, 10, 25, 0.92);
-  border: 1px solid #2a3a6a;
-  border-radius: 6px;
+  background: rgba(10, 10, 25, 0.6);
+  border: 1px solid rgba(218, 212, 200, 0.15);
+  border-radius: var(--r-card);
   padding: 12px 16px;
   display: flex; flex-direction: column;
   overflow: hidden;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: #d0d8ee;
+  font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+  color: var(--oat-border);
   transition: box-shadow 0.4s ease, border-color 0.4s ease;
 }
 .panel.with-tribe {
@@ -113,8 +113,8 @@ const hasContent = computed(() => {
 
 .brand-dot {
   width: 7px; height: 7px; border-radius: 50%;
-  background: #6677aa;
-  box-shadow: 0 0 8px #6677aa;
+  background: var(--warm-silver);
+  box-shadow: 0 0 8px var(--warm-silver);
   animation: pulse 1.4s ease-in-out infinite;
   flex-shrink: 0;
 }
@@ -124,53 +124,55 @@ const hasContent = computed(() => {
 }
 
 .badge {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 10px; font-weight: 600;
   letter-spacing: 1.4px;
   text-transform: lowercase;
   padding: 3px 8px;
-  border-radius: 3px;
+  border-radius: var(--r-pill);
 }
 .badge.without {
-  background: #2a2a3a; color: #99a3bb;
-  border: 1px solid #3a3a55;
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--warm-silver);
+  border: 1px solid rgba(218, 212, 200, 0.15);
 }
 .badge.with {
-  background: #1a3a2a; color: #82e0aa;
-  border: 1px solid #2e6a4a;
-  box-shadow: 0 0 6px rgba(130, 224, 170, 0.4);
+  background: rgba(245, 161, 66, 0.12);
+  color: var(--activation-hot);
+  border: 1px solid rgba(245, 161, 66, 0.4);
+  box-shadow: 0 0 6px rgba(245, 161, 66, 0.3);
 }
 
 .title {
   font-size: 12px;
-  color: #a0aac0;
+  color: var(--oat-border);
   letter-spacing: 0.6px;
 }
 
 .round-badge {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 10px;
   letter-spacing: 1px;
   text-transform: uppercase;
   padding: 2px 6px;
   border: 1px solid;
-  border-radius: 3px;
-  background: rgba(130, 224, 170, 0.06);
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.25);
   flex-shrink: 0;
 }
 
 .header-meta {
   margin-left: auto;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 10px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #6677aa;
+  color: var(--warm-silver);
   flex-shrink: 0;
 }
 
 .panel-divider {
-  border-top: 1px dashed rgba(180, 200, 255, 0.18);
+  border-top: 1px solid rgba(218, 212, 200, 0.10);
   margin-bottom: 8px;
   flex-shrink: 0;
 }
@@ -182,16 +184,20 @@ const hasContent = computed(() => {
   min-height: 0;
 }
 .panel-body::-webkit-scrollbar { width: 6px; }
-.panel-body::-webkit-scrollbar-thumb { background: #2a3a6a; border-radius: 3px; }
+.panel-body::-webkit-scrollbar-thumb {
+  background: rgba(218, 212, 200, 0.20);
+  border-radius: 3px;
+}
 
 section { margin-bottom: 8px; }
 section:last-child { margin-bottom: 0; }
 
 h4 {
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1.4px;
-  color: #6677aa;
+  color: var(--warm-silver);
   margin-bottom: 4px;
   font-weight: 600;
 }
@@ -199,10 +205,12 @@ h4 {
 p {
   font-size: 12.5px;
   line-height: 1.5;
-  color: #d0d8ee;
+  color: var(--oat-border);
 }
 
 .empty {
-  font-size: 12px; color: #557; font-style: italic;
+  font-size: 12px;
+  color: var(--warm-silver);
+  font-style: italic;
 }
 </style>

@@ -26,7 +26,7 @@
       <button class="next-btn" @click="$emit('reveal-done')">view full document →</button>
     </div>
 
-    <div v-if="error" class="err">{{ error }} <button @click="$emit('reveal-done')">skip →</button></div>
+    <div v-if="error" class="err">{{ error }} <button class="skip-btn" @click="$emit('reveal-done')">skip →</button></div>
   </div>
 </template>
 
@@ -107,21 +107,23 @@ onBeforeUnmount(() => { if (timer) clearTimeout(timer) })
 <style scoped>
 .reveal {
   width: 100vw; height: 100vh;
-  background: #050510;
+  background: var(--warm-cream);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   gap: 24px;
   padding: 0 10vw;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: #d0d8ee;
+  font-family: var(--font-sans), 'DM Sans', system-ui, sans-serif;
+  color: var(--warm-charcoal);
   overflow: hidden;
 }
 .title {
+  font-family: var(--font-display), 'Roboto', system-ui, sans-serif;
   font-size: 28px; font-weight: 600;
-  color: #f0f4ff; letter-spacing: -0.5px;
+  color: var(--clay-black); letter-spacing: -0.02em;
 }
 .subtitle {
-  font-size: 13px; color: #6677aa;
+  font-family: var(--font-mono), 'DM Mono', monospace;
+  font-size: 13px; color: var(--warm-silver);
   letter-spacing: 1.4px; text-transform: uppercase;
   margin-bottom: 18px;
 }
@@ -130,10 +132,11 @@ onBeforeUnmount(() => { if (timer) clearTimeout(timer) })
 }
 .excerpt {
   margin-top: 28px;
+  font-family: var(--font-display), 'Roboto', system-ui, sans-serif;
   font-style: italic;
   font-size: 16px;
   line-height: 1.7;
-  color: #aab4cc;
+  color: var(--warm-charcoal);
   max-width: 720px;
   text-align: center;
 }
@@ -142,46 +145,55 @@ onBeforeUnmount(() => { if (timer) clearTimeout(timer) })
   display: flex; flex-direction: column; align-items: center; gap: 14px;
 }
 .final-score {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 20px;
-  color: #4ecdc4;
+  color: var(--blueberry-800);
   letter-spacing: 2px;
 }
 .final-score.failed {
-  color: #ff6b6b;
+  color: var(--red);
   font-size: 14px;
   letter-spacing: 1.6px;
-  border: 1px solid #6a2a2a;
+  border: 1px solid var(--red-soft);
   padding: 6px 14px;
-  border-radius: 4px;
+  border-radius: var(--r-standard);
 }
 .next-btn {
-  background: rgba(10, 10, 28, 0.92);
-  color: #4ecdc4;
-  border: 1px solid #2e6a4a;
-  padding: 10px 22px;
-  border-radius: 5px;
+  background: var(--clay-black);
+  color: var(--pure-white);
+  border: none;
+  padding: 12px 28px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-sans), 'DM Sans', system-ui, sans-serif;
   font-size: 12px; letter-spacing: 1.5px;
   text-transform: uppercase; font-weight: 500;
   cursor: pointer;
-  transition: all 0.18s ease;
-  font-family: inherit;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 .next-btn:hover {
-  background: rgba(20, 50, 40, 0.92);
-  box-shadow: 0 0 18px rgba(78, 205, 196, 0.45);
+  transform: rotateZ(-4deg) translateY(-2px);
+  box-shadow: var(--clay-black) -7px 7px;
 }
 .err {
-  color: #ff8866;
+  font-family: var(--font-mono), 'DM Mono', monospace;
+  color: var(--red);
   font-size: 12px;
   display: flex; gap: 12px; align-items: center;
 }
-.err button {
-  background: transparent; color: #4ecdc4;
-  border: 1px solid #2e6a4a; padding: 6px 14px;
-  font-size: 11px; cursor: pointer;
-  border-radius: 4px;
-  font-family: inherit;
+.skip-btn {
+  background: var(--clay-black);
+  color: var(--pure-white);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-sans), 'DM Sans', system-ui, sans-serif;
+  font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.skip-btn:hover {
+  transform: rotateZ(-4deg) translateY(-2px);
+  box-shadow: var(--clay-black) -5px 5px;
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }

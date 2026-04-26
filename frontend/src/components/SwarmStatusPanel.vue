@@ -97,7 +97,7 @@ function pretty(net) {
 }
 
 function accent(net) {
-  return NETWORK_COLORS[net] || '#aaaaaa'
+  return NETWORK_COLORS[net] || '#9f9b93'
 }
 
 function cardStyle(net) {
@@ -132,12 +132,12 @@ function confLevel(net) {
 
 <style scoped>
 .swarm-status {
-  background: rgba(10, 10, 25, 0.92);
-  border: 1px solid #2a3a6a;
-  border-radius: 8px;
+  background: rgba(10, 10, 25, 0.6);
+  border: 1px solid rgba(218, 212, 200, 0.15);
+  border-radius: var(--r-card);
   padding: 10px 14px 12px;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: #d0d8ee;
+  font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+  color: var(--oat-border);
   display: flex; flex-direction: column;
   gap: 10px;
 }
@@ -147,8 +147,8 @@ function confLevel(net) {
 }
 .brand-dot {
   width: 7px; height: 7px; border-radius: 50%;
-  background: #82e0aa;
-  box-shadow: 0 0 8px #82e0aa;
+  background: var(--activation-hot);
+  box-shadow: 0 0 8px var(--activation-hot);
   animation: brand-pulse 1.4s ease-in-out infinite;
 }
 @keyframes brand-pulse {
@@ -156,22 +156,23 @@ function confLevel(net) {
   50% { opacity: 0.4; }
 }
 .swarm-eyebrow {
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 11px;
   letter-spacing: 1.4px;
   text-transform: uppercase;
-  color: #99a3bb;
+  color: var(--oat-border);
   font-weight: 600;
 }
 .swarm-meta {
   margin-left: auto;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 11px;
-  color: #82e0aa;
+  color: var(--activation-hot);
   letter-spacing: 0.8px;
   display: flex; align-items: center; gap: 6px;
 }
 .swarm-meta-label {
-  color: #6677aa;
+  color: var(--warm-silver);
   font-size: 9.5px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -188,9 +189,9 @@ function confLevel(net) {
 }
 
 .agent-card {
-  background: rgba(20, 20, 36, 0.6);
-  border: 1px solid #1f2a4a;
-  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(218, 212, 200, 0.12);
+  border-radius: var(--r-standard);
   padding: 8px 10px;
   min-height: 78px;
   display: flex; flex-direction: column; gap: 4px;
@@ -204,10 +205,10 @@ function confLevel(net) {
 }
 @keyframes card-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 var(--accent, rgba(180, 200, 255, 0.4));
+    box-shadow: 0 0 0 0 var(--accent, rgba(218, 212, 200, 0.4));
   }
   50% {
-    box-shadow: 0 0 12px 0 var(--accent, rgba(180, 200, 255, 0.6));
+    box-shadow: 0 0 12px 0 var(--accent, rgba(218, 212, 200, 0.6));
   }
 }
 
@@ -220,10 +221,11 @@ function confLevel(net) {
   box-shadow: 0 0 6px currentColor;
 }
 .agent-name {
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #d0d8ee;
+  color: var(--pure-white);
   font-weight: 500;
   flex: 1;
   min-width: 0;
@@ -232,20 +234,21 @@ function confLevel(net) {
   text-overflow: ellipsis;
 }
 .agent-state-tag {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  color: #6677aa;
+  color: var(--warm-silver);
   flex-shrink: 0;
 }
-.agent-card.done .agent-state-tag { color: #82e0aa; }
+.agent-card.done .agent-state-tag { color: var(--activation-hot); }
 
 .agent-text {
   margin: 0;
+  font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
   font-size: 11.5px;
   line-height: 1.35;
-  color: #c5cce0;
+  color: var(--oat-border);
   /* clamp to 3 lines so all 7 cards stay roughly equal height */
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -256,7 +259,7 @@ function confLevel(net) {
   margin: 0;
   font-size: 10.5px;
   font-style: italic;
-  color: #4d597a;
+  color: var(--warm-silver);
 }
 
 .agent-shimmer {
@@ -268,9 +271,9 @@ function confLevel(net) {
   border-radius: 3px;
   background: linear-gradient(
     90deg,
-    rgba(180, 200, 255, 0.06) 0%,
-    rgba(180, 200, 255, 0.22) 50%,
-    rgba(180, 200, 255, 0.06) 100%
+    rgba(218, 212, 200, 0.06) 0%,
+    rgba(218, 212, 200, 0.22) 50%,
+    rgba(218, 212, 200, 0.06) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
@@ -286,16 +289,16 @@ function confLevel(net) {
   display: flex; align-items: center; gap: 6px;
 }
 .agent-conf-badge {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 9px;
   letter-spacing: 1px;
   text-transform: uppercase;
   padding: 1px 5px;
   border: 1px solid;
-  border-radius: 3px;
+  border-radius: var(--r-pill);
   background: rgba(0, 0, 0, 0.25);
 }
-.conf-high   { color: #82e0aa; }
-.conf-medium { color: #f7dc6f; }
-.conf-low    { color: #ff9aa1; }
+.conf-high   { color: var(--activation-hot); }
+.conf-medium { color: var(--blueberry-300); }
+.conf-low    { color: var(--warm-silver); }
 </style>

@@ -36,15 +36,15 @@
           :progress="visionProgress"
           :done="visionDone"
           :logs="visionLogs"
-          accent="#bb8fce"
+          accent="#0a5dbf"
         />
         <ProgressStream
-          label="TRIBE V2 neural prediction"
+          label="amy neural prediction"
           subtitle="prerendered · cached"
           :progress="tribeProgress"
           :done="tribeDone"
           :logs="tribeLogs"
-          accent="#4ecdc4"
+          accent="#01418d"
         />
         <ProgressStream
           :label="`K2 swarm · ${swarmDoneCount}/7 specialists`"
@@ -52,7 +52,7 @@
           :progress="warmupProgress"
           :done="warmupReady"
           :logs="warmupLogs"
-          accent="#f9a000"
+          accent="#f5a142"
         />
       </div>
 
@@ -120,7 +120,7 @@ const VISION_LOGS = [
   'Synthesizing narrative…',
 ]
 const TRIBE_LOGS = [
-  'Loading TRIBE predictions…',
+  'Loading neural predictions…',
   'Aligning to fsaverage5…',
   'Aggregating to Yeo7…',
   'Normalizing per-network…',
@@ -354,7 +354,7 @@ const ProgressStream = defineComponent({
     progress: { type: Number, default: 0 },
     done:     { type: Boolean, default: false },
     logs:     { type: Array, default: () => [] },
-    accent:   { type: String, default: '#4ecdc4' },
+    accent:   { type: String, default: '#01418d' },
   },
   setup(p) {
     // Tick-rail thresholds: 0.2 / 0.4 / 0.6 / 0.8 / 1.0
@@ -384,7 +384,7 @@ const ProgressStream = defineComponent({
           style: {
             width: `${Math.round(p.progress * 100)}%`,
             background: p.accent,
-            boxShadow: `0 0 10px ${p.accent}88`,
+            boxShadow: `0 0 10px ${p.accent}55`,
           },
         }),
       ]),
@@ -400,17 +400,17 @@ const ProgressStream = defineComponent({
 .loading-stage {
   position: relative;
   width: 100vw; height: 100vh;
-  background: #050510;
-  color: #d0d8ee;
+  background: var(--warm-cream);
+  color: var(--warm-charcoal);
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans), 'DM Sans', system-ui, sans-serif;
   overflow: hidden;
 }
 .bg-grid {
   position: absolute; inset: 0;
   background-image:
-    linear-gradient(rgba(120, 160, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 160, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(circle at center, #000 30%, transparent 75%);
   pointer-events: none;
@@ -434,11 +434,11 @@ const ProgressStream = defineComponent({
   transform-box: fill-box;
 }
 .loading-orbital--outer {
-  stroke: rgba(180, 200, 255, 0.10);
+  stroke: rgba(1, 65, 141, 0.10);
   animation: orbit-spin 60s linear infinite;
 }
 .loading-orbital--inner {
-  stroke: rgba(180, 200, 255, 0.06);
+  stroke: rgba(1, 65, 141, 0.06);
   animation: orbit-spin 35s linear infinite reverse;
 }
 @keyframes orbit-spin {
@@ -450,8 +450,8 @@ const ProgressStream = defineComponent({
 .loading-vignette {
   position: absolute; inset: 0;
   background: radial-gradient(circle at 50% 50%,
-    rgba(130, 224, 170, 0.08) 0%,
-    rgba(130, 224, 170, 0) 55%);
+    rgba(1, 65, 141, 0.05) 0%,
+    rgba(1, 65, 141, 0) 55%);
   pointer-events: none;
 }
 
@@ -464,19 +464,20 @@ const ProgressStream = defineComponent({
 .header {
   display: flex; align-items: center; gap: 10px;
   margin-bottom: 36px;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 12px; letter-spacing: 1.6px;
   text-transform: uppercase;
-  color: #99a3bb;
+  color: var(--warm-charcoal);
 }
 .brand-dot {
   width: 8px; height: 8px; border-radius: 50%;
-  background: #f7dc6f;
-  box-shadow: 0 0 8px #f7dc6f;
+  background: var(--blueberry-600);
+  box-shadow: 0 0 6px rgba(10, 93, 191, 0.45);
   animation: pulse 1.4s ease-in-out infinite;
 }
 .brand-dot.done {
-  background: #82e0aa;
-  box-shadow: 0 0 8px #82e0aa;
+  background: var(--blueberry-800);
+  box-shadow: 0 0 6px rgba(1, 65, 141, 0.50);
   animation: none;
 }
 @keyframes pulse {
@@ -484,8 +485,8 @@ const ProgressStream = defineComponent({
   50% { opacity: 0.35; }
 }
 .header-text code {
-  font-family: 'JetBrains Mono', monospace;
-  color: #4ecdc4;
+  font-family: var(--font-mono), 'DM Mono', monospace;
+  color: var(--blueberry-800);
   letter-spacing: normal;
   text-transform: lowercase;
   margin-left: 4px;
@@ -497,14 +498,15 @@ const ProgressStream = defineComponent({
 }
 
 :deep(.stream) {
-  background: rgba(10, 10, 25, 0.6);
-  border: 1px solid #1f2a4a;
-  border-radius: 6px;
+  background: var(--pure-white);
+  border: 1px solid var(--oat-border);
+  border-radius: var(--r-card);
   padding: 16px 20px;
   transition: border-color 0.3s ease;
+  box-shadow: var(--elev-1);
 }
 :deep(.stream.is-done) {
-  border-color: #2e6a4a;
+  border-color: var(--blueberry-300);
 }
 
 :deep(.stream-head) {
@@ -512,12 +514,14 @@ const ProgressStream = defineComponent({
   margin-bottom: 10px;
 }
 :deep(.stream-label) {
+  font-family: var(--font-sans), 'DM Sans', system-ui, sans-serif;
   font-size: 13px; font-weight: 500;
-  color: #e8ecf8;
+  color: var(--clay-black);
   letter-spacing: 0.4px;
 }
 :deep(.stream-sub) {
-  font-size: 11px; color: #6677aa;
+  font-family: var(--font-mono), 'DM Mono', monospace;
+  font-size: 11px; color: var(--warm-silver);
   text-transform: uppercase; letter-spacing: 1.2px;
 }
 :deep(.stream-tick-rail) {
@@ -527,20 +531,20 @@ const ProgressStream = defineComponent({
 }
 :deep(.stream-tick) {
   width: 4px; height: 4px; border-radius: 50%;
-  background: rgba(180, 200, 255, 0.18);
+  background: var(--oat-border);
   transition: background 0.25s ease, box-shadow 0.25s ease;
 }
 :deep(.stream-tick.is-filled) {
   /* color/box-shadow set inline via accent */
 }
 :deep(.stream-pct) {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 12px; font-weight: 500;
   min-width: 36px; text-align: right;
 }
 
 :deep(.bar) {
-  height: 4px; background: rgba(255, 255, 255, 0.06);
+  height: 4px; background: var(--border-light);
   border-radius: 2px; overflow: hidden;
   margin-bottom: 12px;
 }
@@ -551,9 +555,9 @@ const ProgressStream = defineComponent({
 }
 
 :deep(.logs) {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 11px;
-  color: #6677aa;
+  color: var(--warm-silver);
   min-height: 60px;
   display: flex; flex-direction: column; gap: 3px;
 }
@@ -564,13 +568,14 @@ const ProgressStream = defineComponent({
 
 .status-line {
   text-align: center;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 12px;
-  color: #6677aa;
+  color: var(--warm-charcoal);
   letter-spacing: 1px;
   text-transform: uppercase;
   transition: color 0.4s ease;
 }
-.status-line.done { color: #82e0aa; }
+.status-line.done { color: var(--blueberry-800); }
 
 /* Overall pipeline phase-rail: 3 dots labeled uploading / analyzing / syncing */
 .loading-phase-rail {
@@ -580,31 +585,31 @@ const ProgressStream = defineComponent({
 }
 .loading-phase-cell {
   display: flex; align-items: center; gap: 8px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 10px; letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: #556688;
+  color: var(--warm-silver);
   transition: color 0.35s ease;
 }
 .loading-phase-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: rgba(180, 200, 255, 0.18);
+  background: var(--oat-border);
   transition: background 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease;
 }
 .loading-phase-cell.past .loading-phase-dot {
-  background: color-mix(in srgb, #82e0aa 55%, transparent);
+  background: var(--blueberry-300);
 }
 .loading-phase-cell.past .loading-phase-label {
-  color: #99a3bb;
+  color: var(--warm-charcoal);
 }
 .loading-phase-cell.active .loading-phase-dot {
-  background: #82e0aa;
-  box-shadow: 0 0 6px #82e0aa;
+  background: var(--blueberry-800);
+  box-shadow: 0 0 6px rgba(1, 65, 141, 0.45);
   transform: scale(1.4);
   animation: phase-pulse 1.6s ease-in-out infinite;
 }
 .loading-phase-cell.active .loading-phase-label {
-  color: #82e0aa;
+  color: var(--blueberry-800);
 }
 @keyframes phase-pulse {
   0%, 100% { opacity: 1; }

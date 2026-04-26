@@ -65,7 +65,7 @@ const props = defineProps({
   t:          { type: Number,  default: null },
   // Real K2 call latency in seconds. Null = unknown → footer shows just `t=Ns`.
   runtimeSec: { type: Number,  default: null },
-  accentColor:{ type: String,  default: '#aaaaaa' },
+  accentColor:{ type: String,  default: '#9f9b93' },
 })
 
 defineEmits(['close'])
@@ -114,22 +114,25 @@ const runtimeLabel = computed(() => {
 
 .popup-card {
   position: relative;
-  background: rgba(10, 10, 28, 0.96);
-  border: 1px solid #2a3a6a;
-  border-radius: 8px;
+  background: rgba(10, 10, 28, 0.92);
+  border: 1px solid rgba(218, 212, 200, 0.15);
+  border-radius: var(--r-card);
   padding: 20px 24px 16px;
   min-width: 420px;
   max-width: 540px;
-  color: #d0d8ee;
-  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--oat-border);
+  font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+  backdrop-filter: blur(8px);
 }
 
 .close-btn {
   position: absolute; top: 8px; right: 12px;
-  background: transparent; border: none; color: #667;
+  background: transparent; border: none;
+  color: var(--warm-silver);
   font-size: 22px; cursor: pointer; line-height: 1;
+  transition: color 0.18s ease;
 }
-.close-btn:hover { color: #ddd; }
+.close-btn:hover { color: var(--pure-white); }
 
 /* 1. Eyebrow ------------------------------------------------------------ */
 .popup-eyebrow {
@@ -148,32 +151,36 @@ const runtimeLabel = computed(() => {
   50%      { opacity: 0.4; }
 }
 .net-name {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 11px;
   letter-spacing: 1.4px;
   text-transform: lowercase;
-  color: var(--accent);
+  color: var(--pure-white);
+  font-weight: 500;
 }
 .eyebrow-meta {
   margin-left: auto;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 10px;
   letter-spacing: 1.1px;
   text-transform: uppercase;
-  color: #6677aa;
+  color: var(--warm-silver);
 }
 
 /* 2. Telemetry pill ----------------------------------------------------- */
 .popup-telemetry {
   display: flex; align-items: center; gap: 10px;
   margin-bottom: 16px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
 }
 .telemetry-label {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1.1px;
-  color: #6677aa;
+  color: var(--warm-silver);
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  border: 1px solid rgba(218, 212, 200, 0.15);
 }
 .telemetry-bar {
   width: 72px; height: 3px;
@@ -206,17 +213,17 @@ const runtimeLabel = computed(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: #e8ecf8;
-  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--oat-border);
+  font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
 }
 .reading-body.empty {
-  color: #667;
+  color: var(--warm-silver);
   font-style: italic;
 }
 
 /* 4. Dashed-pulse divider ---------------------------------------------- */
 .dashed-divider {
-  border-top: 1px dashed rgba(180, 200, 255, 0.18);
+  border-top: 1px solid rgba(218, 212, 200, 0.10);
   margin: 12px 0 8px;
 }
 
@@ -224,31 +231,32 @@ const runtimeLabel = computed(() => {
 .popup-footer {
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 10px;
   letter-spacing: 0.6px;
   text-transform: lowercase;
-  color: #6677aa;
+  color: var(--warm-silver);
 }
 .footer-cite {
   flex: 1; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-style: italic;
 }
 .footer-runtime {
   flex-shrink: 0;
-  color: #6677aa;
+  color: var(--warm-silver);
 }
 
 /* Loading state -------------------------------------------------------- */
 .popup-loading {
   display: flex; align-items: center; gap: 12px;
-  font-size: 13px; color: #aab4cc;
+  font-size: 13px; color: var(--oat-border);
   padding: 8px 0 4px;
 }
 .spinner {
   width: 16px; height: 16px;
   border: 2px solid rgba(255,255,255,0.1);
-  border-top-color: #fff;
+  border-top-color: var(--pure-white);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

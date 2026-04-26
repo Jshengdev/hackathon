@@ -171,7 +171,7 @@ const empathyData = ref(null)          // EmpathyDocument
 // skip past the convergence moment. Reset on clip switch.
 const loopSettled = ref(false)
 
-const iterativeAccent = '#82e0aa'
+const iterativeAccent = '#f5a142'
 
 const MAX_ROUNDS = 3
 const trajectoryRounds = computed(() => {
@@ -255,7 +255,7 @@ const scrubPct = computed(() => {
 const popup = ref({
   visible: false, loading: false,
   network: '', text: '', confidence: '', cite: '',
-  t: 0, accent: '#aaaaaa',
+  t: 0, accent: '#9f9b93',
 })
 
 async function onRegionClicked(network) {
@@ -266,7 +266,7 @@ async function onRegionClicked(network) {
     network,
     text: '', confidence: '', cite: '',
     t,
-    accent: NETWORK_COLORS[network] || '#aaaaaa',
+    accent: NETWORK_COLORS[network] || '#9f9b93',
   }
   try {
     const res = await postK2Region({ clipId: props.clipId, network, t })
@@ -399,28 +399,29 @@ onBeforeUnmount(() => {
   width: 100vw; height: 100vh;
   background: #050510;
   display: flex;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: #d0d8ee;
+  font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+  color: var(--pure-white);
   overflow: hidden;
 }
 
 .brain-pane {
   flex: 1;
   position: relative;
-  border-right: 1px solid #1a1a2a;
+  border-right: 1px solid rgba(218, 212, 200, 0.12);
 }
 
 .brain-hint {
   position: absolute;
   top: 16px; right: 16px;
   font-size: 10.5px;
-  color: #6677aa;
+  color: var(--oat-border);
   letter-spacing: 1.4px;
   text-transform: uppercase;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   background: rgba(10, 10, 25, 0.65);
   padding: 6px 12px;
-  border-radius: 4px;
-  border: 1px solid #1f2a4a;
+  border-radius: var(--r-sharp);
+  border: 1px solid rgba(218, 212, 200, 0.15);
   pointer-events: none;
   z-index: 5;
 }
@@ -446,7 +447,7 @@ onBeforeUnmount(() => {
   gap: 8px;
   padding: 12px 14px 56px;
   background: #050510;
-  border-top: 1px solid #1a1a2a;
+  border-top: 1px solid rgba(218, 212, 200, 0.12);
   overflow-y: auto;
   min-height: 0;
 }
@@ -463,12 +464,12 @@ onBeforeUnmount(() => {
 }
 .panel-loading {
   background: rgba(10, 10, 25, 0.6);
-  border: 1px dashed #2a3a6a;
-  border-radius: 6px;
+  border: 1px dashed rgba(218, 212, 200, 0.20);
+  border-radius: var(--r-standard);
   padding: 14px 16px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 11px;
-  color: #6677aa;
+  color: var(--warm-silver);
   letter-spacing: 1px;
   text-transform: uppercase;
   display: flex; align-items: center; justify-content: center;
@@ -489,8 +490,8 @@ onBeforeUnmount(() => {
   align-items: center; justify-content: center;
   gap: 8px;
   background: #050510;
-  color: #6677aa;
-  font-family: 'JetBrains Mono', monospace;
+  color: var(--warm-silver);
+  font-family: var(--font-mono, 'DM Mono', monospace);
   text-align: center;
   padding: 0 24px;
 }
@@ -498,12 +499,12 @@ onBeforeUnmount(() => {
   font-size: 12px;
   letter-spacing: 1.6px;
   text-transform: uppercase;
-  color: #aab4cc;
+  color: var(--oat-border);
 }
 .vm-sub {
   font-size: 11px;
   letter-spacing: 0.6px;
-  color: #557;
+  color: var(--warm-silver);
 }
 
 .play-overlay {
@@ -513,17 +514,17 @@ onBeforeUnmount(() => {
   align-items: center; justify-content: center;
   gap: 12px;
   border: none; cursor: pointer;
-  color: #f0f4ff;
+  color: var(--pure-white);
   font-family: inherit;
 }
 .play-overlay:hover .play-icon {
   transform: scale(1.06);
-  border-color: #4ecdc4;
-  color: #4ecdc4;
+  border-color: var(--blueberry-300);
+  color: var(--blueberry-300);
 }
 .play-icon {
   width: 64px; height: 64px;
-  border: 1.5px solid #f0f4ff;
+  border: 1.5px solid var(--pure-white);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-size: 22px;
@@ -533,7 +534,7 @@ onBeforeUnmount(() => {
 .play-label {
   font-size: 12px; letter-spacing: 2px;
   text-transform: uppercase;
-  color: #aab4cc;
+  color: var(--oat-border);
 }
 
 .video-bar {
@@ -544,18 +545,21 @@ onBeforeUnmount(() => {
 }
 .vb-btn {
   background: transparent;
-  color: #f0f4ff;
-  border: 1px solid #2a3a6a;
+  color: var(--pure-white);
+  border: 1px solid rgba(218, 212, 200, 0.15);
   width: 32px; height: 32px;
-  border-radius: 4px;
+  border-radius: var(--r-sharp);
   cursor: pointer;
   font-size: 12px;
 }
-.vb-btn:hover { border-color: #4ecdc4; color: #4ecdc4; }
+.vb-btn:hover {
+  border-color: var(--blueberry-300);
+  color: var(--blueberry-300);
+}
 .vb-time {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 11px;
-  color: #aab4cc;
+  color: var(--oat-border);
   min-width: 80px;
 }
 .scrubber {
@@ -568,15 +572,15 @@ onBeforeUnmount(() => {
 }
 .scrubber-fill {
   position: absolute; top: 0; left: 0; height: 100%;
-  background: #4ecdc4;
+  background: var(--blueberry-300);
   border-radius: 2px;
-  box-shadow: 0 0 8px rgba(78, 205, 196, 0.6);
+  box-shadow: 0 0 8px rgba(109, 166, 232, 0.6);
   transition: width 0.1s linear;
 }
 .stimulus-tag {
   font-size: 11px;
   font-style: italic;
-  color: #f7dc6f;
+  color: var(--activation-hot);
   max-width: 220px;
   white-space: nowrap;
   overflow: hidden;
@@ -586,32 +590,29 @@ onBeforeUnmount(() => {
 .next-btn {
   position: fixed;
   bottom: 20px; right: 20px;
-  background: rgba(10, 10, 28, 0.92);
-  color: #4ecdc4;
-  border: 1px solid #2e6a4a;
+  background: var(--blueberry-800);
+  color: var(--pure-white);
+  border: none;
   padding: 10px 22px;
-  border-radius: 5px;
-  font-size: 12px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
+  border-radius: var(--r-pill);
+  font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 13px;
+  letter-spacing: -0.16px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.18s ease;
-  box-shadow: 0 0 12px rgba(78, 205, 196, 0.18);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  box-shadow: 0 0 12px rgba(1, 65, 141, 0.4);
   z-index: 50;
 }
 .next-btn:hover:not(:disabled) {
-  background: rgba(20, 50, 40, 0.92);
-  box-shadow: 0 0 18px rgba(78, 205, 196, 0.45);
-  transform: translateY(-1px);
+  transform: rotateZ(-4deg) translateY(-2px);
+  box-shadow: var(--clay-black) -7px 7px;
+  background: var(--blueberry-600);
 }
 .next-btn:disabled {
-  color: #3a4a5e;
-  border-color: #1e2a36;
-  background: rgba(10, 10, 28, 0.6);
-  box-shadow: none;
+  opacity: 0.4;
   cursor: not-allowed;
-  opacity: 0.55;
   transform: none;
+  box-shadow: none;
 }
 </style>

@@ -5,7 +5,30 @@ codename: empathy layer
 prior_filename: empathy-layer-prd.md (renamed 2026-04-25 to ironsight-listenlabs-prd.md per user direction)
 author: Johnnysheng (PM/Integration), Junsoo Kim (TRIBE V2), Jacob Cho (K2 swarm + iterative loop), Emilie Duran (Packaging + UI)
 date: 2026-04-25
-version: 1.1 (renamed + one-size-fits-all framing)
+version: 2.0 (post-TRIBE-cut + swarm-loop merged + Opus-as-Stage-4-polish — strategic narrative re-aligned with technical PRD v2.1)
+v2_changelog: |
+  2026-04-25 evening — R-DOCS shard. The v1 strategic narrative described a
+  two-stage agent pipeline with runtime TRIBE V2 forward + reverse and Opus 4.7 as
+  the Stage-2 synthesizer. The v2 architecture (canonicalized in
+  ../planning-artifacts/ironsight-listenlabs-technical-prd.md §3 + §4 and
+  ../../caltech/NEW-ARCHITECTURE.md) ships:
+    - Pre-rendered TRIBE V2 ONLY — `backend/prerendered/<clip>/activity.json` is
+      the brain artifact; runtime TRIBE never runs in any direction.
+    - K2 plays three roles on one surface: Stage 1B specialists × 7, Stage 2
+      moderator × 1, Stage 3 evaluator swarm × 7 per iterative-loop round.
+      Swarm + iterative loop are merged.
+    - Stage 4 Opus 4.7 polish is gated, optional, post-loop, cut-line. Implemented
+      as `services/empathy_polish.py` behind `OPUS_POLISH=1`.
+    - Stage 5 falsification uses a sentence-transformer embedding proxy
+      (all-MiniLM-L6-v2 → 7-dim Yeo7 projection W) standing in for runtime TRIBE
+      forward. Real cosine numbers, CPU-only, ≤200ms.
+    - SAME ENGINE answers Ironsight + Listen Labs + Sideshift + YC. Sponsor-pitch
+      alignment paragraphs in §3 are rewritten to reflect "swarm gives the video
+      info Ironsight didn't have" + "modular Opus polish + persona shell ships
+      scenario-appropriate output for Listen Labs."
+  Removed: prose blocks naming TRIBE-forward as the per-round scorer or Opus as
+  Stage 2. Old prose archived to ./archive/strategic-prd-v1-sections.md (per
+  preservation discipline, R-DOCS shard rules).
 workflowType: prd
 releaseMode: single-release
 freeze: 2026-04-26 8 PM PDT
@@ -38,28 +61,41 @@ one_size_fits_all_problem_statement: |
   failure mode: AI processes the surface but misses the model of the human underneath.
 
 one_size_fits_all_solution_statement: |
-  A brain-grounded empathy translation engine. Two-stage agent pipeline (vision
-  classification + empathy synthesis) with Meta's TRIBE V2 brain-encoding model as
-  the in-between data layer and an iterative-scoring loop (Clair de Lune protocol
-  inverted) that produces a falsifiable paragraph describing what the human felt
-  during the captured video. The same engine runs on multiple data sources — workplace
-  footage (Ironsight's job-site data) and consumer day-to-day visual data (Reels-feed
-  / smart-glasses POV / any consumer visual data). Different data sets. Different
-  data processing parameters per scenario. Different beneficiary stories. Same
-  overarching engine.
+  A brain-grounded empathy translation engine. The engine takes a video, looks up
+  Meta TRIBE V2's brain-pattern JSON (pre-rendered offline; runtime TRIBE never runs),
+  describes the scene with Qwen3-VL, fires a K2 swarm of seven Yeo7-network
+  specialists to read the brain pattern, hands both to a K2 moderator that writes
+  one candidate empathy paragraph, then iteratively rewrites and re-scores each
+  candidate by re-firing the K2 swarm as evaluators (each region rates how
+  faithfully the paragraph captured its reading) across up to eight rounds with
+  plateau exit, optionally polishes the best paragraph with Anthropic Claude Opus
+  4.7 as a ~100-word literary pass (cut-line cherry, gated `OPUS_POLISH=1`), and
+  falsifies the result via a sentence-transformer embedding proxy that stands in
+  for runtime TRIBE-V2-forward inference and produces a real cosine similarity number
+  against the activity target plus a control delta. The output is a falsifiable
+  paragraph describing what the human felt during the captured video. Same engine
+  runs across workplace footage (Ironsight's job-site data) and consumer
+  day-to-day visual data (Reels-feed / smart-glasses POV / any consumer visual
+  data). Different data sources, same engine binary; pre-cached for demo-day
+  reliability.
 
 scope: |
   This PRD covers the one-size-fits-all engine that satisfies BOTH Ironsight's spatial-
   intelligence brief AND Listen Labs's "Simulate Humanity" brief. The engine is a single
-  two-stage agent pipeline (vision-classification + empathy-synthesis) with TRIBE V2
-  brain-encoding as the in-between modality and an iterative-scoring loop that produces
-  falsifiable brain-grounded empathy-layer paragraphs.
+  AI pipeline: pre-rendered TRIBE V2 activity.json on disk + Qwen3-VL vision report +
+  K2 swarm of seven Yeo7-network specialists + K2 moderator synthesis + K2-swarm-as-
+  evaluator iterative loop with plateau exit + optional Anthropic Opus 4.7 literary
+  polish (cut-line, gated `OPUS_POLISH=1`) + sentence-transformer embedding-proxy
+  falsification. Brain-encoded TRIBE V2 is pre-rendered offline; the runtime never
+  invokes TRIBE in any direction. Authoritative engineering spec is the technical PRD
+  v2.1 (../planning-artifacts/ironsight-listenlabs-technical-prd.md §3 + §4); canonical
+  summary is ../../caltech/NEW-ARCHITECTURE.md.
 
-  The engine ships across two demo scenarios with different data sets (workplace footage
-  for Ironsight; consumer day-to-day visual data for Sideshift + YC overlay), different
-  data processing parameters (specialist roster + Opus synthesis prompt swap per scenario
-  via prompt registry hot-swap), and different stories (B2B manager-decision-aware vs.
-  B2C consumer self-knowledge journal). The overarching engine is unchanged across both.
+  The engine ships across two demo scenarios with different data sources (workplace
+  footage for Ironsight; consumer day-to-day visual data for Sideshift + YC overlay),
+  different scenario tagging via `scenario.json` + `PersonaShell` mode (workplace /
+  consumer / pavilion), and different stories (B2B manager-decision-aware vs. B2C
+  consumer self-knowledge journal). The engine binary is one across both.
 
   COMPANION FILES:
   - caltech/use-cases/empathy-layer-prd-simplified.md (build-clarity simplified version)
@@ -73,7 +109,7 @@ scope: |
   - caltech/demo-script.md (90s on-stage execution)
 
 classification:
-  projectType: web_app_demo (real-time AI pipeline; two-stage agent + brain-encoding sidecar; browser-based demo + 3D viz)
+  projectType: web_app_demo (real-time AI pipeline; merged K2 swarm + iterative loop on pre-rendered TRIBE V2 brain-encoding sidecar; optional Opus polish; browser-based Vue 3 + Three.js demo)
   domain: ai_neuroscience_workforce_consumer (Best Use of AI hard target; Creativity; Listen Labs; Sideshift; Ironside; YC stretch)
   complexity: high
   projectContext: greenfield (48 person-hour build window; brownfield team-context: 16 locked decisions, full PRFAQ + prior PRD + use-case docs)
@@ -184,20 +220,20 @@ verbatim_yaps_captured_this_session:
 
 ## One-Size-Fits-All Solution Statement
 
-**A brain-grounded empathy translation engine.** Two-stage agent pipeline (vision classification + empathy synthesis) with Meta's TRIBE V2 brain-encoding model as the in-between data layer and an iterative-scoring loop (Clair de Lune protocol inverted) that produces a falsifiable paragraph describing what the human felt during the captured video. The same engine runs on multiple data sources. Different data sets per scenario. Different data-processing parameters per scenario (specialist roster + Opus synthesis prompt swap). Different beneficiary stories per scenario. **Same overarching engine.**
+**A brain-grounded empathy translation engine — three K2 roles on one surface, with TRIBE V2 as a pre-rendered data layer and Opus 4.7 reserved for an optional Stage-4 literary polish.** A K2 swarm reads each brain region's pre-rendered activations and emits per-region readings; a K2 moderator synthesizes one candidate empathy paragraph from the readings and the vision report; a K2 evaluator-swarm re-scores the candidate region-by-region across up to eight rounds with plateau exit; the best paragraph is optionally polished by Anthropic Claude Opus 4.7 (cut-line cherry, gated `OPUS_POLISH=1`); a sentence-transformer embedding proxy produces real cosine numbers against the activity target plus a control delta as the falsifier. Same engine runs on multiple data sources. Different data sets per scenario. Different persona shell + scenario hint per scenario. **Same overarching engine.**
 
 ## How the Engine Satisfies Both Briefs Simultaneously
 
-| Sponsor brief asks for | How this engine answers |
+| Sponsor brief asks for | How this engine answers (v2) |
 |---|---|
-| **Ironsight: define a spatial task where VLMs fail** | VLMs cannot infer cognitive-emotional state from spatial action. We test this with the API-credited models (Gemini 2.5 Pro / Claude Opus / GPT-5) — they confabulate when asked to rank cognitive state from egocentric footage. |
-| **Ironsight: develop an innovative technique** | Inference-time compute strategy. Spatial-sidecar pattern. TRIBE V2 brain-encoding sidecar augments the VLM's spatial-intelligence reasoning. Stage 2 maps the brain-wave back to the video — which Ironsight's team explicitly defined as qualifying spatial intelligence. |
+| **Ironsight: define a spatial task where VLMs fail** | VLMs cannot infer cognitive-emotional state from spatial action. We test this with the API-credited models — they confabulate when asked to rank cognitive state from egocentric footage. |
+| **Ironsight: develop an innovative technique** | Inference-time compute strategy. Spatial-sidecar pattern. The K2 swarm reads pre-rendered TRIBE V2 brain activations and gives the VLM the per-region cognitive context the egocentric video alone doesn't carry — which Ironsight's team explicitly defined as qualifying spatial intelligence. **The swarm gives the video the information it didn't have before; that's the spatial-sidecar.** |
 | **Ironsight: showcase real-world impact** | Construction safety manager reads the empathy-layer document instead of action data alone; the corner-cut doesn't happen; the worker is treated as a human. Generalizes to healthcare / retail / food-service / education / logistics / emergency-response. |
-| **Listen Labs: simulate humans / societies** | The iterative-scoring loop IS the multi-agent simulation — 8 candidate empathy-layer paragraphs compete across rounds for brain-pattern match. Per-industry generalization (4 different data-set scenarios: construction / healthcare / retail / consumer) IS the demonstration of simulation across humanity. |
-| **Listen Labs: care about insight, not stack** | Insight: brain-grounding distinguishes genuine cognitive-emotional state from confabulated VLM narration. No text-only sim can do this. The cosine similarity score IS the falsifier; falsification check (vs. control footage) IS the rigorous demonstration. |
-| **Listen Labs: ground in data, measure against something real** | Within-subject brain contrast. Same person, two scenes — predicted empathy-layer brain-pattern vs. actual TRIBE-V2-measured brain-pattern. Cosine similarity scored. Same falsification methodology that produced our 90.4% Clair de Lune match. |
+| **Listen Labs: simulate humans / societies** | The merged swarm + iterative-scoring loop IS the multi-agent simulation — seven K2 specialists fire INSIDE each round, the moderator rewrites, evaluators rescore, plateau exit. Per-industry generalization (different `scenario.json` + `PersonaShell` mode) IS the demonstration of simulation across humanity. |
+| **Listen Labs: care about insight, not stack** | Insight: brain-grounding distinguishes genuine cognitive-emotional state from confabulated VLM narration. No text-only sim can do this. **Modular Opus polish + per-scenario PersonaShell** lets the same simulation render scenario-appropriate output (workplace / consumer / pavilion) without rewiring the moderator — Listen Labs's "next-generation synthetic-profile use case." |
+| **Listen Labs: ground in data, measure against something real** | Within-subject brain contrast. Same person, two scenes — candidate paragraph's projected 7-dim Yeo7 vector vs. the same person's pre-rendered activity target vs. the same person's control activity. Real cosine numbers from the embedding proxy (no runtime TRIBE-V2-forward in v2; the falsification methodology is preserved, the scorer is swapped). Same Clair-de-Lune-protocol shape; live execution path is `services/falsification.py`. |
 
-**Two sponsor briefs answered by one engine.** The engine doesn't fork. The data-set forks. The data-processing parameters fork. The story forks. The engine is one.
+**Two sponsor briefs answered by one engine.** The engine doesn't fork. The data-set forks. The persona shell forks. The story forks. The engine is one.
 
 ---
 
@@ -205,9 +241,9 @@ verbatim_yaps_captured_this_session:
 
 ### The Vision
 
-We are building a **brain-grounded empathy translation engine** — a two-stage agent pipeline that takes any video of a human taking actions, runs Meta FAIR's TRIBE V2 brain-encoding model to predict per-second per-region neural response (~20,000 cortical vertices on the fsaverage5 mesh), and uses an iterative-scoring loop (Clair de Lune protocol inverted) to generate paragraph-form descriptions of what the human felt during the captured action. The output is a paragraph anchored to brain-pattern evidence with a similarity score that proves the description is grounded — and a falsification check that demonstrates the description is specifically anchored to that scene, not generically plausible.
+We are building a **brain-grounded empathy translation engine** — a single AI pipeline that takes any video of a human taking actions, looks up Meta FAIR's TRIBE V2 brain-pattern JSON for that clip (~20,000 cortical vertices on the fsaverage5 mesh; pre-rendered offline; runtime TRIBE never runs), describes the scene with Qwen3-VL, fires a K2 swarm of seven Yeo7-network specialists to read per-region activations, hands both to a K2 moderator that drafts an empathy paragraph, then iteratively re-scores each candidate by re-firing the K2 swarm as evaluators across up to eight rounds with plateau exit, optionally polishes the best paragraph with Anthropic Claude Opus 4.7 as a ~100-word literary pass (cut-line cherry, gated `OPUS_POLISH=1`), and falsifies the result via a sentence-transformer embedding proxy that stands in for runtime TRIBE-V2-forward inference. The output is a paragraph anchored to brain-pattern evidence with a similarity number that proves the description is grounded — and a control delta that demonstrates the description is specifically anchored to that scene, not generically plausible.
 
-The mechanism is direct reuse of Johnny's published prior work: in the original Clair de Lune experiment, TRIBE V2 was used forward — text candidate paragraphs were iteratively scored against the brain-pattern of Clair de Lune music, producing a paragraph that achieved 90.4% emotion-center match across 20,484 cortical vertices (falsified against triumphant music, rain, and aggressive speech — pattern only matched Clair de Lune). The empathy layer inverts this protocol: instead of generating text to MATCH a target brain-pattern, the engine uses the brain-pattern of an actual video to score candidate paragraphs DESCRIBING what the human felt — returning the closest-match paragraph + similarity score.
+The mechanism inherits the methodology from Johnny's published prior work: in the original Clair de Lune experiment, TRIBE V2 was used forward — text candidate paragraphs were iteratively scored against the brain-pattern of Clair de Lune music, producing a paragraph that achieved 90.4% emotion-center match across 20,484 cortical vertices (falsified against triumphant music, rain, and aggressive speech — pattern only matched Clair de Lune). The empathy layer inverts the protocol: instead of generating text to match a target brain-pattern, the engine uses the brain-pattern of an actual video to score candidate paragraphs describing what the human felt. v2 swaps the per-round scorer (runtime TRIBE-V2-forward → K2-evaluator-swarm semantic scoring) and the falsification scorer (runtime TRIBE-V2-forward → embedding proxy with a 384×7 Yeo7 projection W) — same Clair-de-Lune protocol shape; different production-path scorers chosen for demo-day reliability.
 
 The product's beneficiaries are **decision-makers (managers, companies, individuals) who would otherwise read action data alone and make corner-cutting decisions that destroy the outcomes they actually care about.** A nurse who spent 30 minutes with a patient processing terminal diagnosis. A construction worker who took 45 minutes on a task because they were navigating a hazard the manager couldn't see. A retail rep who extended a customer interaction because they were de-escalating distress. Action data flags these as productivity outliers; the empathy layer reveals they are care, judgment, and de-escalation — outcomes the company actually wants to preserve. The empathy layer surfaces the human context action data strips out.
 
@@ -217,11 +253,11 @@ The product's beneficiaries are **decision-makers (managers, companies, individu
 
 1. **Direct reuse of a shipped credibility chip.** Johnny's published TRIBE V2 work (Clair de Lune 90.4% match across 20,484 cortical vertices, 8 rounds of iterative scoring, falsified against control music) IS the methodology this product runs in inverse. The mechanism is not theoretical; it has shipped at brain-encoding fidelity in a different direction. **Founder-market-fit and methodology-credibility chip become the same thing.**
 
-2. **Two-stage agent pipeline with TRIBE V2 as in-between modality.** Per the Ironside team's spatial-intelligence definition (clarified in their open office hours): adding another form of information that helps the model infer about the environment qualifies as spatial intelligence, as long as the agent maps the new modality back to the video. Stage 1 (vision-classification) describes the scene; TRIBE V2 emits the new modality (brain-wave data layer); Stage 2 (empathy-synthesis) maps the brain-wave back to the video by generating empathy-grounded paragraphs. The mapping IS the agent's spatial-intelligence work.
+2. **Spatial-sidecar pattern with K2 swarm reading pre-rendered TRIBE activations.** Per the Ironsight team's spatial-intelligence definition (clarified in their open office hours): adding another form of information that helps the model infer about the environment qualifies as spatial intelligence, as long as the agent maps the new modality back to the video. Stage 1A (Qwen3-VL) describes the scene; pre-rendered TRIBE V2 emits the new modality (per-second per-region brain-encoded activations on disk); Stage 1B's K2 swarm of seven Yeo7-network specialists reads those activations and emits per-region semantic readings; the K2 moderator (Stage 2) braids the readings + the vision report into a paragraph that maps the cognitive context back to the video. **The swarm gives the video the information it didn't have before** — that's the spatial-sidecar.
 
-3. **Falsification methodology grounded in within-subject brain contrast.** The similarity score IS the falsifier (cosine similarity of candidate paragraph's predicted brain-pattern vs. actual video brain-pattern). The falsification check (same paragraph scored against control footage of the same human in a different scene) drops similarity sharply, proving the description is specifically anchored. Same logic as the original Clair de Lune work falsifying against control music.
+3. **Falsification methodology grounded in within-subject brain contrast.** The similarity number IS the falsifier (cosine similarity of the candidate paragraph's projected 7-dim Yeo7 vector vs. the same person's pre-rendered activity target). The falsification check (same paragraph scored against the same person's control-clip activity) drops similarity sharply, proving the description is specifically anchored. Same logic as the original Clair de Lune work falsifying against control music. v2 swaps runtime TRIBE-V2-forward for the embedding proxy (`all-MiniLM-L6-v2 → 384×7 Yeo7 projection W`); the protocol shape is preserved.
 
-4. **One engine, two demo scenarios, one hero output.** The engine generalizes across any video of human action: workplace footage (Ironside primary), consumer day-to-day footage (Sideshift + YC overlay). Both scenarios produce the same hero output — the empathy-layer document — with persona-appropriate framing. Multi-track sponsor coverage (Best AI + Ironside + Listen Labs + Sideshift + K2 + Creativity + YC) is structurally MECE because the engine is general; the input file is the persona switch.
+4. **One engine, two demo scenarios, one hero output.** The engine generalizes across any video of human action: workplace footage (Ironsight primary), consumer day-to-day footage (Sideshift + YC overlay). Both scenarios produce the same hero output — the empathy-layer document — with persona-appropriate framing. Multi-track sponsor coverage (Best AI + Ironsight + Listen Labs + Sideshift + K2 + Creativity + YC) is structurally MECE because the engine is general; the input file is the persona switch.
 
 5. **The architecture itself enacts the YEA/NAY rubric.** Best Use of AI track answer is the rubric; the empathy layer enacts it: surface options (the paragraph), user judges (the manager / consumer reads and decides), system never recommends, menial high-throughput work via K2 swarm + iterative loop, synthesizes across signals (vision + brain-encoding + language). The product is the answer to the track question.
 
@@ -231,7 +267,7 @@ The product's beneficiaries are **decision-makers (managers, companies, individu
 
 ## Project Classification
 
-- **Project Type:** Web app + real-time AI pipeline. Front-end is browser-based 3D visualization (Three.js / R3F per Open Item #1) + empathy-layer document UI. Back-end is two-stage agent orchestration (Stage 1 vision-classification via Gemini-or-Claude-vision; Stage 2 empathy-synthesis via Claude Opus) with TRIBE V2 brain-encoding (Junsoo's pipeline) in-between and a K2-orchestrated iterative-scoring loop (Jacob's swarm). Live-with-pre-cache fallback is the operating mode for demo-day reliability.
+- **Project Type:** Web app + real-time AI pipeline. Front-end is browser-based 3D visualization (Vue 3 + Three.js) + empathy-layer document UI. Back-end (v2) is a FastAPI surface that orchestrates pre-rendered TRIBE V2 activity.json + Stage 1A vision-classification (Qwen3-VL via OpenRouter) + Stage 1B K2 swarm of seven Yeo7-network specialists + Stage 2 K2 moderator synthesis + Stage 3 K2-swarm-as-evaluator iterative loop (plateau exit) + Stage 4 optional Anthropic Opus 4.7 polish (gated `OPUS_POLISH=1`) + Stage 5 sentence-transformer embedding-proxy falsification. A `BackgroundTask` warmup pipeline pre-bakes every Layer 1 cache file on `/demo/match` so brain-3D interactions never block on a runtime LLM call. Live-with-pre-cache fallback is the operating mode for demo-day reliability.
 - **Domain:** AI / Neuroscience / Workforce Analytics / Consumer (multi-track sponsor coverage). Best Use of AI is the hard target; Ironside is the primary B2B target ($5K + spatial-intelligence definition explicitly satisfied); Listen Labs is the simulation surface ($3K + interview); Sideshift + YC are B2C overlay (vault + future-Obsidian); K2 is structurally required (8-round loop in consumer latency); Creativity comes from the iterative-loop reveal + 3D viz + brain-grounded paragraph as art.
 - **Complexity:** High. (1) Brain-encoding model integration with forbidden-claim guardrails (no reverse inference, ~20K vertices canonical, within-subject contrast only). (2) Two-stage agent pipeline with iterative-scoring loop requires bidirectional TRIBE V2 inference (forward for scoring + reverse for video brain-encoding). (3) Multi-track sponsor strategy requires one product surface enact multiple distinct sponsor narratives with measurable architectural fit. (4) Live AI pipeline on stage with 90-second budget under hostile-judge scrutiny requires both live-attempt AND per-component pre-cache fallbacks orchestrated under freeze.
 - **Project Context:** Greenfield from a code standpoint (build window opens at hackathon start; budget ~48 person-hours). Brownfield from a planning standpoint — 16 locked decisions, PRFAQ Stage 1, prior PRD draft v1, demo-script.md, narration-script-3min.md, validation-findings × 5, 4 prior use-case docs (ironside, listenlabs-sideshift, yc-stress-test, outsider-advantage), capability-inventory with SynthDebate recommendation, all extant and feeding this PRD.
@@ -243,7 +279,7 @@ The product's beneficiaries are **decision-makers (managers, companies, individu
 | **A — Workplace Footage** | Egocentric body-cam / job-site video / patient-room footage / retail floor cam / kitchen cam / classroom recording / any workplace human-action video | Manager / company / decision-maker reviewing worker performance | The worker (gets context-aware management) + the company (preserves customer/employee outcomes that action-data-only optimization would destroy) | Ironside (CORE) + Listen Labs (CORE — generalization across industries IS the simulation deliverable) | Primary live demo (90s); Ironside pavilion swap-in for construction-specific footage |
 | **B — Consumer Day-to-Day Visual Data** | Reels/TikTok feed screen-recording / phone screen-record of any digital activity / smart-glasses POV / daily-life clip | Maya, Gen-Z teen (or any consumer) | The user themselves (gets a brain-grounded journal of their own experience; daily entries accumulate into knowledge graph) | Sideshift (CORE substrate) + YC stretch (future-Obsidian framing) | Secondary overlay; consumer-track pavilion swap |
 
-**Same engine. Same TRIBE V2 + two-stage agent pipeline + iterative loop. Different input file. Different beneficiary. Different framing.**
+**Same engine. Same pre-rendered TRIBE V2 activity.json + Qwen vision pass + K2 three-roles (specialists / moderator / evaluators) + iterative loop + optional Opus polish + embedding-proxy falsification. Different input file. Different beneficiary. Different framing.**
 
 ---
 
@@ -401,33 +437,33 @@ The user (judge / manager / consumer) succeeds when, in order:
 
 **Capabilities revealed.** Sponsor-swap slides (4 variants); FAQ ammunition deck; iterative-loop reveal as the demo's center of gravity; per-industry generalization as the simulation deliverable.
 
-### Persona 4 — Junsoo (TRIBE V2 + Forward-Direction Scoring Owner)
+### Persona 4 — Junsoo (Embedding-Proxy + Control-Bake Owner; v2-relocated)
 
-**Backstory.** Junsoo owns video-to-brain JSON pipeline AND the forward-direction text-input scoring. The Clair de Lune work originated in his collaboration with Johnny.
+**Backstory.** v1: Junsoo owned video-to-brain JSON pipeline AND the forward-direction text-input scoring. **v2 relocation:** TRIBE V2 forward-direction is dropped at runtime (the engine reads pre-rendered `activity.json` only). Junsoo's load-bearing v2 lane is the **embedding proxy** (`services/embedding_proxy/` + `services/falsification.py`) and the offline bake of `control_activity.json` per scenario. The Clair de Lune work originated in his collaboration with Johnny — that methodology is the falsification protocol the embedding proxy honors.
 
-**Opening scene.** Friday afternoon. Junsoo runs `python tribe-pipeline.py demo-input.mp4`. Output: per-region activation JSON @ 1Hz on the 30s test clip. Latency: 24s. PASS smoke test #1.
+**Opening scene.** Friday afternoon. Junsoo runs the offline TRIBE V2 pipeline once per demo clip on a Vultr GPU box. Output: per-second per-region activation JSON @ 1Hz on the 30s test clip. Latency: ~24s, offline only. He commits `activity.json` to `backend/prerendered/<clip>/`. Smoke test #1 (v2): activity.json schema-valid for both demo clips.
 
-**Rising action.** He sets up forward-direction inference: text input → predicted brain-pattern. Tests with 5 sample paragraphs against the demo video's brain-pattern. Similarity scoring works. Saturday 8 AM, he bakes pre-cached side-by-side MP4 for BEAT-3 (within-subject toggle) AND control-footage brain-pattern for the falsification check.
+**Rising action.** He fits the projection map W (384 × 7) by `np.linalg.lstsq` from `training_pairs.yaml` — 10 hand-paired (paragraph, per-network mean activation) examples. Saves to `services/embedding_proxy/projection_map.npy`. Tests `services/falsification.py` end-to-end: paragraph → 384-dim → 7-dim → cosine vs target. Saturday 8 AM, he bakes `workplace_routine_baseline/activity.json` and `curated_short_film_baseline/activity.json` per A1-deepdive option (i) hand-pick, keeps option (ii) temporal-shuffle as labeled secondary.
 
-**Climax.** Demo-day. BEAT-1 runs live (TRIBE inference). BEAT-3 iterative-scoring loop runs live (forward-direction inference). Falsification check produces the 0.27 control delta. Q-INT-2 from a judge: *"What are the actual TRIBE numbers?"* Junsoo: *"~20,000 cortical-surface vertices on fsaverage5, trained on ~25 deeply-scanned subjects."*
+**Climax.** Demo-day. BEAT-1 reads pre-rendered `activity.json` from disk. BEAT-3 iterative-scoring loop runs through K2-evaluator-swarm semantic scoring (no runtime brain-encoding inference). Falsification (Stage 5) produces the headline `delta=0.57 anchored` with the embedding proxy. Q-INT-2 from a judge: *"What are the actual TRIBE numbers?"* Junsoo: *"~20,000 cortical-surface vertices on fsaverage5, trained on ~25 deeply-scanned subjects. We pre-render once and cache; the embedding proxy is the runtime stand-in for the forward direction so we don't burn GPU on stage."*
 
 **Resolution.** Architecture defense holds. Forbidden-claim guardrails respected throughout.
 
-**Capabilities revealed.** TRIBE V2 inference reverse + forward; control-footage brain-pattern bake; smoke-test gate ownership.
+**Capabilities revealed.** TRIBE V2 offline reverse-direction bake; embedding-proxy projection map fit; control-clip activity.json bake (hand-pick + temporal-shuffle); falsification short-form output `{main_score, control_score, delta, verdict}`; smoke-test gate ownership.
 
-### Persona 5 — Jacob (K2 Iterative-Loop Orchestrator)
+### Persona 5 — Jacob (K2 Three-Roles + Iterative-Loop Orchestrator; v2-promoted)
 
-**Backstory.** Jacob owns K2 swarm fan-out + the iterative-scoring loop orchestration. The 8-round loop runs at K2 speed because at Claude latency it doesn't fit consumer-product budget.
+**Backstory.** Jacob owns the K2 surface that plays three roles in v2 (Stage 1B specialists × 7, Stage 2 moderator × 1, Stage 3 evaluator-swarm × 7 per round) plus the iterative-scoring loop. The merged swarm + loop runs at K2 speed because at Anthropic Opus latency, eight rounds × per-paragraph K2-evaluator-swarm doesn't fit a consumer-product budget. K2 = ~2000 tok/s, OpenAI-compatible chat-completions.
 
-**Opening scene.** Friday afternoon. Jacob spins up K2 Cerebras endpoint. Sets up asyncio.Semaphore(6) + Pydantic strict + brace-balanced JSON extractor + 3-attempt retry + 120s timeout.
+**Opening scene.** Friday afternoon. Jacob spins up the Cerebras K2 endpoint. Sets up `asyncio.gather(*calls)` for the 7-call swarms (no semaphore inside one stage); cross-stage `asyncio.Semaphore(6)` lives only inside `services/warmup.py` for `k2_region_cache` pre-bake. Pydantic strict + brace-balanced JSON extractor + 3-attempt retry + per-call 30s timeout.
 
-**Rising action.** He builds the iterative loop: orchestrate Stage 2 Opus call → score via TRIBE forward-direction call → if score plateaus or 8 rounds, return; else feed score + per-region miss back to Opus → generate candidate #N+1. Friday-night smoke test #2: 10 concurrent K2 calls in 30s window. Zero timeouts. PASS.
+**Rising action.** He builds the iterative loop in `services/iterative_loop.py`. Per round: K2 moderator (`services/empathy_synthesis.py`) writes a candidate paragraph from the vision report + Stage 1B swarm readings; seven K2 evaluators (one per Yeo7 network, prompt `evaluator_score.md`) re-score the candidate against each region's expected reading; mean of seven = round_score; per-region miss feeds back to the moderator for round N+1. Plateau exit `|Δ|<0.02` over 2 rounds OR R==8. Friday-night smoke test #2 (v2): K2 + K2-evaluator-swarm iterative loop, 8 rounds in ≤ 60s. Zero timeouts. PASS.
 
-**Climax.** Demo-day BEAT-3. Iterative loop runs visibly. Each round logs: candidate generated, score computed, per-region attribution surfaced. Judge asks Q-INT-6 (K2-could-be-Claude): *"Why K2?"* Jacob: *"At Claude latency, 8 rounds × per-paragraph TRIBE inference doesn't fit 90 seconds. K2's ~1,300 tok/s makes the iterative loop a consumer-product surface, not a research artifact."*
+**Climax.** Demo-day BEAT-3. Iterative loop runs visibly. Each round logs: candidate generated, mean score computed, per-region attribution surfaced. Judge asks Q-INT-6 (K2-could-be-Claude): *"Why K2?"* Jacob: *"K2 plays three roles on one surface — specialists, moderator, evaluators — at ~2000 tok/s. Eight rounds × seven evaluators × per-round moderator at Anthropic latency doesn't fit ninety seconds. K2 makes the merged swarm + iterative loop a consumer-product surface, not a research artifact. Anthropic Opus 4.7 runs once at the end as an optional ~100-word polish, gated by `OPUS_POLISH=1` — cut-line cherry."*
 
 **Resolution.** K2 architectural-required defense lands.
 
-**Capabilities revealed.** Iterative-loop orchestration template; K2 swarm production-pattern; observability per-round; cross-talk soup defense via per-round attribution.
+**Capabilities revealed.** Three K2 roles on one surface; merged swarm + iterative-loop orchestration; per-round attribution + plateau exit; cache + warmup BackgroundTask; cross-talk-soup defense via per-region attribution.
 
 ### Persona 6 — Emilie (Packaging + Output Document UI)
 
@@ -497,7 +533,7 @@ The journeys reveal these capabilities (which feed Functional Requirements §FR1
 - **TRIBE V2 reverse → iterative-loop contract.** Per-second JSON: `{time_s, region_id, activation, vertices[]}`. Junsoo provides; Jacob consumes for scoring.
 - **TRIBE V2 forward (text input) → iterative-loop contract.** Same JSON output schema; input is the candidate paragraph text. Junsoo provides; Jacob consumes for scoring.
 - **Stage 2 empathy-synthesis → iterative-loop contract.** Output: `{candidate_paragraph_text, generation_round, prior_round_score_feedback}`. Johnny+Jacob shared.
-- **Iterative-loop → output-document contract.** Output: `{best_paragraph, final_score, falsification_delta, per_region_attribution, all_round_scores[]}`. Jacob produces; Emilie's UI consumes.
+- **Iterative-loop → empathy-document contract.** Output (v2 short-form per technical PRD §6.5 + §6.6): `{best_paragraph, polished_paragraph, final_score, round_trajectory[], per_region_attribution{}, falsification: {main_score, control_score, delta, verdict}}`. Jacob produces; Emilie's UI consumes; field names match the live demo path emitted by `services/iterative_loop.py` + `services/falsification.py`.
 - **Pre-cache fallback contracts.** Each beat has a pre-cached MP4 / static asset. Per-beat owners bake by Saturday 8 AM.
 - **Per-industry generalization MP4 contract.** 3-4 short side-by-side clips showing the engine running on construction / healthcare / retail / consumer footage. Listen Labs simulation deliverable.
 
@@ -555,220 +591,157 @@ The journeys reveal these capabilities (which feed Functional Requirements §FR1
 
 ---
 
-## Architecture Diagram (THE ENGINE)
+## Architecture Diagram (THE ENGINE — v2)
+
+> **Authoritative source:** `caltech/NEW-ARCHITECTURE.md` §1 (canonical pipeline diagram) + `_bmad-output/planning-artifacts/ironsight-listenlabs-technical-prd.md` §3 + §4. Long-form prose walk-through: `caltech/architecture-overview.md`. The v1 strategic-PRD diagram (the runtime-TRIBE-V2-forward + reverse pipeline with Anthropic Opus 4.7 in the per-round synthesizer slot and ~1,300 tok/s K2 framing) is archived at `archive/strategic-prd-v1-sections.md` for traceability.
 
 ```
-                          [INPUT: Video of human action]
-                                          │
-                                          ▼
-              ┌───────────────────────────────────────────────┐
-              │              STAGE 1                          │
-              │      Vision Classification Agent              │
-              │                                               │
-              │  Tool: Gemini 2.5 Pro (via OpenRouter)        │
-              │        OR Claude vision API                   │
-              │                                               │
-              │  Job: Describe what happened in the scene     │
-              │       — actions, environment, tools, temporal │
-              │       sequence, spatial relationships         │
-              │                                               │
-              │  Output: Vision Report JSON                   │
-              │          { scene_summary, actions[],          │
-              │            temporal_sequence[],               │
-              │            spatial_relationships[] }          │
-              └───────────────────────┬───────────────────────┘
-                                      │
-                      ┌───────────────┴───────────────┐
-                      │                               │
-                      ▼                               │
-        ┌─────────────────────────────┐               │
-        │   TRIBE V2 (REVERSE)        │               │
-        │   Brain-Encoding Inference  │               │
-        │                             │               │
-        │   Tool: Junsoo's pipeline   │               │
-        │   (Meta FAIR research)      │               │
-        │                             │               │
-        │   Job: Run input video      │               │
-        │   through TRIBE V2          │               │
-        │   → per-second per-region   │               │
-        │   brain-response data       │               │
-        │   layer (~20K vertices,     │               │
-        │   fsaverage5 mesh, 1Hz,     │               │
-        │   5s HRF lag)               │               │
-        │                             │               │
-        │   Output: BRAIN-PATTERN     │               │
-        │           TARGET (json)     │               │
-        │   { time_s, region_id,      │               │
-        │     activation, vertices[]} │               │
-        └────────────┬────────────────┘               │
-                     │                                │
-                     │      ┌─────────────────────────┘
-                     │      │
-                     ▼      ▼
-              ┌─────────────────────────────────────────────┐
-              │              STAGE 2                        │
-              │     Empathy Synthesis Agent                 │
-              │                                             │
-              │  Tool: Claude Opus (per Decision 008)       │
-              │                                             │
-              │  Inputs:                                    │
-              │   1. Vision Report (Stage 1)                │
-              │   2. BRAIN-PATTERN TARGET (TRIBE)           │
-              │   3. (Optional) Other Ironside data layers  │
-              │   4. Prior round score + per-region miss    │
-              │      (if iterative round > 1)               │
-              │                                             │
-              │  Job: Generate emotionally-intelligent      │
-              │       paragraph describing what the         │
-              │       human felt during the footage,        │
-              │       grounded in brain-pattern evidence    │
-              │                                             │
-              │  Output: Candidate Paragraph #N             │
-              └────────────────────┬────────────────────────┘
-                                   │
-                                   ▼
-              ┌─────────────────────────────────────────────┐
-              │       ITERATIVE SCORING LOOP                │
-              │   (Clair de Lune protocol INVERTED)         │
-              │                                             │
-              │   Orchestrator: K2 Cerebras                 │
-              │       (~1,300 tok/s)                        │
-              │                                             │
-              │   For up to 8 rounds:                       │
-              │                                             │
-              │   ┌───────────────────────────────────┐     │
-              │   │ a) Score Candidate #N via         │     │
-              │   │    TRIBE V2 (FORWARD direction):  │     │
-              │   │    paragraph text → predicted     │     │
-              │   │    brain-pattern                  │     │
-              │   │                                   │     │
-              │   │ b) Cosine similarity:             │     │
-              │   │    candidate_brain_pattern vs.    │     │
-              │   │    BRAIN-PATTERN TARGET           │     │
-              │   │    = SCORE                        │     │
-              │   │                                   │     │
-              │   │ c) IF score plateaus (delta < 0.02 │    │
-              │   │    over 2 rounds) OR round == 8:  │     │
-              │   │      RETURN best paragraph        │     │
-              │   │    ELSE:                          │     │
-              │   │      Pass score + per-region miss │     │
-              │   │      back to Stage 2;             │     │
-              │   │      generate Candidate #N+1      │     │
-              │   └───────────────────────────────────┘     │
-              │                                             │
-              │   Output: BEST PARAGRAPH + FINAL SCORE      │
-              └────────────────────┬────────────────────────┘
-                                   │
-                                   ▼
-              ┌─────────────────────────────────────────────┐
-              │        FALSIFICATION CHECK                  │
-              │                                             │
-              │   Score the BEST PARAGRAPH against a        │
-              │   CONTROL VIDEO's brain-pattern (different  │
-              │   human or same human on different scene).  │
-              │                                             │
-              │   If FALSIFICATION DELTA (= main_score      │
-              │   - control_score) is large (e.g., > 0.40), │
-              │   the paragraph is PROVABLY ANCHORED to     │
-              │   the original scene, not generically       │
-              │   plausible.                                │
-              │                                             │
-              │   Output: FALSIFICATION DELTA               │
-              └────────────────────┬────────────────────────┘
-                                   │
-                                   ▼
-              ┌─────────────────────────────────────────────┐
-              │         OUTPUT DOCUMENT                     │
-              │      (The Empathy-Layer Document)           │
-              │                                             │
-              │   Three sections, rendered for the          │
-              │   decision-maker (manager / consumer):      │
-              │                                             │
-              │   §1. Vision Report                         │
-              │       (action-data baseline; what action    │
-              │        data alone would have told you)      │
-              │                                             │
-              │   §2. Empathy Layer Paragraph               │
-              │       (best paragraph from iterative loop;  │
-              │        the empathy translation of what the  │
-              │        human felt during the action)        │
-              │                                             │
-              │   §3. Falsification Evidence                │
-              │       (similarity score + control delta +   │
-              │        per-region attribution; proves the   │
-              │        empathy layer is grounded)           │
-              │                                             │
-              │   Persona-driven framing:                   │
-              │   • Workplace (boss-facing): preserves      │
-              │     action data + adds context              │
-              │   • Consumer (user-facing): daily journal   │
-              │     entry; vault accumulation               │
-              │   • Pavilion (judge-facing): demo artifact  │
-              └─────────────────────────────────────────────┘
-                                   │
-                                   ▼
-                        [DECISION-MAKER reads]
-                            │             │
-                  ┌─────────┘             └─────────┐
-                  │                                 │
-                  ▼                                 ▼
-          [B2B Manager]                    [B2C User]
-        Reads paragraph                  Saves daily entry
-        before cutting corner            Knowledge graph grows
-        Patient experience preserved     Future-Obsidian B2C
-        Worker context-aware managed     Vault is theirs (Sideshift)
+       [INPUT: filename → match → backend/prerendered/<clip_id>/]
+                            │
+                            │  POST /demo/match → BackgroundTask `warmup_clip`
+                            │  pre-bakes every Layer-1 cache file:
+                            │  vision_report, swarm_readings, k2_region_cache,
+                            │  empathy, iterative_trajectory, falsification.
+                            │  Frontend polls /demo/warmup-status until ready.
+                            ▼
+   ┌────────────────────────┬────────────────────────┐
+   ▼                        ▼                        │
+┌──────────────┐   ┌──────────────────────────┐      │  TRIBE V2 = pre-rendered ONLY.
+│ STAGE 1A     │   │ STAGE 1B                 │      │  activity.json on disk is the
+│ Qwen3-VL via │   │ K2 SWARM (×7 Yeo7        │      │  canonical brain artifact.
+│ OpenRouter   │   │ networks, parallel)      │      │  Runtime never invokes TRIBE.
+│              │   │                          │      │
+│ 5 frames →   │   │ activity.json →          │      │
+│ vision_      │   │ 7 per-region readings →  │      │
+│ report.json  │   │ swarm_readings.json      │      │
+│ ≤ 10s        │   │ ≤ 8s parallel            │      │
+└──────┬───────┘   └─────────────┬────────────┘      │
+       └─────────────────┬───────┘                   │
+                         ▼                           │
+            ┌──────────────────────────┐             │
+            │ STAGE 2 — K2 MODERATOR   │             │  K2 plays THREE roles on the
+            │ ONE call combines vision │             │  same OpenAI-compatible chat-
+            │ + swarm + (rounds≥2)     │             │  completions surface:
+            │ prior_score + miss →     │             │   1B specialists × 7
+            │ candidate_paragraph      │             │   2 moderator × 1
+            │ ≤ 5s/round               │             │   3 evaluator-swarm × 7/round
+            └──────────┬───────────────┘             │
+                       ▼                             │
+            ┌──────────────────────────┐             │
+            │ STAGE 3 — K2 EVALUATOR   │             │
+            │ SWARM (rounds 1..8,      │             │
+            │ plateau-exit             │             │
+            │ |Δ|<0.02 over 2 rounds   │             │
+            │ OR R==8). 7 parallel K2  │             │
+            │ calls per round. Mean    │             │
+            │ = round_score. Per-      │             │
+            │ region attribution.      │             │
+            │ ≤ 60s for 8 rounds       │             │
+            │ → empathy.json + iter-   │             │
+            │ ative_trajectory.json    │             │
+            └──────────┬───────────────┘             │
+                       ▼                             │
+            ┌──────────────────────────┐             │
+            │ STAGE 4 — OPUS POLISH    │             │  Anthropic Claude Opus 4.7,
+            │ (CUT-LINE; OPTIONAL)     │             │  `claude-opus-4-7`. ONE call,
+            │ Gated `OPUS_POLISH=1`.   │             │  ~140 output tokens, ~100-word
+            │ K2 best ships as-is on   │             │  literary polish over the K2
+            │ flag-off OR any failure  │             │  best paragraph. Implementation:
+            │ (logger.error, fallback) │             │  services/empathy_polish.py.
+            │ ≤ 5s                     │             │
+            └──────────┬───────────────┘             │
+                       ▼                             │
+            ┌──────────────────────────┐             │
+            │ STAGE 5 — FALSIFICATION  │             │  Sentence-transformer
+            │ embedding proxy:         │             │  all-MiniLM-L6-v2 (CPU, lazy
+            │ paragraph → 384-dim →    │             │  singleton). 384×7 projection
+            │ 7-dim @ projection W →   │             │  W fit offline from
+            │ cos vs activity target   │             │  training_pairs.yaml.
+            │ + cos vs control         │             │
+            │ {main_score, control_    │             │
+            │  score, delta, verdict}  │             │
+            │ verdict = "anchored"     │             │
+            │ if delta > 0.40          │             │
+            │ ≤ 200ms                  │             │
+            └──────────┬───────────────┘             │
+                       ▼                             │
+            ┌──────────────────────────┐             │
+            │ EMPATHY-LAYER DOCUMENT   │             │
+            │ §A vision_report (Stage  │             │
+            │    1A baseline)          │             │
+            │ §B empathy paragraph     │             │
+            │    (Stage 4 if present,  │             │
+            │     else Stage 3 best)   │             │
+            │ §C falsification +       │             │
+            │    per-region attribution│             │
+            │    + round trajectory    │             │
+            │ PersonaShell: workplace /│             │
+            │  consumer / pavilion     │             │
+            └──────────────────────────┘             │
+                                                     │
+        Demo-day operating mode: Saturday 8 AM the warmup runs once per clip
+        and the resulting JSON is committed to the repo. On stage, every
+        endpoint is a disk read. Brain-3D clicks never block on a runtime
+        LLM call. Live attempt runs in the background; if it lands cleanly,
+        swap in. If not, the pre-cache IS the demo. Honest framing throughout.
 ```
 
-### Data Transfer Spec
+**Per-stage owners + files:**
+- LANE-J (Junsoo): `services/embedding_proxy/` + `services/falsification.py` + offline TRIBE-V2-reverse bake of `activity.json` per clip + control activity.json bake (workplace_routine_baseline + curated_short_film_baseline; A1-deepdive option i + ii hybrid).
+- LANE-K (Jacob): `services/swarm_runner.py` (Stage 1B) + `services/empathy_synthesis.py` (Stage 2) + `services/iterative_loop.py` (Stage 3) + `services/empathy_polish.py` (Stage 4) + `services/warmup.py` + `services/session_cache.py` + `services/guardrails.py`. Prompts: `prompts/{network}.md` × 7 + `moderator_synthesis.md` + `evaluator_score.md` + `empathy_polish.md`.
+- LANE-O (Johnny): `services/vision_client.py` (Stage 1A; OpenRouter + Qwen3-VL) + `frontend/src/` (Vue 3 dashboard, persona shell, brain-3D scene, iterative-loop reveal, empathy document) + `main.py` glue.
+- LANE-E (Emilie): typography (Crimson Pro for §B paragraph), launch video, sponsor swap-slides (4 variants), voiceover, Devpost, pitch decks, FAQ ammunition deck, Saturday 6 PM pre-cache assembly test.
+
+### Data Transfer Spec (v2)
 
 | Stage | Input | Tool | Output | Latency target |
 |---|---|---|---|---|
-| Stage 1 | Video file (MP4, H.264, ≥720p, 30-90s) | Gemini 2.5 Pro (via OpenRouter) OR Claude vision API | Vision Report JSON | ≤ 10s |
-| TRIBE V2 reverse | Same video file | Junsoo's pipeline (Meta FAIR research) | BRAIN-PATTERN TARGET JSON (~20K vertices/sec) | ≤ 30s for 30s clip |
-| Stage 2 (Round 1) | Vision Report + BRAIN-PATTERN TARGET | Claude Opus | Candidate Paragraph #1 (~150-300 words) | ≤ 5s |
-| TRIBE V2 forward (per round) | Candidate Paragraph text | Junsoo's forward-direction pipeline | Predicted brain-pattern JSON | ≤ 2s |
-| Cosine similarity (per round) | Candidate vs. TARGET brain-pattern | Local computation | Score [0.0, 1.0] | ≤ 0.5s |
-| Stage 2 (Round N+1) | Vision Report + TARGET + Round N score + per-region miss | Claude Opus | Candidate Paragraph #N+1 | ≤ 5s |
-| Iterative loop total | (8 rounds × Stage 2 ~5s + TRIBE forward ~2s + scoring ~0.5s) = ~60s | K2 Cerebras orchestration | Best paragraph + final score + all-round trajectory | ≤ 60s |
-| Falsification check | Best paragraph + control video TRIBE inference | Junsoo's pipeline | Falsification delta | ≤ 3s |
-| Output document rendering | All upstream outputs | Frontend (Three.js + React) | Empathy-Layer Document UI | ≤ 1s |
-| **Total end-to-end (live)** | Video file | All stages | Empathy-Layer Document | **~104s** (within 90s budget when iterative loop is shortened to 5 rounds OR pre-cached) |
+| Stage 0 cache lookup | `filename` → `clip_id` → `backend/prerendered/<clip_id>/` | match handler | activity.json + scenario.json on disk | ≤ 50ms |
+| Stage 1A vision | 5 frames (cv2/ffmpeg extract) | Qwen3-VL via OpenRouter (`qwen/qwen3-vl-235b-a22b-instruct`) | `vision_report.json` | ≤ 10s ideal; tolerated inside warmup BackgroundTask if higher |
+| Stage 1B K2 swarm | activity.json (per-network aggregates) | K2 × 7 parallel via `asyncio.gather` (no semaphore) | `swarm_readings.json` | ≤ 8s parallel |
+| Stage 2 K2 moderator (per round) | vision_report + swarm_readings + (rounds ≥ 2) prior_score + per_region_miss | K2 × 1 (`prompts/moderator_synthesis.md`) | candidate paragraph (~150-300 words) | ≤ 5s |
+| Stage 3 K2 evaluator swarm (per round) | candidate paragraph + 7 region readings | K2 × 7 parallel (`prompts/evaluator_score.md`) | per-region score + justification → mean = round_score | ≤ 8s/round; ≤ 60s for 8 rounds full |
+| Stage 4 Opus polish (OPTIONAL) | `best_paragraph` + scenario | Anthropic `claude-opus-4-7` (`OPUS_POLISH=1` only) | `polished_paragraph` (~100 words) OR `null` on cut/fail | ≤ 5s; runs in warmup, not on live read path |
+| Stage 5 falsification | `best_paragraph` + main activity + control activity | embedding proxy (all-MiniLM-L6-v2 CPU) + projection W | `{main_score, control_score, delta, verdict}` | ≤ 200ms (after lazy singleton load) |
+| Empathy doc render | All upstream outputs | Frontend (Vue 3 + Three.js) | rendered EmpathyDocument | ≤ 1s |
+| **Cold warmup total (per clip)** | Video filename | Full pipeline (BackgroundTask) | All cache JSON committed to disk | ≈ 90-110s (hidden from demo path) |
+| **Warm read (post-Saturday 8 AM bake)** | Same `clip_id` | Disk read of empathy.json | Empathy-Layer Document | < 100ms |
 
-**Live-vs-pre-cache strategy:** Live attempt for Stage 1 + TRIBE reverse + Stage 2 + iterative loop. If any stage exceeds budget, swap to pre-cached output for that stage. Saturday 8 AM bake includes pre-cached intermediate outputs at every stage boundary.
+**Pre-cache strategy (v2 lock):** Saturday 8 AM the warmup pipeline runs once per demo clip and the resulting JSON is committed to the repo. On stage, demo-day reads are O(1) cache hits. Live attempt runs as a non-blocking background; if it lands cleanly, the demo prefers the live result; if not, the pre-cache IS the demo. **TRIBE V2 NEVER runs in any direction at runtime.**
 
-### The Demo Visualization (90 Seconds On Stage)
+### The Demo Visualization (90 Seconds On Stage — v2)
 
 ```
-TIME      WHAT THE JUDGE SEES                           ENGINE STAGE RUNNING
+TIME      WHAT THE JUDGE SEES                           CACHE / STAGE READ
 ─────     ──────────────────────────────────────        ─────────────────────
-0:00      Workplace footage plays                        Stage 1 (Gemini)
-          Vision Report appears as text overlay:
-          "Nurse entered room. Sat 30 min."
-0:15      3D cortical mesh appears alongside footage     TRIBE V2 (reverse)
-          ~20K vertices visible, rendering ≥30 FPS
-          Regions glow in sync with footage
-0:35      Iterative-loop reveal begins:                  K2 + Stage 2 + TRIBE forward
-          • Round 1: Candidate paragraph #1 appears
-            (text fades in)
-            Score bar fills: 0.42
-          • Round 2: Paragraph rewrites
-            Score: 0.58 (bar grows)
-          • Round 3: 0.65
-          • Round 5: 0.71
-          • Round 8: 0.84 (bar full, paragraph crystallizes)
+0:00      Scenario clip plays (workplace OR consumer)   GET /demo/match → /demo/vision-report
+          Vision Report appears as text overlay         (Stage 1A; pre-baked)
+0:15      3D cortical mesh appears alongside clip.       GET /demo/activity (pre-rendered
+          ~20K vertices, fsaverage5, ≥30 FPS.            TRIBE V2 activity.json on disk)
+          Per-network glow synced to per-second
+          activations. Hover anchors fire K2-region
+          specialist popups (greenchain × icarus
+          dashboard pattern).                            POST /demo/k2-region (cache hit)
+0:35      Iterative-loop reveal:                         GET /demo/iterative-trajectory
+          • Round 1: candidate #1 fades in;             (round_trajectory[] from cached
+            score bar 0.42                               empathy.json — climb is the
+          • Round 2: rewrites; 0.58                      visual reveal; pre-baked from
+          • Round 3: 0.65                                K2-evaluator-swarm semantic scoring,
+          • Round 5: 0.71                                NOT TRIBE-V2-forward inference)
+          • Round 8: 0.84 (bar full)
           ★ THE SCORE CLIMBING IS THE VISUAL REVEAL ★
-1:00      Final empathy-layer paragraph in full           Output document rendering
-          Voiceover reads it aloud
-          Similarity 0.84 displayed
-          Falsification delta 0.27 displayed             Falsification check
-1:25      Side-by-side:                                   Comparison rendering
-          LEFT: action-data report ("over threshold,
-                cut to 10 min")
-          RIGHT: empathy-layer document ("she held
-                 space; brain-grounded; falsified")
-          The decision-maker would call this differently
-1:30      Sponsor close swap-slide                       Static
-          (Ironside / Listen Labs / Sideshift / YC)
+1:00      Final empathy paragraph in full.               GET /demo/empathy → §B
+          Voiceover reads it aloud (literature-grade     (best_paragraph if OPUS_POLISH=0,
+          prose; Stage 4 polish if `OPUS_POLISH=1`).     polished_paragraph if =1; frontend
+          Similarity score + falsification delta         already prefers polished || best)
+          rendered in §C.                                GET /demo/falsification → §C
+1:25      Side-by-side:                                   PersonaShell: workplace mode for
+          LEFT: action-data report ("over threshold;     ironside; consumer mode for twitter
+                cut to 10 min")                          /reels feed; pavilion mode for
+          RIGHT: empathy-layer document                   judges.
+          Decision-maker would call this differently.
+1:30      Sponsor close swap-slide                       Static asset (Ironsight /
+          (Ironsight / Listen Labs / Sideshift / YC)     Listen Labs / Sideshift / YC)
 ```
 
 ---
@@ -876,12 +849,14 @@ TIME      WHAT THE JUDGE SEES                           ENGINE STAGE RUNNING
 
 ### Performance
 
-- **NFR1.** Demo end-to-end runs in ≤ 90 seconds for live-attempt path.
-- **NFR2.** TRIBE V2 reverse inference completes 30s clip in < 30s on demo GPU.
-- **NFR3.** TRIBE V2 forward inference per candidate paragraph ≤ 2s.
-- **NFR4.** K2 swarm completes 10 concurrent specialist calls within 30s with zero timeouts.
-- **NFR5.** Stage 2 Opus call ≤ 5s per round.
-- **NFR6.** 8-round iterative loop completes in ≤ 60s; 5-round shortened version in ≤ 35s.
+> **v2 supersession note:** authoritative NFR semantics now live in technical PRD §14 (NFR1–NFR44). The strategic NFRs below preserve the v1 numbering for traceability; v2 deltas are tagged inline. **Authoritative source for v2 latency budgets is technical PRD §14 + architecture-overview §7.**
+
+- **NFR1.** Demo end-to-end runs in ≤ 90 seconds for live-attempt path. (v2: holds on the warm-cache path post-Saturday-8-AM bake; cold warmup ≈ 90-110s and is hidden inside the `BackgroundTask` warmup pipeline.)
+- **NFR2.** ~~TRIBE V2 reverse inference completes 30s clip in < 30s on demo GPU.~~ **[v2-superseded]** — TRIBE V2 reverse runs OFFLINE only; activity.json on disk is the canonical artifact.
+- **NFR3.** ~~TRIBE V2 forward-direction inference per candidate paragraph ≤ 2s.~~ **[v2-superseded]** — runtime TRIBE-V2-forward never runs in v2. Per-round semantic scoring is K2-evaluator-swarm; falsification cosine numbers come from the embedding proxy (see technical PRD NFR41).
+- **NFR4.** K2 swarm completes 7-call specialist swarm within 8s with zero timeouts (`asyncio.gather(*calls)` per stage; see technical PRD NFR42).
+- **NFR5.** ~~Stage-2 Anthropic Opus call ≤ 5s per round.~~ **[v2-superseded]** — Stage 2 is now the K2 moderator (≤ 5s per candidate, per technical PRD NFR6′). Stage 4 Opus polish (gated `OPUS_POLISH=1`) is the only place Anthropic Opus 4.7 runs in v2; ≤ 5s end-to-end (technical PRD NFR6″).
+- **NFR6.** 8-round iterative loop completes in ≤ 60s; plateau exit usually drops this to 3-5 rounds in practice.
 - **NFR7.** 3D rendering ≥ 30 FPS with iterative-loop visualization overlay.
 - **NFR8.** Demo determinism: < 5% variance across back-to-back runs (temp=0, lock seeds, pre-record fallback).
 
@@ -1003,7 +978,7 @@ This reimagines AI's role. The YEA/NAY rubric IS the architecture. AI surfaces o
 
 **Single-paragraph elevator (Johnny voice):**
 
-> *"Vision-language models can describe what a human did. They cannot communicate how that human felt doing it. That gap is the empathy layer — and it's the gap that makes managers cut corners that destroy what the company actually cares about. A nurse spends 30 minutes with a patient processing terminal diagnosis. The action data says 'over threshold; cut to 10 min.' The action data is wrong because it can't read the room. We close the gap. We use Meta's TRIBE V2 brain-encoding model — the same model that matched Clair de Lune's neural fingerprint to 90.4% in our prior published work, falsified against control music — to predict per-second per-region brain-response on the actual video footage. We invert the Clair de Lune protocol: instead of generating text to MATCH a brain-pattern, we use the brain-pattern of the actual video to score candidate paragraphs DESCRIBING what the human felt. Eight rounds of iterative scoring on K2 Cerebras at ~1,300 tokens per second. The output is a paragraph that reads like a human reading another human, anchored to brain-pattern evidence with a similarity score that proves the reading is grounded — not confabulated. Falsification check: same paragraph scored against control footage drops similarity sharply, confirming the description is specifically anchored to this scene. Managers read the paragraph BEFORE they make optimization decisions. The corner doesn't get cut. The patient experience holds. The company keeps the money the manager couldn't see they were losing. This generalizes to construction, retail, healthcare, food service, education, logistics, any workplace where humans take actions and someone above them is making productivity calls based on action data alone. Same engine extends to consumer day-to-day footage as a B2C overlay: empathy-layer paragraphs accumulate into a daily journal of the user's own brain-grounded experience. Future Obsidian. Database FOR you, not the database that sells you. Humans aren't machines. We built the layer that lets AI augment management decisions with the human context the action data strips out."*
+> *"Vision-language models can describe what a human did. They cannot communicate how that human felt doing it. That gap is the empathy layer — and it's the gap that makes managers cut corners that destroy what the company actually cares about. A nurse spends 30 minutes with a patient processing terminal diagnosis. The action data says 'over threshold; cut to 10 min.' The action data is wrong because it can't read the room. We close the gap. We use Meta's TRIBE V2 brain-encoding model — the same model that matched Clair de Lune's neural fingerprint to 90.4% in our prior published work, falsified against control music — pre-rendered offline as a brain-pattern data layer for each demo clip. A K2 swarm of seven Yeo7-network specialists reads each region's activations, a K2 moderator drafts the empathy paragraph, and a K2 evaluator-swarm re-scores the candidate region by region across up to eight rounds with plateau exit — at Cerebras K2 throughput so the merged swarm + loop fits inside a consumer-product latency budget. The best paragraph is optionally polished by Anthropic Claude Opus 4.7 as a ~100-word literary pass — cut-line cherry, gated by an env flag. Falsification check: a sentence-transformer embedding proxy projects the paragraph into seven Yeo7 dimensions and scores cosine similarity against the activity target plus a control delta, real numbers, ≤ 200ms — proving the description is specifically anchored to this scene, not generically plausible. Managers read the paragraph BEFORE they make optimization decisions. The corner doesn't get cut. The patient experience holds. The company keeps the money the manager couldn't see they were losing. This generalizes to construction, retail, healthcare, food service, education, logistics, any workplace where humans take actions and someone above them is making productivity calls based on action data alone. Same engine extends to consumer day-to-day footage as a B2C overlay: empathy-layer paragraphs accumulate into a daily journal of the user's own brain-grounded experience. Future Obsidian. Database FOR you, not the database that sells you. Humans aren't machines. We built the layer that lets AI augment management decisions with the human context the action data strips out."*
 
 ---
 

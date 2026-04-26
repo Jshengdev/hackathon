@@ -1,0 +1,64 @@
+{
+  "video_stem": "example_clip",
+  "n_actions": 3,
+  "model": "example:hand-authored (illustrative — replace by running run_report_card.py)",
+  "actions": [
+    {
+      "time_window": {"start_t": 0, "end_t": 12},
+      "action": "approach scaffolding (routine)",
+      "attention_score": 0.42,
+      "threat_engagement": 0.18,
+      "cognitive_load": 0.30,
+      "decision_quality": 0.55,
+      "archetype_state": "routine_engaged",
+      "supporting_specialist_evidence": {
+        "visual_attention": "Composite mid (visual=0.55, dorsal_attention=0.61) — wide-field scene intake with mild goal-directed gaze; consistent with locomotion through familiar terrain.",
+        "threat_detection": "Composite low (limbic=0.12, ventral_attention=0.18) — no threat-class signature in this window; hazard not implied by stimulus.",
+        "spatial_mapping": "Dorsal_attention elevated alongside visual mid — environmental layout being tracked at locomotion-relevant granularity, not at fine-grained inspection level.",
+        "motor_planning": "Somatomotor mid (0.42) — gait-level motor activation, no fine-motor preparation.",
+        "salience_tracking": "Ventral_attention near baseline — no unexpected onsets registered.",
+        "prefrontal_engagement": "Frontoparietal mid (0.34) — task-appropriate cognitive control for routine traversal.",
+        "default_mode": "Default_mode mid (0.21) — light internally-directed processing alongside external scanning; consistent with familiar-task autopilot.",
+        "stress_response": "No dysregulation signature: limbic low and frontoparietal mid; activation pattern does not match stress-class profile."
+      }
+    },
+    {
+      "time_window": {"start_t": 12, "end_t": 25},
+      "action": "pick up drill (routine)",
+      "attention_score": 0.68,
+      "threat_engagement": 0.31,
+      "cognitive_load": 0.49,
+      "decision_quality": 0.66,
+      "archetype_state": "focused",
+      "supporting_specialist_evidence": {
+        "visual_attention": "Composite mid-high (visual=0.62, dorsal_attention=0.55) — focal gaze deployment to tool location; eye-hand alignment phase.",
+        "threat_detection": "Composite low-mid (limbic=0.18, ventral_attention=0.32) — minor salience uptick at object-pickup boundary, not threat-class.",
+        "spatial_mapping": "Dorsal_attention sustained mid alongside visual elevation — tracking tool location and grip-target in near-field.",
+        "motor_planning": "Somatomotor elevated (0.71) — grip-and-lift motor program activated; clean execution profile.",
+        "salience_tracking": "Ventral_attention briefly elevated at action boundary, then sustained mid — typical action-onset signature, no unexpected stimulus.",
+        "prefrontal_engagement": "Frontoparietal mid-high (0.49) — task-appropriate cognitive control; no over-deliberation.",
+        "default_mode": "Default_mode low (0.08) — fully task-locked, no mind-wandering.",
+        "stress_response": "Limbic low and frontoparietal sustained — no dysregulation signature."
+      }
+    },
+    {
+      "time_window": {"start_t": 25, "end_t": 42},
+      "action": "begin overhead drilling (novel angle)",
+      "attention_score": 0.81,
+      "threat_engagement": 0.72,
+      "cognitive_load": 0.85,
+      "decision_quality": 0.58,
+      "archetype_state": "deliberating",
+      "supporting_specialist_evidence": {
+        "visual_attention": "Composite high (visual=0.71, dorsal_attention=0.78) — sustained focal gaze on bit-to-anchor contact point; locked-on, deliberate looking.",
+        "threat_detection": "Composite elevated (limbic=0.54, ventral_attention=0.66) — threat-class signature consistent with overhead-position hazard registration; activation pattern matches sustained vigilance, not panic.",
+        "spatial_mapping": "Dorsal_attention high alongside visual high — environmental layout being tracked at fine-grained scale; expanded scan radius consistent with novel-position situational awareness.",
+        "motor_planning": "Somatomotor high (0.83) — overhead motor program engaged; novel posture demands more cortical recruitment than routine grip.",
+        "salience_tracking": "Ventral_attention sustained high — multiple change-detection events (dust onset, vibration feedback) being tracked.",
+        "prefrontal_engagement": "Frontoparietal high (0.81) — substantial cognitive control recruitment; deliberation visible.",
+        "default_mode": "Default_mode minimal (0.04) — zero mind-wandering; full task-locking.",
+        "stress_response": "Limbic elevated alongside frontoparietal HIGH — load is high but control is being recruited, so dysregulation signature is not met. Distinct from overload pattern (limbic high + frontoparietal LOW)."
+      }
+    }
+  ]
+}

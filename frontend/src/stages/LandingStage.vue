@@ -55,7 +55,7 @@
         <div v-if="!loading && !error" class="dz-content">
           <div class="dz-icon">↑</div>
           <div class="dz-title">Drop an MP4 here</div>
-          <div class="dz-sub">or click to browse · try <code>30s_ironsite.mp4</code></div>
+          <div class="dz-sub">or click to browse</div>
         </div>
 
         <div v-else-if="loading" class="dz-content">

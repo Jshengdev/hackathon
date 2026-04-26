@@ -79,7 +79,7 @@
             class="iter-loop"
             :trajectory="trajectoryRounds"
             :accent="iterativeAccent"
-            :round-ms="900"
+            :round-ms="10000"
             :loop="false"
           />
           <div v-else class="panel-loading">iterative loop loading…</div>

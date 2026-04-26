@@ -74,6 +74,7 @@
 import { ref, computed, onMounted } from 'vue'
 import PersonaShell from '../components/PersonaShell.vue'
 import { fetchEmpathyDocument } from '../api/index.js'
+import { filterRealRounds } from '../utils/trajectory.js'
 
 const props = defineProps({
   clipId:        { type: String, required: true },
@@ -96,7 +97,7 @@ const empathyParagraph = computed(() =>
 )
 const finalScore = computed(() => empathy.value?.final_score)
 
-const trajectory = computed(() => empathy.value?.round_trajectory || [])
+const trajectory = computed(() => filterRealRounds(empathy.value?.round_trajectory))
 const attributionRows = computed(() => {
   const a = empathy.value?.per_region_attribution || {}
   return Object.entries(a).map(([network, v]) => ({ network, ...v }))

@@ -33,6 +33,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import RoundScoreBar from '../components/RoundScoreBar.vue'
 import { fetchIterativeTrajectory } from '../api/index.js'
+import { filterRealRounds } from '../utils/trajectory.js'
 
 const props = defineProps({ clipId: { type: String, required: true } })
 defineEmits(['reveal-done'])
@@ -53,7 +54,7 @@ let timer = null
 async function loadAndPlay() {
   try {
     const data = await fetchIterativeTrajectory(props.clipId)
-    const rt = data?.round_trajectory || []
+    const rt = filterRealRounds(data?.round_trajectory)
     if (!rt.length) {
       error.value = 'no trajectory available'
       return

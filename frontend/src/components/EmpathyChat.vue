@@ -22,14 +22,15 @@
         v-model="draft"
         type="text"
         :disabled="loading"
-        placeholder="ask about what the brain was doing — e.g. 'what was the limbic specialist tracking?'"
+        placeholder="ask anything — e.g. 'what was the worker likely feeling at t=18s?'"
       />
       <button type="submit" :disabled="loading || !draft.trim()">send</button>
     </form>
 
     <div class="chat-hint">
-      Answers are grounded in this clip's brain trace and stay observational
-      — no claims about specific subjective feelings.
+      Answers are grounded in this clip's brain trace; interpretive claims
+      are hedged ("likely," "consistent with") and cite the network +
+      timestamp informing them.
     </div>
   </div>
 </template>

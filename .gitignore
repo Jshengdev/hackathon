@@ -34,3 +34,27 @@ research/sources/repos/*
 
 # Locally-installed Claude Code skill plugins (third-party, large, reproducible via clone)
 .claude/skills/
+
+# junsoo/ slice — local Python build artifacts and vendored third-party clone
+junsoo/__pycache__/
+junsoo/cache/
+junsoo/tribev2/
+junsoo/out/
+
+# Pre-rendered TRIBE outputs — keep activity.json (Contract A), drop big binaries
+junsoo/prerendered/**/*.npz
+junsoo/prerendered/**/*.pkl
+junsoo/prerendered/**/*.meta.json
+
+# brain-swarm slice — local Python build artifacts, venv, runtime data, model cache
+_bmad/brain-swarm/backend/__pycache__/
+_bmad/brain-swarm/backend/services/__pycache__/
+_bmad/brain-swarm/backend/.venv/
+_bmad/brain-swarm/backend/data/
+_bmad/brain-swarm/backend/cache/
+_bmad/brain-swarm/frontend/node_modules/
+_bmad/brain-swarm/frontend/dist/
+junsoo/report_card/__pycache__/
+
+caltech/engine/__pycache__/
+junsoo/brain/__pycache__/

@@ -32,6 +32,9 @@ export default function TitleContent() {
             data — so the people managing them stop deciding with half the
             picture.
           </p>
+          <p className="mono text-xs smoke" style={{ letterSpacing: "0.18em" }}>
+            ahead: the problem · the inversion · the engine · the use cases · the stakes.
+          </p>
           <div
             className="flex items-center gap-3 mt-2"
             style={{

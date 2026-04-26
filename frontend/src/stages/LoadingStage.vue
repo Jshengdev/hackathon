@@ -36,7 +36,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, h, defineComponent } from 'vue'
-import { fetchVisionReport, fetchActivity } from '../api/index.js'
+import { fetchVisionReport, fetchActivity, fetchWarmupStatus } from '../api/index.js'
 
 const props = defineProps({
   clipId: { type: String, required: true },
@@ -143,9 +143,24 @@ async function runTribe() {
   pushLog(tribeLogs, '✓ Activity loaded')
 }
 
+async function waitForWarmup(maxMs = 90000, intervalMs = 1500) {
+  const start = performance.now()
+  while (performance.now() - start < maxMs) {
+    try {
+      const status = await fetchWarmupStatus(props.clipId)
+      if (status?.ready) return true
+    } catch (e) {
+      // Endpoint may not exist on older backends — proceed without gating.
+      return false
+    }
+    await new Promise(r => setTimeout(r, intervalMs))
+  }
+  return false
+}
+
 onMounted(async () => {
   await Promise.all([runVision(), runTribe()])
-  // Brief settle before emitting
+  await waitForWarmup()
   await new Promise(r => setTimeout(r, 600))
   emit('done', { vision: visionResult, activity: tribeResult })
 })

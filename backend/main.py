@@ -18,7 +18,12 @@ from services.swarm import SwarmSimulation
 from services.orchestrator import Orchestrator, _parse_observation
 from services.k2_client import K2Client
 from services.vision_client import VisionClient
-from services.comparison import run_comparison
+from services.swarm_runner import run_swarm
+from services.empathy_synthesis import synthesize as synthesize_empathy
+from services.iterative_loop import run_iterative_loop
+from services.falsification import compute_falsification
+from services.session_cache import read_cached, write_cached
+from services.warmup import warmup_clip, get_warmup_status
 
 app = FastAPI(title="Brain Swarm Visualizer")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -182,6 +187,22 @@ def _clip_dir(clip_id: str) -> Path:
     return d
 
 
+def _load_scenario(clip_dir: Path) -> dict:
+    """Read prerendered/<clip_id>/scenario.json. Defaults to consumer."""
+    scenario_path = clip_dir / "scenario.json"
+    if scenario_path.exists():
+        try:
+            blob = json.loads(scenario_path.read_text(encoding="utf-8"))
+            if isinstance(blob, dict) and "scenario" in blob:
+                return {
+                    "scenario": blob.get("scenario", "consumer"),
+                    "label": blob.get("label", clip_dir.name),
+                }
+        except Exception:
+            pass
+    return {"scenario": "consumer", "label": clip_dir.name}
+
+
 def _resolve_video_path(clip_dir: Path, clip_id: str) -> Optional[Path]:
     """Find a sibling MP4 for the clip. Falls back to None if none exists
     yet — the demo still works because vision_client will write a stub."""
@@ -211,46 +232,19 @@ def list_demo_clips():
         if not activity.exists():
             continue
         video = _resolve_video_path(sub, sub.name)
+        scenario = _load_scenario(sub)
         clips.append({
             "clip_id": sub.name,
             "has_video": video is not None,
             "video_url": f"/prerendered/{sub.name}/{video.name}" if video else None,
             "activity_url": f"/prerendered/{sub.name}/activity.json",
+            "scenario": scenario["scenario"],
+            "scenarioLabel": scenario["label"],
         })
     return {"clips": clips}
 
 
-@app.post("/demo/match")
-async def match_clip(payload: dict):
-    """Match an uploaded filename to a prerendered clip_id.
-
-    Body: {"filename": "30s_ironsite.mp4"}
-    Strips the extension and looks for prerendered/<clip_id>/activity.json.
-    """
-    filename = (payload or {}).get("filename")
-    if not filename:
-        raise HTTPException(status_code=400, detail="filename required")
-    clip_id = Path(filename).stem
-    clip_dir = _clip_dir(clip_id)
-    activity_path = clip_dir / "activity.json"
-    if not activity_path.exists():
-        raise HTTPException(status_code=404, detail=f"no prerendered clip for '{clip_id}'")
-
-    # n_frames lookup (cheap — load + count).
-    try:
-        blob = json.loads(activity_path.read_text(encoding="utf-8"))
-        n_frames = len(blob.get("frames") or [])
-    except Exception:
-        n_frames = 0
-
-    video = _resolve_video_path(clip_dir, clip_id)
-    return {
-        "clip_id": clip_id,
-        "video_url": f"/prerendered/{clip_id}/{video.name}" if video else None,
-        "activity_url": f"/prerendered/{clip_id}/activity.json",
-        "n_frames": n_frames,
-        "has_video": video is not None,
-    }
+# /demo/match is defined below as match_clip_with_warmup.
 
 
 @app.get("/demo/activity/{clip_id}")
@@ -279,26 +273,161 @@ async def get_vision_report(clip_id: str):
     return report
 
 
-@app.get("/demo/comparison/{clip_id}")
-async def get_comparison(clip_id: str):
-    """Return cached with/without-TRIBE comparison, generating if missing."""
+_CONTROL_FOR = {
+    "ironside": "workplace_routine_baseline",
+    "consumer": "curated_short_film_baseline",
+}
+
+
+def _load_activity(clip_id: str) -> dict:
+    activity_path = _clip_dir(clip_id) / "activity.json"
+    if not activity_path.exists():
+        raise HTTPException(status_code=404, detail=f"no activity.json for '{clip_id}'")
+    return json.loads(activity_path.read_text(encoding="utf-8"))
+
+
+def _load_control_activity(scenario: str, main_activity: dict) -> dict:
+    control_id = _CONTROL_FOR.get(scenario)
+    if control_id:
+        ctrl_path = (PRERENDERED_DIR / control_id / "activity.json")
+        if ctrl_path.exists():
+            return json.loads(ctrl_path.read_text(encoding="utf-8"))
+    return main_activity
+
+
+@app.post("/demo/match")
+async def match_clip_with_warmup(payload: dict, background_tasks: BackgroundTasks):
+    """Match an uploaded filename to a prerendered clip_id, then kick off
+    the warmup background task so subsequent /demo/* calls are cached."""
+    filename = (payload or {}).get("filename")
+    if not filename:
+        raise HTTPException(status_code=400, detail="filename required")
+    clip_id = Path(filename).stem
     clip_dir = _clip_dir(clip_id)
     activity_path = clip_dir / "activity.json"
     if not activity_path.exists():
-        raise HTTPException(status_code=404, detail="clip not found")
-
-    # Need the vision report first — reuse the same caching pathway.
-    video = _resolve_video_path(clip_dir, clip_id)
-    video_path = video if video else (clip_dir / f"{clip_id}.mp4")
-    vision_report = await get_vision_client().analyze_video(video_path, clip_id)
-
+        raise HTTPException(status_code=404, detail=f"no prerendered clip for '{clip_id}'")
     try:
-        activity = json.loads(activity_path.read_text(encoding="utf-8"))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"failed to parse activity.json: {e}")
+        n_frames = len(json.loads(activity_path.read_text(encoding="utf-8")).get("frames") or [])
+    except Exception:
+        n_frames = 0
+    video = _resolve_video_path(clip_dir, clip_id)
+    scenario = _load_scenario(clip_dir)
 
-    cache = clip_dir / "comparison.json"
-    return await run_comparison(vision_report, activity, cache)
+    background_tasks.add_task(warmup_clip, PRERENDERED_DIR, clip_id)
+
+    return {
+        "clip_id": clip_id,
+        "video_url": f"/prerendered/{clip_id}/{video.name}" if video else None,
+        "activity_url": f"/prerendered/{clip_id}/activity.json",
+        "n_frames": n_frames,
+        "has_video": video is not None,
+        "scenario": scenario["scenario"],
+        "scenarioLabel": scenario["label"],
+    }
+
+
+@app.get("/demo/warmup-status/{clip_id}")
+async def warmup_status(clip_id: str):
+    _clip_dir(clip_id)
+    return await get_warmup_status(PRERENDERED_DIR, clip_id)
+
+
+async def _ensure_swarm_readings(clip_id: str) -> dict:
+    cached = read_cached(PRERENDERED_DIR, clip_id, "swarm_readings")
+    if cached is not None:
+        return cached
+    activity = _load_activity(clip_id)
+    result = await run_swarm(activity, clip_id)
+    write_cached(PRERENDERED_DIR, clip_id, "swarm_readings", result)
+    return result
+
+
+async def _ensure_vision_report(clip_id: str) -> dict:
+    cached = read_cached(PRERENDERED_DIR, clip_id, "vision_report")
+    if cached is not None:
+        return cached
+    clip_dir = _clip_dir(clip_id)
+    video = _resolve_video_path(clip_dir, clip_id) or (clip_dir / f"{clip_id}.mp4")
+    return await get_vision_client().analyze_video(video, clip_id)
+
+
+async def _ensure_empathy(clip_id: str) -> dict:
+    cached = read_cached(PRERENDERED_DIR, clip_id, "empathy")
+    if cached is not None:
+        return cached
+
+    scenario = _load_scenario(_clip_dir(clip_id))
+    main_activity = _load_activity(clip_id)
+
+    vision_report, swarm_readings = await asyncio.gather(
+        _ensure_vision_report(clip_id),
+        _ensure_swarm_readings(clip_id),
+    )
+
+    loop_result = await run_iterative_loop(
+        vision_report=vision_report,
+        swarm_readings=swarm_readings,
+        scenario=scenario["scenario"],
+    )
+
+    control_activity = _load_control_activity(scenario["scenario"], main_activity)
+    falsif = compute_falsification(
+        loop_result.get("best_paragraph") or "",
+        main_activity,
+        control_activity,
+    )
+
+    empathy = {
+        "clip_id": clip_id,
+        "scenario": scenario["scenario"],
+        "scenario_label": scenario["label"],
+        "vision_report": vision_report,
+        "swarm_readings": swarm_readings,
+        "best_paragraph": loop_result.get("best_paragraph"),
+        "polished_paragraph": None,
+        "final_score": loop_result.get("final_score"),
+        "round_trajectory": loop_result.get("round_trajectory") or [],
+        "per_region_attribution": loop_result.get("per_region_attribution") or {},
+        "falsification": falsif,
+    }
+    write_cached(PRERENDERED_DIR, clip_id, "empathy", empathy)
+    return empathy
+
+
+@app.get("/demo/empathy/{clip_id}")
+async def get_empathy(clip_id: str):
+    _clip_dir(clip_id)
+    return await _ensure_empathy(clip_id)
+
+
+@app.get("/demo/iterative-trajectory/{clip_id}")
+async def get_iterative_trajectory(clip_id: str):
+    _clip_dir(clip_id)
+    cached = read_cached(PRERENDERED_DIR, clip_id, "iterative_trajectory")
+    if cached is not None:
+        return cached
+    empathy = await _ensure_empathy(clip_id)
+    trajectory = {
+        "clip_id": clip_id,
+        "round_trajectory": empathy.get("round_trajectory") or [],
+        "final_score": empathy.get("final_score"),
+        "best_paragraph": empathy.get("best_paragraph"),
+    }
+    write_cached(PRERENDERED_DIR, clip_id, "iterative_trajectory", trajectory)
+    return trajectory
+
+
+@app.get("/demo/falsification/{clip_id}")
+async def get_falsification(clip_id: str):
+    _clip_dir(clip_id)
+    cached = read_cached(PRERENDERED_DIR, clip_id, "falsification")
+    if cached is not None:
+        return cached
+    empathy = await _ensure_empathy(clip_id)
+    falsif = empathy.get("falsification") or {}
+    write_cached(PRERENDERED_DIR, clip_id, "falsification", falsif)
+    return falsif
 
 
 @app.post("/demo/k2-region")

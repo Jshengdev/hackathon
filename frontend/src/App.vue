@@ -7,11 +7,11 @@
         v-bind="stageProps"
         @matched="onMatched"
         @done="onLoadingDone"
-        @next="goToComparison"
+        @next="goToIterativeReveal"
+        @reveal-done="onRevealDone"
       />
     </transition>
 
-    <!-- Tiny stage indicator (bottom-left) -->
     <div class="stage-indicator">
       <span
         v-for="(s, i) in stages"
@@ -26,36 +26,54 @@
 
 <script setup>
 import { ref, computed, shallowRef } from 'vue'
-import LandingStage    from './stages/LandingStage.vue'
-import LoadingStage    from './stages/LoadingStage.vue'
-import MainStage       from './stages/MainStage.vue'
-import ComparisonStage from './stages/ComparisonStage.vue'
+import LandingStage         from './stages/LandingStage.vue'
+import LoadingStage         from './stages/LoadingStage.vue'
+import MainStage            from './stages/MainStage.vue'
+import IterativeRevealStage from './stages/IterativeRevealStage.vue'
+import EmpathyDocumentStage from './stages/EmpathyDocumentStage.vue'
 
-const stages = ['landing', 'loading', 'main', 'comparison']
+const stages = ['landing', 'loading', 'main', 'iterative-reveal', 'empathy-document']
 const currentStage = ref('landing')
 const stageIdx = computed(() => stages.indexOf(currentStage.value))
 
-// Cross-stage state
-const clipId       = ref('')   // matched clip identifier
-const activityData = shallowRef(null)
-const visionReport = shallowRef(null)
+const clipId         = ref('')
+const scenario       = ref('')
+const scenarioLabel  = ref('')
+const activityData   = shallowRef(null)
+const visionReport   = shallowRef(null)
 
-const stageMap = { landing: LandingStage, loading: LoadingStage, main: MainStage, comparison: ComparisonStage }
+const stageMap = {
+  'landing':          LandingStage,
+  'loading':          LoadingStage,
+  'main':             MainStage,
+  'iterative-reveal': IterativeRevealStage,
+  'empathy-document': EmpathyDocumentStage,
+}
 const stageComponent = computed(() => stageMap[currentStage.value])
 
 const stageProps = computed(() => {
   switch (currentStage.value) {
-    case 'loading':    return { clipId: clipId.value }
-    case 'main':       return { clipId: clipId.value, activityData: activityData.value }
-    case 'comparison': return { clipId: clipId.value, activityData: activityData.value }
-    default:           return {}
+    case 'loading':
+      return { clipId: clipId.value }
+    case 'main':
+      return { clipId: clipId.value, activityData: activityData.value, scenario: scenario.value }
+    case 'iterative-reveal':
+      return { clipId: clipId.value, scenario: scenario.value }
+    case 'empathy-document':
+      return {
+        clipId: clipId.value,
+        scenario: scenario.value,
+        scenarioLabel: scenarioLabel.value,
+      }
+    default:
+      return {}
   }
 })
 
-// ── Stage transitions ──────────────────────────────────────────────────────
 function onMatched(payload) {
-  // payload from POST /demo/match — expect { clip_id, ... }
-  clipId.value = payload?.clip_id || payload?.clipId || ''
+  clipId.value        = payload?.clip_id      || payload?.clipId       || ''
+  scenario.value      = payload?.scenario     || 'consumer'
+  scenarioLabel.value = payload?.scenarioLabel|| payload?.scenario_label|| ''
   if (!clipId.value) {
     console.warn('No clip_id in match payload', payload)
     return
@@ -69,8 +87,12 @@ function onLoadingDone({ vision, activity }) {
   currentStage.value = 'main'
 }
 
-function goToComparison() {
-  currentStage.value = 'comparison'
+function goToIterativeReveal() {
+  currentStage.value = 'iterative-reveal'
+}
+
+function onRevealDone() {
+  currentStage.value = 'empathy-document'
 }
 </script>
 
@@ -108,9 +130,6 @@ function goToComparison() {
   text-transform: uppercase;
 }
 
-/* Stage cross-fade */
-.stage-enter-active, .stage-leave-active {
-  transition: opacity 0.4s ease;
-}
-.stage-enter-from, .stage-leave-to { opacity: 0; }
+.stage-enter-active, .stage-leave-active { transition: opacity 0.4s ease; }
+.stage-enter-from, .stage-leave-to       { opacity: 0; }
 </style>

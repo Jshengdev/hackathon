@@ -23,11 +23,6 @@ export async function fetchStatus() {
 // ── Demo flow endpoints ─────────────────────────────────────────────────────
 const DEMO = '/demo'
 
-/**
- * Stage 1: "Match" an uploaded video to a prerendered clip.
- * Fakes the upload — server looks up by filename and returns clip_id + URLs.
- * @param {string} filename — e.g. "30s_ironsite.mp4"
- */
 export async function postDemoMatch(filename) {
   const r = await fetch(`${DEMO}/match`, {
     method: 'POST',
@@ -38,30 +33,18 @@ export async function postDemoMatch(filename) {
   return r.json()
 }
 
-/**
- * Stage 2: vision analysis (Gemini/Claude). Returns the structured report.
- */
 export async function fetchVisionReport(clipId) {
   const r = await fetch(`${DEMO}/vision-report/${encodeURIComponent(clipId)}`)
   if (!r.ok) throw new Error(`vision-report failed: ${r.status}`)
   return r.json()
 }
 
-/**
- * Stage 2/3: load activity.json (TRIBE V2 predictions, prerendered).
- */
 export async function fetchActivity(clipId) {
   const r = await fetch(`${DEMO}/activity/${encodeURIComponent(clipId)}`)
   if (!r.ok) throw new Error(`activity fetch failed: ${r.status}`)
   return r.json()
 }
 
-/**
- * Stage 3: K2 narration for a single clicked region.
- * @param {string} clipId
- * @param {string} network — yeo7 network name (e.g. "visual")
- * @param {number} t — integer seconds (floor of currentTime)
- */
 export async function postK2Region({ clipId, network, t }) {
   const r = await fetch(`${DEMO}/k2-region`, {
     method: 'POST',
@@ -72,18 +55,30 @@ export async function postK2Region({ clipId, network, t }) {
   return r.json()
 }
 
-/**
- * Stage 4: side-by-side without/with TRIBE V2 comparison.
- */
-export async function fetchComparison(clipId) {
-  const r = await fetch(`${DEMO}/comparison/${encodeURIComponent(clipId)}`)
-  if (!r.ok) throw new Error(`comparison fetch failed: ${r.status}`)
+export async function fetchEmpathyDocument(clipId) {
+  const r = await fetch(`${DEMO}/empathy/${encodeURIComponent(clipId)}`)
+  if (!r.ok) throw new Error(`empathy fetch failed: ${r.status}`)
   return r.json()
 }
 
-/**
- * Helper: URL of the prerendered MP4 for an HTML5 <video> element.
- */
+export async function fetchIterativeTrajectory(clipId) {
+  const r = await fetch(`${DEMO}/iterative-trajectory/${encodeURIComponent(clipId)}`)
+  if (!r.ok) throw new Error(`iterative-trajectory failed: ${r.status}`)
+  return r.json()
+}
+
+export async function fetchFalsification(clipId) {
+  const r = await fetch(`${DEMO}/falsification/${encodeURIComponent(clipId)}`)
+  if (!r.ok) throw new Error(`falsification failed: ${r.status}`)
+  return r.json()
+}
+
+export async function fetchWarmupStatus(clipId) {
+  const r = await fetch(`${DEMO}/warmup-status/${encodeURIComponent(clipId)}`)
+  if (!r.ok) throw new Error(`warmup-status failed: ${r.status}`)
+  return r.json()
+}
+
 export function videoUrl(clipId) {
   return `/prerendered/${encodeURIComponent(clipId)}/${encodeURIComponent(clipId)}.mp4`
 }

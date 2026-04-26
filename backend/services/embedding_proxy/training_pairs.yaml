@@ -1,0 +1,161 @@
+# Hand-paired (paragraph, mean-activation-vector) examples used to fit the
+# 384 -> 7 projection map W in projection_map.npy.
+#
+# Activation values are PER-NETWORK MEAN across all frames, in the same
+# numeric range as backend/prerendered/{30s_ironsite,30s_twitter}/activity.json
+# (typically -0.15 .. +0.30 after frame averaging).
+#
+# Network ordering used by project_to_yeo7 / activity_target_vector:
+#   visual, somatomotor, dorsal_attention, ventral_attention,
+#   limbic, frontoparietal, default_mode
+#
+# Pairs are intentionally written so that paragraphs which describe a
+# scenario's lived experience match the activation pattern that scenario
+# actually produced in the prerendered activity.json.
+#
+# 5 ironside pairs + 5 consumer pairs = 10 total.
+
+pairs:
+  # ---------------- IRONSIDE (workplace / scaffolding) ----------------
+
+  - scenario: ironside
+    paragraph: >
+      The worker's eyes track the steel beam's edge as he climbs the scaffolding,
+      attention split between foot placement and the tool resting near the drop.
+      His body leans into the rail; the world below recedes from concern.
+    activation:
+      visual: 0.21
+      somatomotor: 0.04
+      dorsal_attention: 0.18
+      ventral_attention: 0.05
+      limbic: -0.02
+      frontoparietal: 0.03
+      default_mode: -0.09
+
+  - scenario: ironside
+    paragraph: >
+      Hands grip the cold rail; the harness tugs at his hip as he steps across
+      the gap. He scans the crossbeam ahead, gauging distance, weight,
+      and the next handhold before committing his weight.
+    activation:
+      visual: 0.19
+      somatomotor: 0.02
+      dorsal_attention: 0.16
+      ventral_attention: 0.04
+      limbic: -0.01
+      frontoparietal: 0.02
+      default_mode: -0.07
+
+  - scenario: ironside
+    paragraph: >
+      He fixes on the bolt pattern, tracing the line of rivets with his gaze.
+      Peripheral motion of the crane swing pulls his attention briefly sideways,
+      then his focus snaps back to the workpiece.
+    activation:
+      visual: 0.22
+      somatomotor: -0.01
+      dorsal_attention: 0.15
+      ventral_attention: 0.06
+      limbic: -0.02
+      frontoparietal: 0.01
+      default_mode: -0.08
+
+  - scenario: ironside
+    paragraph: >
+      A held breath, a small adjustment of the shoulder. The drill bites the
+      beam and his hands brace against the recoil. The hum of the site
+      narrows down to the single contact point under his palms.
+    activation:
+      visual: 0.18
+      somatomotor: 0.05
+      dorsal_attention: 0.13
+      ventral_attention: 0.03
+      limbic: -0.03
+      frontoparietal: 0.02
+      default_mode: -0.06
+
+  - scenario: ironside
+    paragraph: >
+      Watching the worker on the high beam, the mind narrows. The eye picks
+      out edges, gaps, the tool teetering near the drop. There is no inner
+      monologue, only outward tracking — the body kept honest by the height.
+    activation:
+      visual: 0.20
+      somatomotor: 0.00
+      dorsal_attention: 0.14
+      ventral_attention: 0.03
+      limbic: -0.02
+      frontoparietal: 0.01
+      default_mode: -0.07
+
+  # ---------------- CONSUMER (twitter / reels feed) ----------------
+
+  - scenario: consumer
+    paragraph: >
+      The scroll is rhythmic, unconscious. A face flashes by, then a clip,
+      then a caption — held for a half-second, abandoned. The thumb keeps
+      moving and the inner narrator keeps drifting somewhere else.
+    activation:
+      visual: 0.14
+      somatomotor: 0.01
+      dorsal_attention: 0.05
+      ventral_attention: 0.02
+      limbic: -0.03
+      frontoparietal: 0.02
+      default_mode: -0.09
+
+  - scenario: consumer
+    paragraph: >
+      Scenes blur into one another: a kitchen, a celebrity, a complaint, a joke.
+      None of it lands hard. Attention skims the surface of each frame
+      and the rest of the brain rehearses tomorrow's errands.
+    activation:
+      visual: 0.13
+      somatomotor: 0.00
+      dorsal_attention: 0.04
+      ventral_attention: 0.01
+      limbic: -0.02
+      frontoparietal: 0.02
+      default_mode: -0.10
+
+  - scenario: consumer
+    paragraph: >
+      A cute dog, then an argument, then a product. The viewer's body is
+      slack on the couch; only the eye moves. Inwardly, half-formed thoughts
+      about dinner and a half-remembered text bubble up and recede.
+    activation:
+      visual: 0.13
+      somatomotor: 0.01
+      dorsal_attention: 0.05
+      ventral_attention: 0.01
+      limbic: -0.03
+      frontoparietal: 0.02
+      default_mode: -0.08
+
+  - scenario: consumer
+    paragraph: >
+      Each clip is short enough to consume without thinking. The feed
+      autoplays; faces and voices wash over the visual cortex while the
+      rest of the mind wanders through unrelated, mostly self-referential terrain.
+    activation:
+      visual: 0.14
+      somatomotor: 0.00
+      dorsal_attention: 0.05
+      ventral_attention: 0.02
+      limbic: -0.02
+      frontoparietal: 0.02
+      default_mode: -0.09
+
+  - scenario: consumer
+    paragraph: >
+      The thumb flicks. Somewhere between the third and fourth video the
+      viewer stops reading captions. The pictures keep arriving, the
+      mind keeps half-watching, and the rest of the day quietly intrudes.
+    activation:
+      visual: 0.12
+      somatomotor: 0.00
+      dorsal_attention: 0.04
+      ventral_attention: 0.01
+      limbic: -0.03
+      frontoparietal: 0.01
+      default_mode: -0.08

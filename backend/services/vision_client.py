@@ -1,7 +1,8 @@
 """Vision LLM client.
 
-Wraps a vision-capable LLM (default: Anthropic Claude) and turns an MP4 into a
-structured "vision report" JSON describing what is happening in the clip.
+Wraps a vision-capable LLM (default: OpenRouter + Qwen3-VL) and turns an MP4
+into a structured "vision report" JSON describing what physically happens in
+the clip (Stage 1A of the locked architecture, build-plan-locked.md §1).
 
 Strategy for keeping this demo-reliable:
   1. Extract 5 evenly-spaced frames from the video as JPEG bytes (cv2 →
@@ -12,7 +13,19 @@ Strategy for keeping this demo-reliable:
      subsequent calls are instant.
 
 If no API key is configured we still emit a stub report flagged with
-`"stub": true` so the frontend can render something.
+`"stub": true` so the frontend can render something. Stubs are also cached
+so subsequent calls don't re-attempt.
+
+Output schema (build-plan-locked §4.1):
+    {
+      "scene_summary": str,
+      "actions": list[str],
+      "temporal_sequence": list[{"t_s": int, "event": str}],
+      "spatial_relationships": list[str],
+      "emotional_tone": str,        # descriptive only — neutral/tense/calm/...
+      "stub": bool,
+      "error": str | None
+    }
 """
 from __future__ import annotations
 
@@ -74,18 +87,13 @@ def _extract_frames_ffmpeg(video_path: Path, n: int = 5) -> list[bytes]:
         return []
     with tempfile.TemporaryDirectory() as tmp:
         out_pattern = str(Path(tmp) / "frame_%03d.jpg")
-        # ffmpeg -i ... -vf "select='not(mod(n\,K))'" doesn't work without total
-        # count. Instead, use -vf "fps=N/D" with total duration, or just use
-        # thumbnail filter. Simpler: use -vf select with even time-stamps.
-        # Easiest: -vf "fps=N/duration" requires duration. We use the
-        # `thumbnail` + `-frames:v` combo which is fast and predictable.
         cmd = [
             "ffmpeg",
             "-y",
             "-i",
             str(video_path),
             "-vf",
-            f"thumbnail,scale=640:-1",
+            "thumbnail,scale=640:-1",
             "-frames:v",
             str(n),
             out_pattern,
@@ -122,32 +130,26 @@ def extract_frames(video_path: Path, n: int = 5) -> list[bytes]:
 # ---------------------------------------------------------------------------
 
 _VISION_SYSTEM = (
-    "You are a careful visual-scene analyst. You will receive a few evenly-"
-    "spaced frames from a short video clip. Describe what is happening in "
-    "the clip and infer the task or activity the people in it are performing. "
-    "Respond ONLY with a single valid JSON object matching the schema given "
-    "in the user message. Do not wrap it in markdown fences. Do not add prose."
+    "You are a careful video describer. You will see N frames sampled across "
+    "a short clip. Describe what physically happens — actions, environment, "
+    "tools, temporal sequence, spatial relationships. NO emotion claims. NO "
+    "cognitive-state claims. Use observational language only. Output ONLY a "
+    "JSON object — no markdown fences, no commentary."
 )
 
 
-def _build_user_prompt(clip_id: str) -> str:
-    return (
-        f'Clip ID: "{clip_id}". Below are 5 frames from the clip in temporal order.\n'
-        "Return a JSON object with EXACTLY these keys:\n"
-        "{\n"
-        '  "clip_id": string,\n'
-        '  "task_type": short snake_case label (e.g. "construction_site_navigation"),\n'
-        '  "scene_summary": one or two sentence overview,\n'
-        '  "actions": array of {t_start (seconds, integer), t_end, verb, description},\n'
-        '  "objects": array of strings,\n'
-        '  "people": array of {role, count},\n'
-        '  "environment": short string,\n'
-        '  "emotional_tone": short string,\n'
-        '  "raw_analysis": one long paragraph describing the clip\n'
-        "}\n"
-        "Times in `actions` should be reasonable estimates over a ~30 second clip.\n"
-        "Return JSON ONLY. No commentary, no markdown."
-    )
+_USER_INSTRUCTIONS = (
+    "Output JSON matching this schema EXACTLY:\n"
+    "{\n"
+    '  "scene_summary": "1-2 sentence factual summary of the clip",\n'
+    '  "actions": ["array of distinct physical actions observed"],\n'
+    '  "temporal_sequence": [\n'
+    '    {"t_s": <integer second within clip>, "event": "<short description>"}\n'
+    "  ],\n"
+    '  "spatial_relationships": ["array of spatial-relationship phrases"],\n'
+    '  "emotional_tone": "neutral | tense | calm | playful | focused | uncertain"\n'
+    "}"
+)
 
 
 # Try hard to pull JSON out of an LLM response that may have stray prose
@@ -169,7 +171,6 @@ def _coerce_json(text: str) -> Optional[dict]:
     # 2. Raw object — find first { and matching closing }
     try:
         start = text.index("{")
-        # naive bracket counting (good enough for well-formed model JSON)
         depth = 0
         for i in range(start, len(text)):
             c = text[i]
@@ -185,43 +186,48 @@ def _coerce_json(text: str) -> Optional[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Stub fallbacks (no API key)
+# Stub fallbacks (no API key / extraction failure)
 # ---------------------------------------------------------------------------
 
-def _stub_report(clip_id: str, reason: str) -> dict:
+def _stub_report(clip_id: str, reason: str, n_frames: int = 0) -> dict:
+    """Return a §4.1-shaped stub vision report so callers always have something
+    to render. Uses sensible defaults; marks `stub: true` and surfaces the
+    failure reason in `error`.
+    """
     return {
-        "clip_id": clip_id,
-        "task_type": "unknown_clip",
         "scene_summary": (
-            f"[stub vision report — {reason}] A short video clip whose contents "
-            "could not be analyzed because no vision model was configured."
+            f"[stub vision report — {reason}] Short video clip; no live vision "
+            "model was invoked, so this description is a placeholder."
         ),
         "actions": [
-            {"t_start": 0, "t_end": 10, "verb": "observe",
-             "description": "Subject views the clip from start."},
-            {"t_start": 10, "t_end": 20, "verb": "track",
-             "description": "Continuous engagement through the middle of the clip."},
-            {"t_start": 20, "t_end": 30, "verb": "conclude",
-             "description": "Final segment of the clip."},
+            "subject enters frame",
+            "continuous activity through the middle of the clip",
+            "scene resolves at the end of the clip",
         ],
-        "objects": [],
-        "people": [],
-        "environment": "unspecified",
+        "temporal_sequence": [
+            {"t_s": 0, "event": "clip begins"},
+            {"t_s": 10, "event": "mid-clip activity"},
+            {"t_s": 20, "event": "late-clip activity"},
+            {"t_s": 29, "event": "clip ends"},
+        ],
+        "spatial_relationships": [
+            "subject roughly centered in frame",
+            "background context visible behind subject",
+        ],
         "emotional_tone": "neutral",
-        "raw_analysis": (
-            "Vision analysis unavailable. Configure VISION_API_KEY to enable "
-            "frame-level scene description for this clip."
-        ),
         "stub": True,
         "error": reason,
+        # keep clip_id + frame count for downstream debug, harmless extras
+        "clip_id": clip_id,
+        "n_frames_sampled": n_frames,
     }
 
 
 # ---------------------------------------------------------------------------
-# Provider calls
+# Provider call — OpenRouter + Qwen3-VL (OpenAI-compatible chat/completions)
 # ---------------------------------------------------------------------------
 
-async def _call_anthropic(
+async def _call_openrouter(
     api_key: str,
     model: str,
     system: str,
@@ -229,68 +235,37 @@ async def _call_anthropic(
     frames: list[bytes],
     timeout: float = 60.0,
 ) -> str:
+    """Fire a multimodal chat-completions call at OpenRouter.
+
+    Body shape matches OpenAI vision: messages[1].content is a list with N
+    image_url entries (data: URLs) followed by a final text block carrying the
+    JSON-schema instructions.
+    """
     if httpx is None:
         raise RuntimeError("httpx not available")
-    content: list[dict] = []
-    for jpg in frames:
-        b64 = base64.standard_b64encode(jpg).decode("ascii")
-        content.append({
-            "type": "image",
-            "source": {"type": "base64", "media_type": "image/jpeg", "data": b64},
-        })
-    content.append({"type": "text", "text": user})
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        resp = await client.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={
-                "x-api-key": api_key,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
-            json={
-                "model": model,
-                "max_tokens": 2000,
-                "system": system,
-                "messages": [{"role": "user", "content": content}],
-            },
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        # Anthropic returns content as a list of {type, text} blocks.
-        blocks = data.get("content", [])
-        for b in blocks:
-            if b.get("type") == "text":
-                return b.get("text", "")
-        return ""
 
-
-async def _call_openai(
-    api_key: str,
-    model: str,
-    system: str,
-    user: str,
-    frames: list[bytes],
-    timeout: float = 60.0,
-) -> str:
-    if httpx is None:
-        raise RuntimeError("httpx not available")
-    user_content: list[dict] = [{"type": "text", "text": user}]
+    user_content: list[dict] = []
     for jpg in frames:
         b64 = base64.standard_b64encode(jpg).decode("ascii")
         user_content.append({
             "type": "image_url",
             "image_url": {"url": f"data:image/jpeg;base64,{b64}"},
         })
+    user_content.append({"type": "text", "text": user})
+
     async with httpx.AsyncClient(timeout=timeout) as client:
         resp = await client.post(
-            "https://api.openai.com/v1/chat/completions",
+            "https://openrouter.ai/api/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
+                # OpenRouter recommends these for attribution / rate-limit tier.
+                "HTTP-Referer": "https://hackathon.local",
+                "X-Title": "empathy-layer-engine",
             },
             json={
                 "model": model,
-                "max_tokens": 2000,
+                "max_tokens": 1500,
                 "messages": [
                     {"role": "system", "content": system},
                     {"role": "user", "content": user_content},
@@ -301,40 +276,81 @@ async def _call_openai(
         return resp.json()["choices"][0]["message"]["content"]
 
 
-async def _call_gemini(
-    api_key: str,
-    model: str,
-    system: str,
-    user: str,
-    frames: list[bytes],
-    timeout: float = 60.0,
-) -> str:
-    if httpx is None:
-        raise RuntimeError("httpx not available")
-    parts: list[dict] = [{"text": user}]
-    for jpg in frames:
-        b64 = base64.standard_b64encode(jpg).decode("ascii")
-        parts.append({"inline_data": {"mime_type": "image/jpeg", "data": b64}})
-    url = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{model}:generateContent?key={api_key}"
-    )
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        resp = await client.post(
-            url,
-            headers={"Content-Type": "application/json"},
-            json={
-                "system_instruction": {"parts": [{"text": system}]},
-                "contents": [{"role": "user", "parts": parts}],
-                "generationConfig": {"maxOutputTokens": 2000},
-            },
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        try:
-            return data["candidates"][0]["content"]["parts"][0]["text"]
-        except Exception:
-            return ""
+# ---------------------------------------------------------------------------
+# Schema normalization
+# ---------------------------------------------------------------------------
+
+_VALID_TONES = {"neutral", "tense", "calm", "playful", "focused", "uncertain"}
+
+
+def _normalize_report(parsed: dict, clip_id: str, n_frames: int) -> dict:
+    """Coerce the parsed model output into the locked §4.1 schema."""
+    # scene_summary
+    summary = parsed.get("scene_summary")
+    if not isinstance(summary, str) or not summary.strip():
+        summary = "Short clip; no scene summary returned by the vision model."
+
+    # actions — accept list[str] or list[dict] (legacy shape) and flatten
+    raw_actions = parsed.get("actions") or []
+    actions: list[str] = []
+    if isinstance(raw_actions, list):
+        for a in raw_actions:
+            if isinstance(a, str) and a.strip():
+                actions.append(a.strip())
+            elif isinstance(a, dict):
+                desc = a.get("description") or a.get("verb") or a.get("event")
+                if isinstance(desc, str) and desc.strip():
+                    actions.append(desc.strip())
+    if not actions:
+        actions = ["activity observed in clip"]
+
+    # temporal_sequence — list[{t_s:int, event:str}]
+    raw_seq = parsed.get("temporal_sequence") or []
+    temporal: list[dict] = []
+    if isinstance(raw_seq, list):
+        for item in raw_seq:
+            if not isinstance(item, dict):
+                continue
+            try:
+                t_s = int(item.get("t_s", item.get("t", 0)))
+            except Exception:
+                t_s = 0
+            event = item.get("event") or item.get("description") or ""
+            if isinstance(event, str) and event.strip():
+                temporal.append({"t_s": t_s, "event": event.strip()})
+    if not temporal:
+        temporal = [{"t_s": 0, "event": "clip begins"}]
+
+    # spatial_relationships — list[str]
+    raw_spatial = parsed.get("spatial_relationships") or []
+    spatial: list[str] = []
+    if isinstance(raw_spatial, list):
+        for s in raw_spatial:
+            if isinstance(s, str) and s.strip():
+                spatial.append(s.strip())
+    if not spatial:
+        spatial = ["subjects positioned within the frame"]
+
+    # emotional_tone — descriptive only, force into known vocabulary if close
+    tone = parsed.get("emotional_tone") or "neutral"
+    if isinstance(tone, str):
+        tone_l = tone.strip().lower().split()[0] if tone.strip() else "neutral"
+        tone = tone_l if tone_l in _VALID_TONES else (tone.strip() or "neutral")
+    else:
+        tone = "neutral"
+
+    return {
+        "scene_summary": summary.strip(),
+        "actions": actions,
+        "temporal_sequence": temporal,
+        "spatial_relationships": spatial,
+        "emotional_tone": tone,
+        "stub": False,
+        "error": None,
+        # debug extras — harmless to downstream consumers
+        "clip_id": clip_id,
+        "n_frames_sampled": n_frames,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -342,18 +358,19 @@ async def _call_gemini(
 # ---------------------------------------------------------------------------
 
 class VisionClient:
-    """Async vision client with caching + provider abstraction."""
+    """Async vision client with caching + OpenRouter Qwen3-VL provider.
+
+    Reads env on construction:
+      - OPENROUTER_API_KEY  : required for live calls; missing = stub fallback
+      - VISION_MODEL        : OpenRouter model slug (default qwen3-vl-235b)
+      - VISION_TIMEOUT      : httpx timeout in seconds (default 60.0)
+    """
 
     def __init__(self):
-        self.api_key = os.getenv("VISION_API_KEY", "")
-        self.provider = os.getenv("VISION_PROVIDER", "anthropic").lower().strip()
-        # Sensible per-provider default models.
-        default_model = {
-            "anthropic": "claude-sonnet-4-5",
-            "openai": "gpt-4o",
-            "gemini": "gemini-1.5-flash",
-        }.get(self.provider, "claude-sonnet-4-5")
-        self.model = os.getenv("VISION_MODEL", default_model)
+        self.api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
+        self.model = os.getenv(
+            "VISION_MODEL", "qwen/qwen3-vl-235b-a22b-instruct"
+        ).strip() or "qwen/qwen3-vl-235b-a22b-instruct"
         self.timeout = float(os.getenv("VISION_TIMEOUT", "60.0"))
 
     @staticmethod
@@ -361,7 +378,12 @@ class VisionClient:
         return clip_dir / "vision_report.json"
 
     async def analyze_video(self, video_path: Path, clip_id: str) -> dict:
-        """Return a vision report for the clip. Reads cache first."""
+        """Return a vision report for the clip. Reads cache first.
+
+        Always returns a dict matching build-plan-locked §4.1 (with `stub` and
+        `error` flags). Always writes the result to the cache, including stubs,
+        so subsequent calls are instant and don't re-attempt failed providers.
+        """
         clip_dir = video_path.parent
         cache = self.cache_path(clip_dir)
         if cache.exists():
@@ -371,7 +393,7 @@ class VisionClient:
                 pass  # corrupted cache → re-generate
 
         if not self.api_key:
-            report = _stub_report(clip_id, "no API key")
+            report = _stub_report(clip_id, "OPENROUTER_API_KEY not set")
             self._save(cache, report)
             return report
 
@@ -388,43 +410,34 @@ class VisionClient:
             self._save(cache, report)
             return report
 
-        system = _VISION_SYSTEM
-        user = _build_user_prompt(clip_id)
-
         try:
-            if self.provider == "anthropic":
-                raw = await _call_anthropic(
-                    self.api_key, self.model, system, user, frames, self.timeout
-                )
-            elif self.provider == "openai":
-                raw = await _call_openai(
-                    self.api_key, self.model, system, user, frames, self.timeout
-                )
-            elif self.provider == "gemini":
-                raw = await _call_gemini(
-                    self.api_key, self.model, system, user, frames, self.timeout
-                )
-            else:
-                report = _stub_report(clip_id, f"unknown provider: {self.provider}")
-                self._save(cache, report)
-                return report
+            raw = await _call_openrouter(
+                self.api_key,
+                self.model,
+                _VISION_SYSTEM,
+                _USER_INSTRUCTIONS,
+                frames,
+                self.timeout,
+            )
         except Exception as e:
-            report = _stub_report(clip_id, f"vision API call failed: {e}")
+            report = _stub_report(
+                clip_id, f"OpenRouter vision call failed: {e}", n_frames=len(frames)
+            )
             self._save(cache, report)
             return report
 
         parsed = _coerce_json(raw)
         if not parsed:
-            report = _stub_report(clip_id, "vision model returned non-JSON")
+            report = _stub_report(
+                clip_id, "vision model returned non-JSON", n_frames=len(frames)
+            )
             report["raw_response_tail"] = raw[-500:] if raw else ""
             self._save(cache, report)
             return report
 
-        # Force the clip_id we know so callers can rely on it.
-        parsed["clip_id"] = clip_id
-        parsed.setdefault("stub", False)
-        self._save(cache, parsed)
-        return parsed
+        report = _normalize_report(parsed, clip_id, len(frames))
+        self._save(cache, report)
+        return report
 
     @staticmethod
     def _save(path: Path, payload: dict) -> None:

@@ -17,3 +17,7 @@ google-generativeai>=0.8.0
 # Optional: used by services/vision_client.py for in-process frame extraction.
 # Falls back to ffmpeg subprocess if absent, so this is not strictly required.
 opencv-python-headless>=4.9.0
+
+# Embedding proxy (services/embedding_proxy) + training-pair YAML loader.
+sentence-transformers>=2.7.0
+PyYAML>=6.0

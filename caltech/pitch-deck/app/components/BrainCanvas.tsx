@@ -23,6 +23,10 @@ type Props = {
   size?: number; // px width of square canvas
   highlight?: string; // region label (cortical-mesh, activation-pulse)
   className?: string;
+  // BEAT-3 reveal annotation. Number 0..1 — renders "round score: 0.XX" in
+  // the bottom-right corner of the canvas container. Pure additive overlay;
+  // the 3D mesh / shader pipeline is not touched.
+  scoreOverlay?: number;
 };
 
 // Palette aligned with globals.css (Clay-fused tokens).
@@ -583,17 +587,47 @@ export default function BrainCanvas({
   size = 480,
   highlight,
   className,
+  scoreOverlay,
 }: Props) {
   const sketch = useMemo(
     () => makeSketch(variant, seed, size, highlight),
     [variant, seed, size, highlight],
   );
+  const showOverlay =
+    typeof scoreOverlay === "number" && Number.isFinite(scoreOverlay);
   return (
     <div
       className={className}
-      style={{ width: size, height: size, lineHeight: 0 }}
+      style={{
+        width: size,
+        height: size,
+        lineHeight: 0,
+        position: "relative",
+      }}
     >
       <P5Canvas sketch={sketch} />
+      {showOverlay && (
+        <div
+          aria-hidden="false"
+          style={{
+            position: "absolute",
+            right: 8,
+            bottom: 8,
+            padding: "4px 8px",
+            background: "rgba(255,255,255,0.78)",
+            border: "1px solid rgba(0,0,0,0.09)",
+            fontFamily:
+              "var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace",
+            fontSize: 11,
+            letterSpacing: 0.4,
+            color: "rgb(29,26,23)",
+            textTransform: "lowercase",
+            lineHeight: 1.2,
+          }}
+        >
+          round score: {scoreOverlay!.toFixed(2)}
+        </div>
+      )}
     </div>
   );
 }

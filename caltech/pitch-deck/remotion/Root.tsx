@@ -6,6 +6,7 @@ import { Wordmark } from "./compositions/Wordmark";
 import { GlassesScan } from "./compositions/GlassesScan";
 import { RoomUnfold } from "./compositions/RoomUnfold";
 import { CapturePulse } from "./compositions/CapturePulse";
+import { MasterCut } from "./compositions/MasterCut";
 
 const W = 1920;
 const H = 1080;
@@ -13,6 +14,16 @@ const FPS = 30;
 
 export const RemotionRoot = () => (
   <>
+    <Folder name="empathy-layer">
+      <Composition
+        id="MasterCut"
+        component={MasterCut}
+        width={W}
+        height={H}
+        fps={FPS}
+        durationInFrames={2880}
+      />
+    </Folder>
     <Folder name="shpatial">
       <Composition
         id="optimized-out"

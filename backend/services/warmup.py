@@ -34,7 +34,8 @@ _NETWORKS: tuple[str, ...] = (
 
 _PROMPTS_DIR = Path(__file__).parents[1] / "prompts"
 _K2_REGION_SEMAPHORE_LIMIT = 6
-_REQUIRED_KEYS = ("vision_report", "swarm_readings", "k2_region_cache", "empathy")
+# k2_region_cache is excluded — it's a popup-latency optimization; /demo/k2-region falls back to live K2 on miss.
+_REQUIRED_KEYS = ("vision_report", "swarm_readings", "empathy")
 
 _CONTROL_FOR = {
     "ironside": "workplace_routine_baseline",

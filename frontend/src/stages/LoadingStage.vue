@@ -46,6 +46,14 @@
           :logs="tribeLogs"
           accent="#4ecdc4"
         />
+        <ProgressStream
+          :label="`K2 swarm · ${swarmDoneCount}/7 specialists`"
+          subtitle="Cerebras · per-region readings"
+          :progress="warmupProgress"
+          :done="warmupReady"
+          :logs="warmupLogs"
+          accent="#f9a000"
+        />
       </div>
 
       <div class="status-line" :class="{ done: allDone }">
@@ -89,6 +97,15 @@ const tribeProgress  = ref(0)
 const visionDone = ref(false)
 const tribeDone  = ref(false)
 
+// Warmup / swarm-progress stream (driven by /demo/warmup-status). The bar
+// paces with real backend reality — swarm specialists, k2_region_cache, and
+// empathy each contribute. This is the "slow lane" so the loading screen
+// reflects the actual swarm work instead of snapping to 100% on cached fetches.
+const warmupProgress = ref(0)
+const warmupReady = ref(false)
+const swarmDoneCount = ref(0)
+const warmupLogs = ref([])
+
 const visionLogs = ref([])
 const tribeLogs  = ref([])
 
@@ -109,10 +126,19 @@ let visionResult = null
 let tribeResult  = null
 let timers = []
 
-const allDone = computed(() => visionDone.value && tribeDone.value)
+const allDone = computed(() =>
+  visionDone.value && tribeDone.value && warmupReady.value
+)
 
-// Overall pipeline progress (mean of the two streams) drives the phase-rail.
-const overallProgress = computed(() => (visionProgress.value + tribeProgress.value) / 2)
+// Weighted overall progress — warmup (swarm + caches) is the slow lane so it
+// dominates pacing. Vision + TRIBE are fast cached fetches, capped to a
+// minor share so the bar can't blow past the swarm.
+const overallProgress = computed(() => {
+  const v = Math.min(visionProgress.value, 1)
+  const t = Math.min(tribeProgress.value, 1)
+  const w = Math.min(warmupProgress.value, 1)
+  return v * 0.10 + t * 0.10 + w * 0.80
+})
 
 const pipelinePhases = [
   { key: 'uploading', label: 'uploading' },
@@ -201,25 +227,85 @@ async function runTribe() {
   pushLog(tribeLogs, '✓ Activity loaded')
 }
 
-async function waitForWarmup(maxMs = 90000, intervalMs = 1500) {
+// Pace the warmup progress bar with real backend reality, with a minimum
+// animation floor so the bar never finishes faster than the eye can follow.
+//   swarm_readings_progress[net].state === 'done'  → 1/7 of swarm slice (50% of bar)
+//   k2_region_cache present in completed[]          → +25% of bar
+//   empathy present in completed[]                  → +25% of bar
+// MIN_MS floor: even when the backend is instant (cached/placeholder), the bar
+// rises over MIN_MS and the swarm-count "lights up" one specialist per ~2.6s,
+// so the loading screen feels like the swarm is actually working.
+const WARMUP_MIN_MS = 20000           // 20s minimum loading duration
+const SWARM_TICK_MS = WARMUP_MIN_MS / 7 // ~2.86s per specialist reveal
+async function pollWarmup(maxMs = 180000, intervalMs = 600) {
   const start = performance.now()
+  let lastShownCount = 0
+  let backendReady = false
   while (performance.now() - start < maxMs) {
+    let backendBar = 0
+    let backendSwarm = 0
     try {
       const status = await fetchWarmupStatus(props.clipId)
-      if (status?.ready) return true
+      const sp = status?.swarm_readings_progress || {}
+      backendSwarm = Object.values(sp).filter(
+        (s) => s && s.state === 'done',
+      ).length
+      const completed = status?.completed || []
+      const k2reg  = completed.includes('k2_region_cache') ? 1 : 0
+      const empath = completed.includes('empathy') ? 1 : 0
+      backendBar = (backendSwarm / 7) * 0.50 + k2reg * 0.25 + empath * 0.25
+      backendReady = !!status?.ready
     } catch (e) {
-      // Endpoint may not exist on older backends — proceed without gating.
-      return false
+      console.warn('warmup-status fetch failed', e)
+      // Fall back to the time-paced floor if the backend isn't reachable.
+      backendBar = 0
+      backendReady = false
     }
-    await new Promise(r => setTimeout(r, intervalMs))
+
+    const elapsed = performance.now() - start
+    const timeFraction = Math.min(1, elapsed / WARMUP_MIN_MS)
+    const timeSwarm = Math.min(7, Math.floor(elapsed / SWARM_TICK_MS) + 1)
+
+    // Bar = min of real backend progress and time-floor — never finishes
+    // before MIN_MS even if backend is instant.
+    const pacedBar = Math.min(
+      backendReady ? 1 : 0.95,
+      Math.max(0.05, Math.min(backendBar, timeFraction)),
+    )
+    warmupProgress.value = pacedBar
+
+    // Reveal swarm specialists one-by-one over time even if cached.
+    const shown = Math.min(backendSwarm, timeSwarm)
+    if (shown > lastShownCount) {
+      lastShownCount = shown
+      // Pick a deterministic-looking label; falls back to a generic line.
+      const sp = (await fetchWarmupStatus(props.clipId).catch(() => null))
+        ?.swarm_readings_progress || {}
+      const names = Object.keys(sp).filter((k) => sp[k]?.state === 'done')
+      const label = names[shown - 1]
+        ? names[shown - 1].replace(/_/g, ' ')
+        : `specialist ${shown}`
+      pushLog(warmupLogs, `✓ ${label}`)
+    }
+    swarmDoneCount.value = shown
+
+    // Exit when both real readiness AND minimum time floor have been met.
+    if (backendReady && elapsed >= WARMUP_MIN_MS) {
+      warmupProgress.value = 1
+      warmupReady.value = true
+      swarmDoneCount.value = 7
+      pushLog(warmupLogs, '✓ swarm ready · advancing')
+      return true
+    }
+    await new Promise((r) => setTimeout(r, intervalMs))
   }
   return false
 }
 
 onMounted(async () => {
-  await Promise.all([runVision(), runTribe()])
-  await waitForWarmup()
-  await new Promise(r => setTimeout(r, 600))
+  pushLog(warmupLogs, 'spawning K2 specialists…')
+  await Promise.all([runVision(), runTribe(), pollWarmup()])
+  await new Promise((r) => setTimeout(r, 600))
   emit('done', { vision: visionResult, activity: tribeResult })
 })
 

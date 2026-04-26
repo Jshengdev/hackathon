@@ -49,8 +49,17 @@ let renderer, labelRenderer, scene, camera, controls
 let brainMesh, wandererMesh
 let atmosphereMesh, atmosphereMat
 let orbitGroup
-let agentEdgeLines, regionEdgeLines
+let agentEdgeLines, regionEdgeLines, swarmNetEdgeLines
 const regionMeshes = {}      // network → { mesh, glowMat, labelDiv }
+
+// Per-pair firing schedule for the inter-region "swarm network" graph.
+// Each pair fires independently on its own random period — visualizes the
+// 7 K2 specialists exchanging signals at uncorrelated rates.
+const SWARM_NET_SEGMENTS = 24
+const SWARM_NET_FIRE_MIN_MS = 1500
+const SWARM_NET_FIRE_MAX_MS = 4500
+const SWARM_NET_DECAY_PER_MS = 0.0022
+const swarmNetPairs = []     // [{ a, b, fireAt, intensity }]
 let raycaster = null
 const _ndc = new THREE.Vector2()
 let animId = null
@@ -250,6 +259,26 @@ function buildEdgeGraphs() {
   })
   regionEdgeLines = new THREE.LineSegments(regionGeo, regionMat)
   scene.add(regionEdgeLines)
+
+  // (3) Swarm network: independent pulses between every pair of region
+  //     specialists, each on its own random firing period. Reads as
+  //     "agents talking at random rates" without depending on activation.
+  const SWARM_PAIR_BUDGET = 21  // 7 choose 2 — every region pair
+  const swarmNetPositions = new Float32Array(SWARM_PAIR_BUDGET * SWARM_NET_SEGMENTS * 2 * 3)
+  const swarmNetColors    = new Float32Array(SWARM_PAIR_BUDGET * SWARM_NET_SEGMENTS * 2 * 3)
+  const swarmNetGeo = new THREE.BufferGeometry()
+  swarmNetGeo.setAttribute('position', new THREE.BufferAttribute(swarmNetPositions, 3))
+  swarmNetGeo.setAttribute('color',    new THREE.BufferAttribute(swarmNetColors,    3))
+  swarmNetGeo.setDrawRange(0, 0)
+  const swarmNetMat = new THREE.LineBasicMaterial({
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  })
+  swarmNetEdgeLines = new THREE.LineSegments(swarmNetGeo, swarmNetMat)
+  scene.add(swarmNetEdgeLines)
 }
 
 // ── Region agents (7 spheres) ──────────────────────────────────────────────
@@ -533,11 +562,13 @@ function animate() {
       }
       updateAgentEdges()
       updateRegionEdges(levels)
+      updateSwarmNetwork(now, dt)
       topRegion.value = frame.top_region || ''
     }
   } else {
     // No activity yet — still tick the swarm so it's always alive on stage.
     updateAgentEdges()
+    updateSwarmNetwork(now, dt)
   }
 
   renderer.render(scene, camera)
@@ -637,6 +668,85 @@ function updateRegionEdges(levels) {
   regionEdgeLines.geometry.setDrawRange(0, REGION_ARC_SEGMENTS * 2)
   regionEdgeLines.geometry.attributes.position.needsUpdate = true
   regionEdgeLines.geometry.attributes.color.needsUpdate    = true
+}
+
+// Inter-region swarm network: every region pair sparks on its own random
+// schedule. Each pair holds an `intensity` that jumps to 1 on fire, then
+// decays exponentially. Geometry is rewritten every frame; pairs with
+// near-zero intensity contribute black-on-additive (effectively invisible).
+function initSwarmNetPairs() {
+  if (swarmNetPairs.length > 0) return
+  const names = Object.keys(regionMeshes)
+  if (names.length < 2) return
+  const now = performance.now()
+  for (let i = 0; i < names.length; i++) {
+    for (let j = i + 1; j < names.length; j++) {
+      swarmNetPairs.push({
+        a: names[i],
+        b: names[j],
+        fireAt: now + Math.random() * SWARM_NET_FIRE_MAX_MS,
+        intensity: 0,
+      })
+    }
+  }
+}
+
+function updateSwarmNetwork(now, dt) {
+  if (!swarmNetEdgeLines) return
+  if (swarmNetPairs.length === 0) initSwarmNetPairs()
+  if (swarmNetPairs.length === 0) return
+
+  const positions = swarmNetEdgeLines.geometry.attributes.position.array
+  const colors    = swarmNetEdgeLines.geometry.attributes.color.array
+  const decay = Math.exp(-SWARM_NET_DECAY_PER_MS * dt)
+
+  let segOffset = 0
+  for (const pair of swarmNetPairs) {
+    if (now >= pair.fireAt && pair.intensity < 0.05) {
+      pair.intensity = 1.0
+      pair.fireAt = now + SWARM_NET_FIRE_MIN_MS
+        + Math.random() * (SWARM_NET_FIRE_MAX_MS - SWARM_NET_FIRE_MIN_MS)
+    } else {
+      pair.intensity *= decay
+    }
+
+    const aMesh = regionMeshes[pair.a]
+    const bMesh = regionMeshes[pair.b]
+    if (!aMesh || !bMesh) { segOffset += SWARM_NET_SEGMENTS; continue }
+
+    const a = aMesh.mesh.position, b = bMesh.mesh.position
+    const aCol = aMesh.mesh.material.color
+    const bCol = bMesh.mesh.material.color
+    const I = pair.intensity
+
+    for (let s = 0; s < SWARM_NET_SEGMENTS; s++) {
+      const t0 = s / SWARM_NET_SEGMENTS
+      const t1 = (s + 1) / SWARM_NET_SEGMENTS
+      const p0 = arcPoint(a, b, t0)
+      const p1 = arcPoint(a, b, t1)
+      const k = (segOffset + s) * 6
+      positions[k]     = p0.x; positions[k + 1] = p0.y; positions[k + 2] = p0.z
+      positions[k + 3] = p1.x; positions[k + 4] = p1.y; positions[k + 5] = p1.z
+
+      // Bright leading head, dim tail — head sits at t=0 on fire and slides
+      // out as intensity decays, so a fresh pulse reads as "signal racing
+      // from one node to the other".
+      const headPos = 1 - I
+      const distFromHead = Math.abs(t0 - headPos)
+      const headGlow = Math.pow(Math.max(0, 1 - distFromHead * 6), 2)
+      const baseT = (0.15 + headGlow * 0.85) * I
+      const blend = t0
+      const r = (aCol.r * (1 - blend) + bCol.r * blend) * baseT
+      const g = (aCol.g * (1 - blend) + bCol.g * blend) * baseT
+      const bl = (aCol.b * (1 - blend) + bCol.b * blend) * baseT
+      colors[k]     = r;  colors[k + 1] = g;  colors[k + 2] = bl
+      colors[k + 3] = r;  colors[k + 4] = g;  colors[k + 5] = bl
+    }
+    segOffset += SWARM_NET_SEGMENTS
+  }
+  swarmNetEdgeLines.geometry.setDrawRange(0, segOffset * 2)
+  swarmNetEdgeLines.geometry.attributes.position.needsUpdate = true
+  swarmNetEdgeLines.geometry.attributes.color.needsUpdate    = true
 }
 
 // Arc helper — quadratic Bézier with a midpoint lifted along the average

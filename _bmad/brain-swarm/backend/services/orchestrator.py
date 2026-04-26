@@ -16,6 +16,24 @@ from services.k2_client import K2Client
 # Try to load full prompts from Junsoo's papers/prompts/ if available
 _PROMPTS_DIR = Path(__file__).parents[4] / "junsoo" / "papers" / "prompts"
 
+
+def _parse_observation(text: str) -> dict:
+    """Parse 3-line K2 output into {reading, confidence, cite}.
+    Tolerant: missing fields fall back to empty string; 'text' = full reading line."""
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    out = {"reading": "", "confidence": "", "cite": ""}
+    for line in lines:
+        low = line.lower()
+        if low.startswith(("1.", "**reading**", "reading:")):
+            out["reading"] = line.split(":", 1)[-1].strip().lstrip("*").strip()
+        elif low.startswith(("2.", "**confidence", "confidence")):
+            out["confidence"] = line.split(":", 1)[-1].strip().lstrip("*").strip()
+        elif low.startswith(("3.", "**cite", "cite")):
+            out["cite"] = line.split(":", 1)[-1].strip().lstrip("*").strip()
+    if not out["reading"]:
+        out["reading"] = text.strip()
+    return out
+
 def _load_prompt(network: str) -> str:
     path = _PROMPTS_DIR / f"{network}.md"
     if path.exists():
@@ -134,4 +152,12 @@ class Orchestrator:
 
         # Push per-network observations to speech queue
         for name, text in observations.items():
-            await speech_queue.put({"network": name, "text": text, "t": t, "type": "region"})
+            parsed = _parse_observation(text)
+            await speech_queue.put({
+                "network": name,
+                "text": parsed["reading"],
+                "confidence": parsed["confidence"],
+                "cite": parsed["cite"],
+                "t": t,
+                "type": "region",
+            })

@@ -34,6 +34,7 @@ You do *not* know if the moment is positive or negative on your own. The swarm s
 - You ↑ alone (everything else flat) → reward/value processing without obvious external trigger; possible internal cue.
 
 ## Output format
-Two short lines:
-1. **Reading**: is this affectively important? If yes, your best inferred valence (positive / negative / ambiguous), with the cross-signal you used.
-2. **Confidence + caveats**: explicitly note that valence is inferred from co-activation, not from you alone.
+Three short lines, exactly:
+1. **Reading**: one-sentence call on what's likely happening in this network right now.
+2. **Confidence + caveats**: low/med/high; what would change your call.
+3. **Cite**: [Rolls 2023, Brain Structure and Function]

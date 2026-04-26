@@ -5,8 +5,9 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, BackgroundTasks
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,12 +15,54 @@ load_dotenv()
 from services.brain_mesh import BrainMesh
 from services.activity_reader import ActivityReader
 from services.swarm import SwarmSimulation
-from services.orchestrator import Orchestrator
+from services.orchestrator import Orchestrator, _parse_observation
+from services.k2_client import K2Client
+from services.vision_client import VisionClient
+from services.comparison import run_comparison
 
 app = FastAPI(title="Brain Swarm Visualizer")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 DATA_DIR = Path(os.getenv("DATA_DIR", "./data"))
+
+# ---------------------------------------------------------------------------
+# Prerendered (junsoo) static mount — serves MP4s + activity.json so the
+# frontend can `<video src="/prerendered/{clip_id}/{clip_id}.mp4">` directly.
+# Resolves to <repo_root>/junsoo/prerendered.
+# ---------------------------------------------------------------------------
+PRERENDERED_DIR = (Path(__file__).parents[3] / "junsoo" / "prerendered").resolve()
+print(f"[prerendered] mounting {PRERENDERED_DIR} (exists={PRERENDERED_DIR.exists()})")
+if PRERENDERED_DIR.exists():
+    app.mount(
+        "/prerendered",
+        StaticFiles(directory=str(PRERENDERED_DIR)),
+        name="prerendered",
+    )
+
+PROMPTS_DIR = (Path(__file__).parents[3] / "junsoo" / "papers" / "prompts").resolve()
+
+YEO7_NETWORKS = {
+    "visual", "somatomotor", "dorsal_attention", "ventral_attention",
+    "limbic", "frontoparietal", "default_mode",
+}
+
+# Lazy clients — instantiated on first use so startup is fast.
+_vision_client: Optional[VisionClient] = None
+_k2_client: Optional[K2Client] = None
+
+
+def get_vision_client() -> VisionClient:
+    global _vision_client
+    if _vision_client is None:
+        _vision_client = VisionClient()
+    return _vision_client
+
+
+def get_k2_client() -> K2Client:
+    global _k2_client
+    if _k2_client is None:
+        _k2_client = K2Client()
+    return _k2_client
 
 brain_mesh: Optional[BrainMesh] = None
 activity_reader: Optional[ActivityReader] = None
@@ -151,6 +194,229 @@ async def run_inference(payload: dict):
         "ok": True,
         **activity_reader.reload(),
         "log_tail": log[-500:],
+    }
+
+
+# ---------------------------------------------------------------------------
+# /demo/* — prerendered-clip demo flow
+# ---------------------------------------------------------------------------
+
+def _clip_dir(clip_id: str) -> Path:
+    """Return the prerendered/<clip_id>/ directory, validating against
+    directory traversal."""
+    if not clip_id or "/" in clip_id or "\\" in clip_id or clip_id.startswith("."):
+        raise HTTPException(status_code=400, detail="invalid clip_id")
+    d = (PRERENDERED_DIR / clip_id).resolve()
+    # Make sure d is actually under PRERENDERED_DIR (defense in depth).
+    try:
+        d.relative_to(PRERENDERED_DIR)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invalid clip_id")
+    return d
+
+
+def _resolve_video_path(clip_dir: Path, clip_id: str) -> Optional[Path]:
+    """Find a sibling MP4 for the clip. Falls back to None if none exists
+    yet — the demo still works because vision_client will write a stub."""
+    candidates = [
+        clip_dir / f"{clip_id}.mp4",
+        clip_dir / "clip.mp4",
+        clip_dir / "video.mp4",
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+    # Last resort: any *.mp4 in the directory.
+    mp4s = list(clip_dir.glob("*.mp4"))
+    return mp4s[0] if mp4s else None
+
+
+@app.get("/demo/clips")
+def list_demo_clips():
+    """List clip_ids that have an activity.json available."""
+    if not PRERENDERED_DIR.exists():
+        return {"clips": []}
+    clips = []
+    for sub in sorted(PRERENDERED_DIR.iterdir()):
+        if not sub.is_dir():
+            continue
+        activity = sub / "activity.json"
+        if not activity.exists():
+            continue
+        video = _resolve_video_path(sub, sub.name)
+        clips.append({
+            "clip_id": sub.name,
+            "has_video": video is not None,
+            "video_url": f"/prerendered/{sub.name}/{video.name}" if video else None,
+            "activity_url": f"/prerendered/{sub.name}/activity.json",
+        })
+    return {"clips": clips}
+
+
+@app.post("/demo/match")
+async def match_clip(payload: dict):
+    """Match an uploaded filename to a prerendered clip_id.
+
+    Body: {"filename": "30s_ironsite.mp4"}
+    Strips the extension and looks for prerendered/<clip_id>/activity.json.
+    """
+    filename = (payload or {}).get("filename")
+    if not filename:
+        raise HTTPException(status_code=400, detail="filename required")
+    clip_id = Path(filename).stem
+    clip_dir = _clip_dir(clip_id)
+    activity_path = clip_dir / "activity.json"
+    if not activity_path.exists():
+        raise HTTPException(status_code=404, detail=f"no prerendered clip for '{clip_id}'")
+
+    # n_frames lookup (cheap — load + count).
+    try:
+        blob = json.loads(activity_path.read_text(encoding="utf-8"))
+        n_frames = len(blob.get("frames") or [])
+    except Exception:
+        n_frames = 0
+
+    video = _resolve_video_path(clip_dir, clip_id)
+    return {
+        "clip_id": clip_id,
+        "video_url": f"/prerendered/{clip_id}/{video.name}" if video else None,
+        "activity_url": f"/prerendered/{clip_id}/activity.json",
+        "n_frames": n_frames,
+        "has_video": video is not None,
+    }
+
+
+@app.get("/demo/activity/{clip_id}")
+def get_demo_activity(clip_id: str):
+    """Return the prerendered activity.json contents directly."""
+    clip_dir = _clip_dir(clip_id)
+    activity_path = clip_dir / "activity.json"
+    if not activity_path.exists():
+        raise HTTPException(status_code=404, detail="activity.json not found")
+    try:
+        return json.loads(activity_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"failed to parse activity.json: {e}")
+
+
+@app.get("/demo/vision-report/{clip_id}")
+async def get_vision_report(clip_id: str):
+    """Return the cached vision report, generating it if missing."""
+    clip_dir = _clip_dir(clip_id)
+    if not (clip_dir / "activity.json").exists():
+        raise HTTPException(status_code=404, detail="clip not found")
+    video = _resolve_video_path(clip_dir, clip_id)
+    # vision_client handles missing video → stub fallback
+    video_path = video if video else (clip_dir / f"{clip_id}.mp4")
+    report = await get_vision_client().analyze_video(video_path, clip_id)
+    return report
+
+
+@app.get("/demo/comparison/{clip_id}")
+async def get_comparison(clip_id: str):
+    """Return cached with/without-TRIBE comparison, generating if missing."""
+    clip_dir = _clip_dir(clip_id)
+    activity_path = clip_dir / "activity.json"
+    if not activity_path.exists():
+        raise HTTPException(status_code=404, detail="clip not found")
+
+    # Need the vision report first — reuse the same caching pathway.
+    video = _resolve_video_path(clip_dir, clip_id)
+    video_path = video if video else (clip_dir / f"{clip_id}.mp4")
+    vision_report = await get_vision_client().analyze_video(video_path, clip_id)
+
+    try:
+        activity = json.loads(activity_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"failed to parse activity.json: {e}")
+
+    cache = clip_dir / "comparison.json"
+    return await run_comparison(vision_report, activity, cache)
+
+
+@app.post("/demo/k2-region")
+async def k2_region(payload: dict):
+    """Run K2 with a paper-grounded prompt for a given region at a timestamp.
+
+    Body: {"clip_id": str, "network": str, "t": int}
+    Returns: {network, text, cite, t}
+    """
+    clip_id = (payload or {}).get("clip_id")
+    network = (payload or {}).get("network")
+    t = (payload or {}).get("t")
+    if not clip_id or not network or t is None:
+        raise HTTPException(status_code=400, detail="clip_id, network, and t are required")
+    if network not in YEO7_NETWORKS:
+        raise HTTPException(status_code=400, detail=f"unknown network: {network}")
+    try:
+        t_int = int(t)
+    except Exception:
+        raise HTTPException(status_code=400, detail="t must be an integer")
+
+    clip_dir = _clip_dir(clip_id)
+    activity_path = clip_dir / "activity.json"
+    if not activity_path.exists():
+        raise HTTPException(status_code=404, detail="clip not found")
+
+    try:
+        activity = json.loads(activity_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"failed to parse activity.json: {e}")
+
+    frames = activity.get("frames") or []
+    if not frames:
+        raise HTTPException(status_code=500, detail="activity.json has no frames")
+    frame = frames[t_int % len(frames)]
+    regions: dict = frame.get("regions") or {}
+
+    # Load the network's grounded system prompt.
+    prompt_path = PROMPTS_DIR / f"{network}.md"
+    if prompt_path.exists():
+        system_prompt = prompt_path.read_text(encoding="utf-8")
+    else:
+        system_prompt = (
+            f"You are the {network} network. React in 1-2 sentences to your "
+            "activation, grounded in published neuroscience."
+        )
+    others = ", ".join(
+        f"{k}={v:.2f}" for k, v in regions.items() if k != network
+    )
+    user = (
+        f"Your activation: {regions.get(network, 0.0):.2f}.\n"
+        f"Other networks: {others}.\n"
+        f"Time: t={t_int}s in clip '{clip_id}'.\n"
+        "Output the three lines exactly as specified in your system prompt."
+    )
+
+    try:
+        text = await get_k2_client().chat(system_prompt, user, max_tokens=200)
+    except Exception as e:
+        return {
+            "network": network,
+            "t": t_int,
+            "text": f"[K2 call failed: {e}]",
+            "confidence": "",
+            "cite": None,
+            "stub": True,
+            "error": str(e),
+        }
+
+    # Parse the 3-line output the prompts produce: Reading / Confidence / Cite.
+    parsed = _parse_observation(text)
+    cite = parsed.get("cite") or None
+    if cite:
+        # Strip wrapping brackets if present so the frontend can render however it likes.
+        cite = cite.strip()
+        if cite.startswith("[") and cite.endswith("]"):
+            cite = cite[1:-1].strip()
+
+    return {
+        "network": network,
+        "t": t_int,
+        "text": parsed.get("reading") or text.strip(),
+        "confidence": parsed.get("confidence") or "",
+        "cite": cite,
+        "raw": text,
     }
 
 

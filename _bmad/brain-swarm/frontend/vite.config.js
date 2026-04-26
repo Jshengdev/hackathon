@@ -6,8 +6,10 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/brain': 'http://localhost:8000',
-      '/ws': { target: 'ws://localhost:8000', ws: true },
+      '/brain':       'http://localhost:8000',
+      '/demo':        'http://localhost:8000',
+      '/prerendered': 'http://localhost:8000',
+      '/ws':          { target: 'ws://localhost:8000', ws: true },
     },
   },
 })

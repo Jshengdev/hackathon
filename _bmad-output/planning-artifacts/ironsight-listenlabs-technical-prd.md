@@ -3,7 +3,7 @@ title: "Ironsight / Listen Labs — TECHNICAL PRD (Empathy Layer Engine)"
 project_name: ironsight-listenlabs-empathy-engine
 codename: Empathy Layer
 date: 2026-04-25
-version: 2.0 (post-TRIBE-cut — reflects what actually shipped)
+version: 2.1 (post-audit DOCS-FROZEN — R-DOCS edits 2026-04-25 evening)
 workflowType: technical-prd
 build_window: 2026-04-25 (Friday eve) → 2026-04-26 11 PM PDT (Saturday submit)
 freeze: 2026-04-26 8 PM PDT
@@ -30,7 +30,28 @@ v2_changelog: |
       JSON files (vision_report, swarm_readings, k2_region_cache, empathy,
       iterative_trajectory) on /demo/match so brain-3D interactions never
       block on a live LLM call.
+  v2.1 changelog (2026-04-25 evening — R-DOCS shard, post-audit DOCS-FROZEN):
+    - §6.6 falsification field-name lock: short-form `{main_score, control_score,
+      delta, verdict}` per A4-deepdive Pick B. Long-form / `*_video_id` belong to
+      the offline harness only.
+    - §4.2b Stage 4 Opus polish SHIP path clarified: gated `OPUS_POLISH=1`,
+      `services/empathy_polish.py`, K2-best fallback on any failure or guardrail
+      violation. Cut-line is `OPUS_POLISH=0` re-bake — not a code rollback.
+    - §13 FR-O4 tagged [v2-superseded] (Stage 2 = K2 moderator). FR-O4′ added
+      for Stage 4 Opus polish via the env flag. FR-O17 [v2-amended] to clarify
+      the regex post-flight applies to K2 moderator + (when enabled) Opus polish,
+      and the tuple-unpack semantics of `pass_guardrail_pre_flight`.
+    - §14 NFRs: NFR3, NFR6, NFR31 struck (TRIBE forward / Opus-as-Stage-2 are
+      v2-superseded). NFR22 amended to monotone-Δ semantics (the v1 floor of
+      0.75 assumed a different scoring distribution). Added NFR41 (embedding-
+      proxy ≤200ms), NFR42 (K2 three-roles concurrency), NFR43 (no-silent-stub
+      NON-NEGOTIABLE), NFR44 (Opus polish env-flag discipline).
+    - §10 smoke gate extended with §10.1 eval-harness recipes (no-fallback grep
+      gate G1-G5, no-silent-stub kill-switch test, schema validators, e2e demo
+      gate, latency budget harness, golden outputs + forbidden-phrase oracle,
+      run-test-run rule per refactor R-shard PR).
   Companion plan: caltech/build-plan-locked.md
+  Companion canonical summary: caltech/NEW-ARCHITECTURE.md
 v2_endpoints_shipped:
   - POST /demo/match                            # triggers warmup BackgroundTask
   - GET  /demo/clips
@@ -352,9 +373,17 @@ once and commits the JSON files to repo, so demo-day warmup is just disk reads.
 ### 4.2b Stage 4 — Optional Polish (the only place Opus 4.7 runs)
 
 **Tool:** Anthropic Claude Opus 4.7 (`claude-opus-4-7`)
-**Cost:** $5 in / $25 out per M tokens (+35% tokenizer bloat).
-**Role:** ~100-word literary polish over the K2 best paragraph. Cut-line cherry — first to drop if behind 8 PM Saturday. K2's `best_paragraph` ships as-is when polish is cut.
-**Latency:** ≤5s.
+**Implementation file:** `backend/services/empathy_polish.py` (gated thin module per A3-deepdive §3 sketch).
+**Cost:** $5 in / $25 out per M tokens (+35% tokenizer bloat). Per-call ≈ $0.005; whole demo budget ≈ $0.25 across 50 runs.
+**Role:** Single Anthropic Messages API call, ~140 output tokens, ~100-word literary polish over the K2 best paragraph. Cut-line cherry — first to drop if behind 8 PM Saturday.
+**Env-gated SHIP path (A3-deepdive recommendation):**
+- `OPUS_POLISH=1` in the production demo env → polish runs once per clip in the warmup BackgroundTask, post-iterative-loop, off the live request path.
+- `OPUS_POLISH=0` (default in `.env.example`) → polish is skipped at runtime; the JSON shape is preserved with `polished_paragraph: null`. This is the cut-line — flipping the flag, not rolling back code.
+- Empty-input guard: if Stage 3 returned an empty `best_paragraph`, skip without an API call.
+- Guardrail re-check on Opus output (regex post-flight per §5) — failures fall back to K2 `best_paragraph` and log `opus_polish_unavailable` structurally; never ships a polish that introduces forbidden phrases.
+- Any other failure (network, 401, 5xx, timeout, parse): same behavior — `polished_paragraph: null`, structured `logger.error("opus_polish_unavailable", extra={...})`, frontend already prefers `polished_paragraph || best_paragraph`.
+**JSON contract:** `EmpathyDocument.polished_paragraph: str | null` (CONTRACTS C2 + §6.5 example) is the only field exposed to the frontend. Internal warmup result also carries `polish_status ∈ {"ok","cut","error"}` and `polish_error: str | null` for observability + the no-fallback grep gate (A6 §3.1).
+**Latency:** ≤5s. Polish runs in warmup, not in the demo's live read path — so its budget contributes to *cold warmup*, not demo response.
 
 ### 4.3 K2 Think — three roles on one surface (v2)
 
@@ -562,18 +591,20 @@ These guardrails apply to every Opus-generated empathy paragraph, every voiceove
 }
 ```
 
-### 6.6 Falsification Check Output (Junsoo + Jacob emit; consumed by output document)
+### 6.6 Falsification Check Output (Stage 5 emits; consumed by output document)
+
+**v2 field-name lock (2026-04-25 — A4-deepdive Pick B):** the live demo path emits the **short-form** keys below. `backend/services/falsification.py` is the canonical writer; `frontend/src/stages/EmpathyDocumentStage.vue` is the canonical reader; every cached `falsification.json` and `empathy.json` on disk uses these keys. The legacy long-form key set (`*_paragraph_score` × 2 plus a delta key) plus the `*_video_id` pair belong to the offline harness in `caltech/engine/` and are out of scope for the live demo contract — see A4-deepdive §1 for the full break-cost matrix and the doc-only edits applied here.
 
 ```json
 {
-  "main_video_id": "demo-input-1.mp4",
-  "control_video_id": "workplace_routine_baseline.mp4",
-  "main_paragraph_score": 0.84,
-  "control_paragraph_score": 0.27,
-  "falsification_delta": 0.57,
-  "verdict": "anchored"  // delta > 0.40 = anchored; ≤ 0.40 = generic-plausible (red flag)
+  "main_score": 0.84,
+  "control_score": 0.27,
+  "delta": 0.57,
+  "verdict": "anchored"  // delta > 0.40 = anchored; ≤ 0.40 = generic_plausible (red flag)
 }
 ```
+
+`verdict` is one of `"anchored"`, `"generic_plausible"`, `"control_unavailable"`, or `"unknown"`. The `control_unavailable` value is reserved for the surface-the-failure path (per CONSTRAINTS rule 2) when the per-scenario control activity.json is missing — the embedding-proxy stage returns the structured error payload, §C of the empathy doc renders a red `CONTROL MISSING` chip, and the frontend never shows a fluent verdict over a self-substituted control. See A1-deepdive §1 for the control-clip strategy (hand-picked + temporal-shuffle hybrid).
 
 ### 6.7 Empathy-Layer Document (Emilie's UI consumes; renders for end user)
 
@@ -717,16 +748,39 @@ K2 wraps Stage 2 for sub-1s loop coordination if needed. Default flow above uses
 
 | # | Test | Owner | Threshold | Fallback if fail |
 |---|---|---|---|---|
-| 1 | TRIBE V2 reverse inference latency on 30s clip on demo GPU | [LANE-J] Junsoo | < 30s | Pre-cache BEAT-1 MP4; live mode disabled |
-| 2 | K2 + Opus iterative-loop test (8 rounds) | [LANE-K] Jacob | All 8 rounds complete in < 60s; zero timeouts | Pre-cached iterative-loop trajectory |
+| 1 | ~~TRIBE V2 reverse inference latency on 30s clip on demo GPU~~ **[v2-superseded]** — TRIBE runs OFFLINE only. Replace with: `activity.json` schema validator over both demo clips. | [LANE-J] Junsoo | activity.json present + schema-valid (Yeo7 networks present, region values ∈ [0,1]) for both demo clips | Re-bake offline before 8 AM Saturday |
+| 2 | ~~K2 + Opus iterative-loop test (8 rounds)~~ **[v2-amended]** — K2 + K2 evaluator swarm iterative-loop test (8 rounds). | [LANE-K] Jacob | All 8 rounds complete in ≤ 60s; zero timeouts; trajectory monotone-ish (mean Δ ≥ 0.02) | Pre-cached iterative-loop trajectory |
 | 3 | Renaissance differentiation rehearsal | [LANE-E] Emilie + [LANE-O] Johnny | First 60s shown to "Renaissance scorer" — no pattern-match within 10s | Re-cut first 10s |
 | 4 | 3D mesh rendering FPS on demo laptop | [LANE-O] Johnny | ≥ 30 FPS (fsaverage5 + iterative-loop overlay) | Mesh decimation / pre-baked camera motion |
 | 5 | Wi-Fi contingency (full demo on phone hotspot) | [LANE-O] Johnny + [LANE-E] Emilie | Zero API timeouts | Full backup MP4 |
-| 6 | Stage 1 (Qwen3-VL) latency + JSON validity | [LANE-K] Jacob + [LANE-O] Johnny | ≤ 10s; JSON schema valid | Pre-cached vision-report JSON |
-| 7 | Falsification check effectiveness | [LANE-J] Junsoo + [LANE-K] Jacob | Control delta ≥ 0.40 on test paragraph | Hand-tune control video selection |
+| 6 | Stage 1 (Qwen3-VL) latency + JSON validity | [LANE-K] Jacob + [LANE-O] Johnny | ≤ 10s ideal; ≤ 60s acceptable inside warmup window (per qa_logs); JSON schema valid; **no `stub:true` written to disk on failure** | Pre-cached vision-report JSON |
+| 7 | Falsification check effectiveness | [LANE-J] Junsoo + [LANE-K] Jacob | Control delta ≥ 0.40 on test paragraph; verdict ∈ {`anchored`, `generic_plausible`, `control_unavailable`}; never silently substitutes main as control | Hand-pick a different real control clip (A1-deepdive option i) → temporal-shuffle stub (option ii) → flip verdict to `control_unavailable` (red surface) → never auto-pass |
 | 8 | Demo determinism (2 back-to-back same-input runs) | [LANE-O] Johnny | < 5% variance in final paragraph | temp=0, lock seeds, pre-record |
 
 **Failure on any → mandatory mitigation immediately.**
+
+### §10.1 Eval-harness recipes (v2 NEW — installed by R6 per A6 audit)
+
+The eval harness lands as `scripts/eval/` and turns "ran once" into "run-test-run discipline." Every refactor R-shard runs §10.1 pre-flight + post-flight, pastes the diff into the PR description, and merges only if no gate regressed.
+
+**G1-G5 — no-fallback grep gate (`scripts/eval/no_fallback_grep.sh`).** CI-runnable shell script. Enforces:
+- G1: `grep -rln '"stub": *true' backend/prerendered/` → 0 hits (no committed stubs).
+- G2: `grep -rln '\[K2 error:\|\[empathy_synthesis error:\|\[parse error:\|\[K2 call failed:' backend/prerendered/` → 0 hits (no error-strings smuggled into reading/paragraph fields).
+- G3: `grep -n "trajectory = \[\|const.*= \[ *{ *round:" frontend/src/stages/*.vue frontend/src/components/*.vue | grep -v '// dev-only'` → 0 hits (no inline frontend mock arrays).
+- G4: every fallback-render path is gated by `import.meta.env.PROD` / `import.meta.env.DEV` / `MOCK_*=1` (warns on any `.vue` file mentioning `MOCK_`/`fallback`/`placeholder` without an env gate).
+- G5: Pydantic models exist for every contract in CONTRACTS.md (EmpathyDocument, VisionReport, SwarmReadings, ActivityJSON, RoundTrajectoryEntry, FalsificationBlock).
+
+**no-silent-stub kill-switch test (`scripts/eval/no_silent_stub.sh`).** Boots uvicorn with `OPENROUTER_API_KEY`/`K2_API_KEY`/`ANTHROPIC_API_KEY` deliberately unset. Hits `/demo/match` then `/demo/empathy/<clip>`. Asserts the response carries a structured error (`{"error": "vision_unavailable", ...}` OR HTTP 503), NOT a 200 with a fluent stub paragraph. Today's vision-client behavior fails this test — fixed by R2.
+
+**Schema validators (`scripts/eval/validate_caches.sh`).** Per-clip JSON-schema gate covering `activity.json` (mesh = `fsaverage5`, all Yeo7 networks, region values ∈ [0,1]), `vision_report.json` (non-empty `actions[]`, no stub flag), `swarm_readings.json` (all 7 networks), `empathy.json` (`best_paragraph` length ≥ 200, `round_trajectory` length ≥ 1), `falsification.json` (`delta` is float, `verdict` ∈ {anchored, generic_plausible, control_unavailable, unknown}).
+
+**E2e demo gate (`scripts/eval/e2e_demo_gate.sh`).** The single command before sleep on Saturday night. Sequences: `/demo/clips` → `/demo/match` → `/demo/warmup-status` poll (≤180s) → `/demo/empathy/<clip>` (asserts no `stub`/`error`, paragraph ≥ 200 chars, trajectory ≥ 1 round, delta float, verdict valid) for both demo clips. Runs Playwright drive-through (`scripts/eval/drive_through.spec.ts`) which asserts the rendered HTML never contains `STUB`/`PLACEHOLDER`/`(no scene summary)`/`(empathy paragraph not yet generated)`/`falsification: pending`. Then runs the no-fallback grep gate. Single PASS/FAIL exit code — also runs at Saturday 6 PM as the assembly test (NFR20).
+
+**Latency budget harness (`scripts/eval/latency_budget.py`).** Times each stage independently against the §3 + §7 architecture-overview budgets (Stage 1A ≤10s, Stage 1B ≤8s, Stage 2 ≤5s/round, Stage 3 ≤60s/8 rounds, Stage 4 ≤5s, Stage 5 ≤200ms, /demo/k2-region <50ms post-warmup, warmup_total ≤110s). Records per-stage measurements; flags regressions even when absolute thresholds were relaxed for the demo deadline.
+
+**Golden outputs + similarity oracle (`scripts/eval/golden/<clip>.txt` + `golden_similarity.py`).** 2 hand-written gold paragraphs (Saturday morning), one per demo clip. Reuses the embedding proxy already in the codebase to compute cosine vs the live `best_paragraph`; threshold 0.80. Plus a forbidden-phrase oracle (zero-tolerance ban on `felt`/`was thinking`/`clinical`/`diagnosis`/`average`/`normal`/`symptom`/`disorder`/`PTSD`/`depressed`/`anxious`) that catches what `pass_guardrail_pre_flight` misses today. Plus a round-trajectory monotonicity oracle (`descents <= 1` allowing one ≥0.05 dip).
+
+**Refactor discipline (the run-test-run rule).** Per refactor R-shard PR: (1) pre-flight `no_fallback_grep + validate_caches + latency_budget`, record output as `audits/baselines/R<N>-pre.txt`; (2) implement the refactor; (3) post-flight all of the above + `no_silent_stub + e2e_demo_gate`. Diff vs pre-baseline. PR description MUST quote the gate output (per `superpowers:verification-before-completion` discipline). Reject any PR that adds a fallback render path without a matching `import.meta.env` gate increase, or that emits a new JSON shape without a Pydantic model in `backend/models/`.
 
 ---
 
@@ -777,40 +831,43 @@ Demo runs Saturday-8AM-pre-baked assets primarily. Live attempt runs in backgrou
 
 ## §13. Functional Requirements (FR1–FR60) — split per execution lane
 
-### LANE-J (Junsoo — TRIBE V2 reverse + forward + control bake)
+### LANE-J (Junsoo — embedding proxy + control bake; TRIBE V2 reverse + forward DROPPED in v2)
 
-- **FR-J1.** TRIBE V2 reverse-direction pipeline ingests video file (MP4, H.264, ≥720p, 30-90s).
-- **FR-J2.** Pipeline produces per-second per-region activation JSON conforming to §6.2 schema.
+- **FR-J1.** **[v2-amended]** TRIBE V2 reverse-direction pipeline ingests video file (MP4, H.264, ≥720p, 30-90s) **OFFLINE only**. activity.json files in `backend/prerendered/<clip_id>/` are the canonical brain artifact; runtime never invokes the pipeline.
+- **FR-J2.** Pipeline produces per-second per-region activation JSON conforming to §6.2 schema (committed to repo as `activity.json`).
 - **FR-J3.** Pipeline emits ~20,000-vertex predictions on fsaverage5 mesh per second.
 - **FR-J4.** Pipeline supports both workplace input (egocentric footage) AND consumer input (Reels screen-recording).
-- **FR-J5.** Pipeline supports forward-direction text-input scoring: callable `tribe_v2_score(text, target) -> (score, per_region_attribution)` per §6.3.
-- **FR-J6.** Pre-cached brain JSON for ALL demo input clips by Saturday 8 AM.
-- **FR-J7.** Pre-cached brain JSON for control footage (workplace_routine_baseline.mp4 + curated_short_film_baseline.mp4) by Saturday 8 AM.
+- **FR-J5.** ~~Pipeline supports forward-direction text-input scoring: callable `tribe_v2_score(text, target) -> (score, per_region_attribution)` per §6.3.~~ **[v2-superseded]** — Replaced by Stage 5 embedding-proxy falsification (§4.4b) and Stage 3 K2-evaluator-swarm scoring (§4.3 role 3). The FR-J5 callable never ships in v2; the offline harness in `caltech/engine/` retains a separate offline equivalent.
+- **FR-J6.** Pre-cached `activity.json` for ALL demo input clips by Saturday 8 AM. **[v2 critical — runtime is pre-cache-only.]**
+- **FR-J7.** **[v2-amended]** Pre-cached `control_activity.json` for control clips (`workplace_routine_baseline`, `curated_short_film_baseline`) by Saturday 8 AM. Per A1-deepdive §1: ship hand-picked-control (option i) as headline + temporal-shuffle (option ii) as labeled secondary; option iii (synthetic Gaussian) only if both fail. Missing-control path returns `verdict: "control_unavailable"` (NEVER silently substitutes main as control — that's the demo's anti-payload).
 - **FR-J8.** Pipeline honors all forbidden-claim guardrails (§5).
-- **FR-J9.** Pipeline emits output via Pydantic schema-validated JSON.
+- **FR-J9.** Pipeline emits output via Pydantic schema-validated JSON (FR-J11 below + A6 §3.3 schema gate).
 - **FR-J10.** Pre-baked side-by-side MP4 for BEAT-3 within-subject toggle by Saturday 8 AM.
+- **FR-J11. [v2 NEW]** `services/embedding_proxy/projection_map.npy` (384 × 7) fit offline via `backend/scripts/fit_projection_map.py` from `training_pairs.yaml`. Committed to repo. Re-fit reproducible.
 
 ### LANE-K (Jacob — K2 swarm + iterative loop + falsification)
 
-- **FR-K1.** K2 Cerebras integration via OpenAI-compatible chat-completions API at `https://api.k2think.ai/v1`.
-- **FR-K2.** Iterative-scoring loop orchestration with `asyncio.Semaphore(6)` + Pydantic strict + brace-balanced JSON extractor + 3-attempt retry + 120s timeout per `research/wiki/tools/k2-think.md` template.
-- **FR-K3.** Iterative loop calls Stage 2 (Opus) for paragraph generation each round.
-- **FR-K4.** Iterative loop calls Junsoo's TRIBE forward-direction scoring callable each round.
-- **FR-K5.** Cosine similarity computation between candidate's predicted brain-pattern and TARGET brain-pattern.
-- **FR-K6.** Iterative loop continues until score plateaus (delta < 0.02 over 2 consecutive rounds) OR 8 rounds reached.
-- **FR-K7.** Iterative loop returns best paragraph + final score + all-round trajectory per §6.5 schema.
-- **FR-K8.** Iterative loop latency ≤ 60s for 8-round full execution (or ≤ 35s for 5-round shortened).
-- **FR-K9.** Falsification check: score best paragraph against control-video brain-pattern; emit delta per §6.6.
-- **FR-K10.** Pre-cached iterative-loop trajectory for demo input (Saturday 8 AM bake) as fallback.
+- **FR-K1.** K2 Cerebras integration via OpenAI-compatible chat-completions API at `https://api.k2think.ai/v1`. **[v2: K2 plays three roles on this surface — see §4.3 + NFR42.]**
+- **FR-K2.** **[v2-amended]** Iterative-scoring loop orchestration with `asyncio.gather(*calls)` for 7-call swarms (NO semaphore inside one stage) + Pydantic strict + brace-balanced JSON extractor + 3-attempt retry + 120s timeout per `research/wiki/tools/k2-think.md` template. Cross-stage `asyncio.Semaphore(6)` enforced **only** inside `services/warmup.py` for `k2_region_cache` pre-bake.
+- **FR-K3.** ~~Iterative loop calls Stage 2 (Opus) for paragraph generation each round.~~ **[v2-superseded]** — Stage 2 is now the K2 moderator (`services/empathy_synthesis.py`, prompt `prompts/moderator_synthesis.md`). Opus 4.7 only runs at Stage 4 polish, gated `OPUS_POLISH=1`, post-loop. (PRD §4.2 v2)
+- **FR-K4.** ~~Iterative loop calls Junsoo's TRIBE forward-direction scoring callable each round.~~ **[v2-superseded]** — Replaced by Stage 3 K2-evaluator-swarm: 7 parallel K2 calls per round (prompt `evaluator_score.md`), each rates how faithfully the candidate paragraph captured its network's reading; mean of 7 = round_score. (PRD §4.3 role 3)
+- **FR-K5.** ~~Cosine similarity computation between candidate's predicted brain-pattern and TARGET brain-pattern.~~ **[v2-relocated]** — Cosine math moves to Stage 5 falsification (§4.4b embedding proxy: `cos(emb @ W, mean(activity.frames[*].regions))`). Per-round scoring is now K2-evaluator semantic scoring (FR-K4 v2 substitute).
+- **FR-K6.** Iterative loop continues until score plateaus (`|Δ| < 0.02` over 2 consecutive rounds, after round ≥ 3) OR 8 rounds reached. Plateau-exit logic in `services/iterative_loop.py:run_iterative_loop`.
+- **FR-K7.** Iterative loop returns best paragraph + final score + all-round trajectory per §6.5 schema; emitted as `empathy.json` + `iterative_trajectory.json` by warmup.
+- **FR-K8.** Iterative loop latency ≤ 60s for 8-round full execution. Plateau exit usually drops this to 3-5 rounds in practice.
+- **FR-K9.** **[v2-amended]** Falsification check: score best paragraph against control-clip activity via embedding proxy (§4.4b); emit `{main_score, control_score, delta, verdict}` per §6.6 short-form. Implementation in `services/falsification.py`. Threshold `delta > 0.40 = anchored`.
+- **FR-K10.** Pre-cached iterative-loop trajectory for demo input (Saturday 8 AM bake) as fallback. Emitted by `services/warmup.py:warmup_clip`.
 - **FR-K11.** Per-region attribution computed per round for cross-talk-soup defense + observability.
-- **FR-K12.** Optional: per-region specialist swarm (8 K2 calls in parallel using specialist roster from prompt registry §4.5) feeds Stage 2 with multi-perspective context.
+- **FR-K12.** ~~Optional: per-region specialist swarm (8 K2 calls in parallel using specialist roster from prompt registry §4.5) feeds Stage 2 with multi-perspective context.~~ **[v2-promoted-to-mandatory]** — This is now Stage 1B (§4.3 role 1): 7 parallel K2 calls reading `activity.json`, emitting `swarm_readings.json`. Mandatory, not optional. Prompts: `backend/prompts/{network}.md` × 7 Yeo7 networks.
+- **FR-K13. [v2 NEW]** Stage 5 embedding-proxy falsification: `services/falsification.py` reads `services/embedding_proxy/projection_map.npy`, computes `384→7→cos` similarity vs target + control activity.json, writes `falsification.json` with short-form keys per §6.6. Verdict `delta > 0.40 = anchored`. Latency ≤ 200ms (NFR41). Lazy MiniLM-L6-v2 singleton; CPU-only.
 
 ### LANE-O (Johnny — Stage 1 vision + integration glue + frontend)
 
 - **FR-O1.** Stage 1 vision agent integrates Qwen3-VL via OpenRouter (`qwen/qwen3-vl-235b-a22b-instruct`) using OpenAI-compatible API.
 - **FR-O2.** Stage 1 produces Vision Report JSON conforming to §6.1 schema; Pydantic-validated.
 - **FR-O3.** Stage 1 latency ≤ 10s for 30s clip; pre-cached fallback bake.
-- **FR-O4.** Stage 2 Opus 4.7 integration via Anthropic Messages API; prompt loaded from prompt registry §4.5.
+- **FR-O4.** ~~Stage 2 Opus 4.7 integration via Anthropic Messages API; prompt loaded from prompt registry §4.5.~~ **[v2-superseded]** — Stage 2 is now the K2 moderator (`services/empathy_synthesis.py`, system prompt `prompts/moderator_synthesis.md`). Anthropic Opus 4.7 only runs at Stage 4 polish (gated `OPUS_POLISH=1`), per FR-O4′ below.
+- **FR-O4′ (v2 NEW).** Stage 4 Opus polish via Anthropic Messages API; gated by env flag `OPUS_POLISH=1` (default OFF). Implementation in `services/empathy_polish.py` per §4.2b. On any failure or guardrail-violation, falls back to K2 `best_paragraph` as-is and logs `opus_polish_unavailable` structurally.
 - **FR-O5.** Prompt registry (§4.5) hot-swap mechanism — runtime config switch between Ironsight + Listen Labs scenarios.
 - **FR-O6.** Three-Claude-sibling orchestration: vis-brain (3D mesh) + vis-graph (knowledge-graph + iterative-loop reveal) + orch-glue (integration + fallback).
 - **FR-O7.** Per-component pre-cache fallback swap logic at every stage boundary.
@@ -823,7 +880,7 @@ Demo runs Saturday-8AM-pre-baked assets primarily. Live attempt runs in backgrou
 - **FR-O14.** Wi-Fi contingency: full backup MP4 of entire 90s.
 - **FR-O15.** Demo determinism: temp=0, lock seeds, pre-record fallback for back-to-back consistency.
 - **FR-O16.** Final product name + headline picked Saturday 6 PM; integrated across all UI surfaces.
-- **FR-O17.** Guardrail pre-flight regex check on every Opus output before rendering.
+- **FR-O17.** **[v2-amended]** Guardrail pre-flight regex check on every empathy paragraph output before rendering. Applies to: (a) Stage 2 K2 moderator output (mandatory; one-shot STRICT MODE retry on violation; sentinel error payload returned if retry still fails — A1-deepdive §2 + A5 §3); (b) Stage 4 Opus polish output if `OPUS_POLISH=1` (mandatory post-flight; on violation, `polished_paragraph` is dropped and the K2 `best_paragraph` ships as-is with a structured `opus_polish_unavailable` log line). Implementation: `services.guardrails.pass_guardrail_pre_flight` returns `tuple[bool, list[str]]` — callers MUST unpack the tuple (not `bool(...)` it; that's the truthiness bug A1-deepdive §2 documents).
 
 ### LANE-E (Emilie — packaging + UI + storytelling + sponsor closes)
 
@@ -846,13 +903,15 @@ Demo runs Saturday-8AM-pre-baked assets primarily. Live attempt runs in backgrou
 ## §14. Non-Functional Requirements (NFR1–NFR40)
 
 ### Performance
-- **NFR1.** Demo end-to-end runs in ≤ 90s for live-attempt path.
-- **NFR2.** TRIBE V2 reverse inference < 30s on 30s clip on demo GPU.
-- **NFR3.** TRIBE V2 forward inference per candidate paragraph ≤ 2s.
+- **NFR1.** Demo end-to-end runs in ≤ 90s for live-attempt path. (v2 reality: holds on the warm-cache path post-Saturday-8-AM bake; cold warmup ≈ 90-110s and is hidden inside `BackgroundTask` per §3 pre-warmup contract.)
+- **NFR2.** ~~TRIBE V2 reverse inference < 30s on 30s clip on demo GPU.~~ **[v2-superseded]** — TRIBE V2 reverse runs OFFLINE only. activity.json on disk is the canonical artifact; runtime never invokes TRIBE in any direction.
+- **NFR3.** ~~TRIBE V2 forward inference per candidate paragraph ≤ 2s.~~ **[v2-superseded]** — TRIBE forward never runs in v2. Per-round semantic scoring is K2-evaluator-swarm (§4.3 role 3, NFR7); falsification cosine numbers come from the embedding proxy (§4.4b, NFR41).
 - **NFR4.** K2 Cerebras at ~2000 tok/s sustained throughput.
-- **NFR5.** Stage 1 Qwen3-VL ≤ 10s for 30s clip.
-- **NFR6.** Stage 2 Opus 4.7 ≤ 5s per candidate (~250-token output).
-- **NFR7.** 8-round iterative loop ≤ 60s; 5-round shortened ≤ 35s.
+- **NFR5.** Stage 1 Qwen3-VL ≤ 10s for 30s clip. (v2 measurement risk: live runs observed at 51-60s in `qa_logs/`; hidden inside warmup BackgroundTask. Demo-day reads are O(1) cache hits.)
+- **NFR6.** ~~Stage 2 Opus 4.7 ≤ 5s per candidate (~250-token output).~~ **[v2-superseded]** — Stage 2 is now the K2 moderator. Stage 4 Opus polish (gated `OPUS_POLISH=1`) is the only place Opus runs; see NFR6′.
+- **NFR6′ (v2 NEW).** K2 moderator (Stage 2) ≤ 5s per candidate paragraph (~250-token output). Fired once per iterative-loop round.
+- **NFR6″ (v2 NEW).** Stage 4 Opus polish ≤ 5s end-to-end when `OPUS_POLISH=1`; runs in warmup, not on the live read path.
+- **NFR7.** 8-round iterative loop ≤ 60s; plateau exit usually drops this to 3-5 rounds in practice.
 - **NFR8.** 3D rendering ≥ 30 FPS with iterative-loop visualization overlay.
 - **NFR9.** Demo determinism: < 5% variance across back-to-back runs.
 
@@ -871,8 +930,8 @@ Demo runs Saturday-8AM-pre-baked assets primarily. Live attempt runs in backgrou
 - **NFR19.** Wi-Fi-loss contingency: full backup MP4 of entire 90s.
 - **NFR20.** Pre-cache assembly test (Saturday 6 PM) passes — entire demo runnable on pre-recorded only.
 - **NFR21.** Sponsor-swap reliability: BEAT-0 + BEAT-5 hot-swap < 5s.
-- **NFR22.** Iterative-loop convergence: by round 8, score ≥ 0.75 on test footage.
-- **NFR23.** Falsification check: control delta ≥ 0.40 (proves anchoring strength).
+- **NFR22.** **[v2-amended]** Iterative-loop convergence: round-trajectory climbs near-monotonically with mean Δ ≥ 0.02 across rounds 1-8; plateau exit (|Δ|<0.02 over 2 consecutive rounds OR R==8) is honored. The v1 "score ≥ 0.75 by round 8" threshold assumed TRIBE-forward cosine distribution; the v2 K2-evaluator-swarm score distribution is different and was not pre-calibrated. Recalibrate against golden outputs (A6 §7 oracle) Saturday morning if a fixed floor is needed for the demo gate.
+- **NFR23.** Falsification check: control delta ≥ 0.40 (proves anchoring strength). Honored only with a real control activity.json on disk per FR-J7 + A1-deepdive §1; under `verdict == "control_unavailable"`, NFR23 evaluates as `n/a` and the demo doc renders the missing-data surface instead of a fabricated number.
 
 ### Accessibility & UX
 - **NFR24.** Empathy-layer paragraph uses literature-grade prose (not academic / clinical).
@@ -883,11 +942,11 @@ Demo runs Saturday-8AM-pre-baked assets primarily. Live attempt runs in backgrou
 
 ### Integration
 - **NFR29.** Stage 1 → Stage 2 contract: Vision Report JSON Pydantic schema-validated.
-- **NFR30.** TRIBE V2 reverse → Stage 2 contract: per-second JSON schema-validated.
-- **NFR31.** TRIBE V2 forward → iterative-loop contract: text input → JSON output schema-validated.
-- **NFR32.** Stage 2 → iterative-loop contract: candidate paragraph emitted with guardrail pre-flight status.
-- **NFR33.** Iterative-loop → output-document contract: full trajectory + best-paragraph + falsification-delta payload schema-validated.
-- **NFR34.** Pre-cache fallback contracts: per-stage MP4 / JSON / static-image committed to repo by Saturday 8 AM.
+- **NFR30.** TRIBE V2 reverse → Stage 2 contract: per-second JSON (`activity.json`) schema-validated. (v2: TRIBE runs OFFLINE; this NFR applies to the disk artifact, not a live producer.)
+- **NFR31.** ~~TRIBE V2 forward → iterative-loop contract: text input → JSON output schema-validated.~~ **[v2-superseded]** — TRIBE forward never runs in v2; the equivalent contract is now NFR41 (embedding-proxy falsification) + NFR42 (K2 evaluator-swarm scoring).
+- **NFR32.** Stage 2 → iterative-loop contract: candidate paragraph emitted with guardrail pre-flight status (tuple `(ok, violations)` per FR-O17 v2-amended).
+- **NFR33.** Iterative-loop → empathy-document contract: full `round_trajectory[]` + `best_paragraph` + `per_region_attribution{}` + `falsification` payload (short-form `{main_score, control_score, delta, verdict}` per §6.6) schema-validated.
+- **NFR34.** Pre-cache fallback contracts: per-stage MP4 / JSON / static-image committed to repo by Saturday 8 AM. v2 cache layout is `backend/prerendered/<clip_id>/` × {`activity.json`, `vision_report.json`, `swarm_readings.json`, `k2_region_cache.json`, `empathy.json`, `iterative_trajectory.json`, `falsification.json`} per §3.
 
 ### Observability (demo-day operational)
 - **NFR35.** Demo runbook logs per-beat live/pre-cache decision.
@@ -898,6 +957,12 @@ Demo runs Saturday-8AM-pre-baked assets primarily. Live attempt runs in backgrou
 ### Sponsor & Strategic Alignment
 - **NFR39.** Best Use of AI YEA/NAY rubric is the explicit closing slide; product enacts the rubric.
 - **NFR40.** Empathy-layer positioning is the unified spine across all 4 sponsor swap-slides; closing-line wording polished Saturday 6 PM.
+
+### v2 NEW NFRs (2026-04-25 — fill the gaps the TRIBE-cut + K2-three-roles + no-stub locks introduced)
+- **NFR41 (v2 NEW — embedding-proxy latency).** Stage 5 falsification (`backend/services/falsification.py` + `services/embedding_proxy/`) completes ≤ 200ms per call after the lazy MiniLM-L6-v2 singleton is loaded. First-call cold load (~5-10s) is paid once at process startup or pre-warmed via the warmup task. The `projection_map.npy` 384×7 matrix is committed to the repo per FR-J11.
+- **NFR42 (v2 NEW — K2 three-roles concurrency).** K2 plays three roles on one surface (Stage 1B specialists × 7, Stage 2 moderator × 1, Stage 3 evaluator swarm × 7 per round). Each 7-call swarm fires via `asyncio.gather(*calls)` (no semaphore inside one stage). Cross-stage `asyncio.Semaphore(6)` is enforced **only** inside the warmup `BackgroundTask` when pre-baking the `k2_region_cache` 7×N grid. Per the K2 free-tier sponsor budget, no upstream rate-limit semaphore is required for the demo path.
+- **NFR43 (v2 NEW — no-silent-stub rule, NON-NEGOTIABLE).** Per CONSTRAINTS rule 2: every backend failure path MUST end in either `raise HTTPException(...)` OR `logger.error(<event>, extra={...}); return {"error": "<code>", "clip_id": ..., ...}`. Returning a fluent string that looks like real output (e.g., `_stub_report` writing a fluent paragraph + `stub:true` flag, or `f"[K2 error: {e}]"` smuggled into a `reading` field) is grounds for revert. Frontend mirrors via the `assertReal` helper (A6 §4.2): missing real data renders a red `REAL DATA MISSING · <field>` badge in PROD; DEV may keep friendlier copy gated behind `import.meta.env.DEV`. Canonical helper module: `backend/services/error_payload.py` (R2 lands per EXECUTION-PLAN §3 PHASE 3).
+- **NFR44 (v2 NEW — Opus polish env-flag discipline).** Stage 4 polish runs only when `OPUS_POLISH=1`. The default `.env.example` ships `OPUS_POLISH=0`. Cut-line (Saturday 8 PM) is implemented as `OPUS_POLISH=0` re-bake of the cache JSON (frontend already prefers `polished_paragraph || best_paragraph`), NOT a code rollback. The architecture treats polish as cut-line-optional; any doc that names Opus 4.7 must qualify it as Stage 4 polish only.
 
 ---
 

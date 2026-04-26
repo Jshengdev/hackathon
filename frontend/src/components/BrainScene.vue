@@ -1,8 +1,5 @@
 <template>
   <div ref="container" class="scene-container" :class="`layout-${layout}`">
-    <!-- Warm bottom glow — radial gradient evokes the lit-from-below look in
-         the TRIBE V2 hero (matches /tmp/tribev2-ref/landing.png). -->
-    <div class="bottom-glow" aria-hidden="true"></div>
     <div class="hud" v-if="showHud">
       <span class="top-region" v-if="topRegion">{{ topRegion.replace(/_/g, ' ') }}</span>
       <span class="frame-counter">t={{ Math.floor(currentTime) }}s</span>
@@ -18,7 +15,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
 import { fetchMesh } from '../api/index.js'
-import { networkHex, tribeHeatRGB } from '../utils/colors.js'
+import { networkHex } from '../utils/colors.js'
 
 // ── Props / emits ──────────────────────────────────────────────────────────
 const props = defineProps({
@@ -79,8 +76,7 @@ function initThree() {
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
   renderer.setSize(W, H)
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  // TRIBE V2 reskin: pure black canvas — brain sits on the void.
-  renderer.setClearColor(0x000000, 1)
+  renderer.setClearColor(0x050510, 1)
   container.value.appendChild(renderer.domElement)
 
   labelRenderer = new CSS2DRenderer()
@@ -91,8 +87,7 @@ function initThree() {
   container.value.appendChild(labelRenderer.domElement)
 
   scene = new THREE.Scene()
-  // Black fog so the brain edges fade into the void instead of clipping hard.
-  scene.fog = new THREE.FogExp2(0x000000, 0.0025)
+  scene.fog = new THREE.FogExp2(0x050510, 0.0025)
 
   camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 1000)
   camera.position.set(0, 40, 230)
@@ -104,20 +99,10 @@ function initThree() {
   controls.minDistance = 60
   controls.maxDistance = 500
 
-  // TRIBE V2 lighting — soft warm rim. Low ambient keeps the cortex from
-  // looking flat-lit; warm key from upper-front gives the cream-tissue
-  // surface its honey'd highlights; cool back rim outlines the silhouette.
-  scene.add(new THREE.AmbientLight(0xfff5e6, 0.25))
-  const keyLight = new THREE.DirectionalLight(0xfff5e6, 0.6)
-  keyLight.position.set(60, 140, 200)
-  scene.add(keyLight)
-  const rimLight = new THREE.DirectionalLight(0x8aa0c0, 0.35)
-  rimLight.position.set(-100, 60, -120)
-  scene.add(rimLight)
-  // Subtle warm fill from below — pairs with the CSS bottom glow.
-  const fillLight = new THREE.DirectionalLight(0xffb44a, 0.18)
-  fillLight.position.set(0, -100, 80)
-  scene.add(fillLight)
+  scene.add(new THREE.AmbientLight(0x223355, 2.5))
+  const sun = new THREE.DirectionalLight(0xffffff, 1.8)
+  sun.position.set(120, 180, 100)
+  scene.add(sun)
 
   raycaster = new THREE.Raycaster()
   renderer.domElement.addEventListener('click', onCanvasClick)
@@ -131,22 +116,17 @@ function buildBrainMesh(data) {
   const vertices = new Float32Array(data.vertices)
   const indices = new Uint32Array(data.faces)
 
-  // TRIBE V2 cortical-tissue base: cream-white (#e8e2d9) with the central
-  // fissure pulled toward shadow so the longitudinal valley still reads.
-  // Vertex colors get multiplied by material.color (white) so the buffer
-  // alone drives surface albedo. Activations later lerp these toward the
-  // heat colormap.
+  // Bilateral central-fissure cue: vertices very near the x=0 plane get a
+  // darker base color, suggesting the longitudinal fissure between hemispheres.
+  // fsaverage5 is in MNI mm; the midline shows up well within ±2.5 mm.
   const colors = new Float32Array(N * 3)
-  const TISSUE_R = 0xe8 / 255  // 0.910
-  const TISSUE_G = 0xe2 / 255  // 0.886
-  const TISSUE_B = 0xd9 / 255  // 0.851
   for (let i = 0; i < N; i++) {
     const x = vertices[i * 3]
     const fissure = Math.max(0, 1 - Math.abs(x) / 2.5)  // 1 at midline → 0 outside
-    const k = 1 - fissure * 0.55                        // pull toward dark at midline
-    colors[i * 3]     = TISSUE_R * k
-    colors[i * 3 + 1] = TISSUE_G * k
-    colors[i * 3 + 2] = TISSUE_B * k
+    const base = 0.05 - fissure * 0.035                 // darken at midline
+    colors[i * 3]     = Math.max(0.02, base)
+    colors[i * 3 + 1] = Math.max(0.02, base)
+    colors[i * 3 + 2] = Math.max(0.06, 0.13 - fissure * 0.06)
   }
 
   const geo = new THREE.BufferGeometry()
@@ -155,18 +135,18 @@ function buildBrainMesh(data) {
   geo.setIndex(new THREE.BufferAttribute(indices, 1))
   geo.computeVertexNormals()
 
-  // TRIBE V2 cortical tissue: high-roughness, no metalness, no emissive.
-  // material.color stays white so the vertex-color buffer fully drives the
-  // surface — that buffer carries cream tissue at rest and lerps toward the
-  // heat colormap where activations fire.
+  // MeshStandardMaterial with high roughness reads as organic tissue, not a
+  // glossy sphere. Slight emissive on top of vertexColors keeps active regions
+  // visible against the dark backdrop.
   const mat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
     vertexColors: true,
     side: THREE.DoubleSide,
     roughness: 0.85,
-    metalness: 0.0,
-    transparent: false,
-    opacity: 1.0,
+    metalness: 0.05,
+    emissive: 0x1a1a32,
+    emissiveIntensity: 0.18,
+    transparent: true,
+    opacity: 0.92,
   })
 
   brainMesh = new THREE.Mesh(geo, mat)
@@ -189,10 +169,9 @@ function buildBrainMesh(data) {
 function buildAtmosphere(brainR) {
   const geo = new THREE.SphereGeometry(brainR * 1.18, 48, 36)
   atmosphereMat = new THREE.MeshBasicMaterial({
-    // TRIBE V2 reskin: warm tungsten halo instead of cool-blue rim.
-    color: 0xfff5e6,
+    color: 0x6da9ff,
     transparent: true,
-    opacity: 0.04,
+    opacity: 0.05,
     side: THREE.BackSide,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
@@ -222,8 +201,7 @@ function buildOrbits(brainR) {
     const geo = new THREE.BufferGeometry()
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
     const mat = new THREE.LineBasicMaterial({
-      // TRIBE V2 reskin: warm beige orbits instead of cool-blue rings.
-      color: 0xe8e2d9, transparent: true, opacity: cfg.opacity * 0.7,
+      color: 0xb4c8ff, transparent: true, opacity: cfg.opacity,
     })
     const orbit = new THREE.LineLoop(geo, mat)
     orbit.rotation.x = cfg.tilt
@@ -245,9 +223,7 @@ function buildEdgeGraphs() {
   const agentMat = new THREE.LineBasicMaterial({
     vertexColors: true,
     transparent: true,
-    // TRIBE V2 reskin: subdued swarm web — the activation IS the visual,
-    // edges should whisper, not shout.
-    opacity: 0.22,
+    opacity: 0.55,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   })
@@ -268,9 +244,7 @@ function buildEdgeGraphs() {
   const regionMat = new THREE.LineBasicMaterial({
     vertexColors: true,
     transparent: true,
-    // TRIBE V2 reskin: thin cross-talk arcs only — the surface heatmap
-    // does the heavy lifting, arcs hint at "swarm cross-talk" subtly.
-    opacity: 0.45,
+    opacity: 0.85,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   })
@@ -299,21 +273,12 @@ function buildRegionAgents(networks) {
     glow.userData.network = name
     mesh.add(glow)
 
-    // TRIBE V2 register: lowercase mono label on near-black chip with a
-    // hairline border. Network color tints the dot, not the whole pill.
     const div = document.createElement('div')
     Object.assign(div.style, {
-      color: '#e8e2d9',
-      fontSize: '10px',
-      fontWeight: '500',
-      fontFamily: "'JetBrains Mono', monospace",
-      background: 'rgba(0,0,0,0.78)',
-      padding: '3px 8px',
-      borderRadius: '2px',
-      border: '1px solid rgba(255,255,255,0.12)',
-      whiteSpace: 'nowrap',
-      letterSpacing: '1.1px',
-      textTransform: 'lowercase',
+      color: data.color, fontSize: '11px', fontWeight: '600',
+      background: 'rgba(5,5,20,0.75)', padding: '3px 7px',
+      borderRadius: '4px', border: `1px solid ${data.color}`,
+      whiteSpace: 'nowrap', letterSpacing: '0.5px',
       pointerEvents: 'none',
     })
     div.textContent = name.replace(/_/g, ' ')
@@ -353,46 +318,40 @@ function buildWanderers(n = N_WANDERERS) {
 }
 
 // ── Coloring helpers ───────────────────────────────────────────────────────
-// TRIBE V2 heat colormap (delegated to utils/colors.js) — cream tissue at
-// rest lerps toward deep red → orange → yellow → white as activation rises.
-
-// Cached cortical-tissue base (vertex colors at zero activation). Captured
-// once on first call so per-frame updates don't have to recompute the
-// fissure-tinted base for every vertex — we just lerp from this snapshot.
-let _baseTissueColors = null
-function rememberBaseTissue() {
-  if (!brainMesh) return
-  if (_baseTissueColors) return
-  const arr = brainMesh.geometry.attributes.color.array
-  _baseTissueColors = new Float32Array(arr.length)
-  _baseTissueColors.set(arr)
+// Fire colormap: dark navy → purple → red → orange → yellow
+function activationToRGB(t, out) {
+  const tt = Math.max(0, Math.min(1, t))
+  if (tt < 0.35) {
+    const s = tt / 0.35
+    out[0] = 0.05 + s * 0.50;  out[1] = 0.05 - s * 0.04;  out[2] = 0.13 + s * 0.52
+  } else if (tt < 0.70) {
+    const s = (tt - 0.35) / 0.35
+    out[0] = 0.55 + s * 0.45;  out[1] = 0.01 + s * 0.20;  out[2] = 0.65 - s * 0.65
+  } else {
+    const s = (tt - 0.70) / 0.30
+    out[0] = 1.0;               out[1] = 0.21 + s * 0.79;  out[2] = 0.0 + s * 0.08
+  }
 }
 
 // Apply a per-network level dictionary to the mesh's vertex-color buffer.
-// Vertices outside any active network reset to their cream-tissue base; verts
-// inside a firing network lerp toward tribeHeat(level) by `level` strength,
-// so low activation reads as warm red on tissue and peak blows out to white.
 function applyRegionLevelsToMesh(levels) {
   if (!brainMesh || !meshNetworks.value) return
-  rememberBaseTissue()
   const colors = brainMesh.geometry.attributes.color.array
-  const base   = _baseTissueColors
-  // Restore tissue base for every vertex
-  colors.set(base)
-  const heat = [0, 0, 0]
+  const tmp = [0, 0, 0]
+  // First, fill base color for all verts
+  for (let i = 0; i < colors.length; i += 3) {
+    colors[i] = 0.05; colors[i + 1] = 0.05; colors[i + 2] = 0.13
+  }
   for (const [name, meta] of Object.entries(meshNetworks.value)) {
     const lvl = levels[name] ?? 0
-    if (lvl <= 0.001) continue
-    tribeHeatRGB(lvl, heat)
+    activationToRGB(lvl, tmp)
     const idxs = meta.vertex_indices
     if (!idxs) continue
-    const w = Math.max(0, Math.min(1, lvl))
     for (let k = 0; k < idxs.length; k++) {
       const v = idxs[k]
-      const i = v * 3
-      colors[i]     = base[i]     + (heat[0] - base[i])     * w
-      colors[i + 1] = base[i + 1] + (heat[1] - base[i + 1]) * w
-      colors[i + 2] = base[i + 2] + (heat[2] - base[i + 2]) * w
+      colors[v * 3]     = tmp[0]
+      colors[v * 3 + 1] = tmp[1]
+      colors[v * 3 + 2] = tmp[2]
     }
   }
   brainMesh.geometry.attributes.color.needsUpdate = true
@@ -498,20 +457,6 @@ function applyLayout(layout) {
     tweenCameraTo(
       new THREE.Vector3(40, 35, 220),
       new THREE.Vector3(0, 10, 0),
-    )
-  } else if (layout === 'hero-left') {
-    // TRIBE V2 hero — lateral view of the LEFT hemisphere from outside.
-    // Left hemi sits at -X in MNI space, so camera goes to negative X with
-    // a tiny upward tilt to avoid a flat profile silhouette.
-    tweenCameraTo(
-      new THREE.Vector3(-220, 18, 30),
-      new THREE.Vector3(0, 6, 0),
-    )
-  } else if (layout === 'hero-right') {
-    // Lateral view of the RIGHT hemisphere from outside (camera at +X).
-    tweenCameraTo(
-      new THREE.Vector3(220, 18, 30),
-      new THREE.Vector3(0, 6, 0),
     )
   } else {
     tweenCameraTo(
@@ -773,23 +718,7 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   position: relative;
-  /* TRIBE V2: pure-black surface so the brain reads against the void. */
-  background: var(--tribe-bg, #000);
-}
-
-/* Warm radial glow at the bottom — pairs with the warm fill light in the
-   Three.js scene to evoke TRIBE V2's lit-from-below register. */
-.bottom-glow {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  background: radial-gradient(
-    ellipse at 50% 100%,
-    rgba(255, 180, 80, 0.15) 0%,
-    transparent 60%
-  );
-  mix-blend-mode: screen;
+  background: #050510;
 }
 
 .hud {
@@ -798,17 +727,13 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 .top-region {
-  font-size: 11px;
-  color: var(--tribe-ink, #e8e2d9);
-  font-family: 'JetBrains Mono', monospace;
-  text-transform: lowercase;
-  letter-spacing: 1.4px;
-  font-weight: 500;
+  font-size: 12px; color: #ffcc66;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  text-shadow: 0 0 6px rgba(255, 204, 102, 0.4);
 }
 .frame-counter {
-  font-size: 10px;
-  color: var(--tribe-smoke, #465a69);
+  font-size: 11px;
+  color: #556688;
   font-family: 'JetBrains Mono', monospace;
-  letter-spacing: 0.6px;
 }
 </style>

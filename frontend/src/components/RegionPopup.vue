@@ -71,10 +71,10 @@ const props = defineProps({
 defineEmits(['close'])
 
 // CSS custom properties so scoped styles can pick up the network accent.
-// TRIBE V2 register: hairline border + soft warm drop, accent stays in the
-// dot/marker/fill rather than colorizing the chrome.
 const cssVars = computed(() => ({
   '--accent': props.accentColor,
+  borderColor: props.accentColor,
+  boxShadow: `0 0 24px ${props.accentColor}55`,
 }))
 
 // Normalize the network identifier into a lowercased, space-separated label
@@ -104,54 +104,37 @@ const runtimeLabel = computed(() => {
 </script>
 
 <style scoped>
-/* TRIBE V2 register — near-black surface, hairline borders, mono kicker,
-   warm-cream body. Network accent only fills dots/markers/bars, never the
-   chrome itself. */
 .popup-overlay {
   position: fixed; inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(5, 5, 18, 0.55);
   display: flex; align-items: center; justify-content: center;
   z-index: 100;
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(2px);
 }
 
 .popup-card {
   position: relative;
-  background: var(--tribe-bg-overlay, rgba(0, 0, 0, 0.92));
-  border: 1px solid var(--tribe-hair, rgba(255, 255, 255, 0.08));
-  border-radius: 4px;
-  padding: 22px 26px 18px;
+  background: rgba(10, 10, 28, 0.96);
+  border: 1px solid #2a3a6a;
+  border-radius: 8px;
+  padding: 20px 24px 16px;
   min-width: 420px;
   max-width: 540px;
-  color: var(--tribe-ink, #e8e2d9);
+  color: #d0d8ee;
   font-family: 'Inter', system-ui, sans-serif;
-  /* Warm bottom drop — same warmth as the BrainScene bottom glow. */
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.6),
-    0 1px 0 rgba(255, 180, 80, 0.06) inset;
 }
 
 .close-btn {
-  position: absolute; top: 10px; right: 12px;
-  background: transparent;
-  border: 1px solid var(--tribe-hair, rgba(255, 255, 255, 0.14));
-  color: var(--tribe-smoke, #8a8a82);
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  font-size: 14px; line-height: 1;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  position: absolute; top: 8px; right: 12px;
+  background: transparent; border: none; color: #667;
+  font-size: 22px; cursor: pointer; line-height: 1;
 }
-.close-btn:hover {
-  color: var(--tribe-ink, #e8e2d9);
-  border-color: rgba(255, 255, 255, 0.32);
-}
+.close-btn:hover { color: #ddd; }
 
 /* 1. Eyebrow ------------------------------------------------------------ */
 .popup-eyebrow {
-  display: flex; align-items: center; gap: 9px;
-  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
 }
 .brand-dot {
   width: 7px; height: 7px; border-radius: 50%;
@@ -169,15 +152,15 @@ const runtimeLabel = computed(() => {
   font-size: 11px;
   letter-spacing: 1.4px;
   text-transform: lowercase;
-  color: var(--tribe-ink, #e8e2d9);
+  color: var(--accent);
 }
 .eyebrow-meta {
   margin-left: auto;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 1.4px;
-  text-transform: lowercase;
-  color: var(--tribe-smoke, #8a8a82);
+  font-size: 10px;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: #6677aa;
 }
 
 /* 2. Telemetry pill ----------------------------------------------------- */
@@ -187,54 +170,54 @@ const runtimeLabel = computed(() => {
   font-family: 'JetBrains Mono', monospace;
 }
 .telemetry-label {
-  font-size: 9px;
-  text-transform: lowercase;
-  letter-spacing: 1.2px;
-  color: var(--tribe-smoke, #8a8a82);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.1px;
+  color: #6677aa;
 }
 .telemetry-bar {
-  width: 72px; height: 2px;
+  width: 72px; height: 3px;
   background: rgba(255, 255, 255, 0.06);
-  border-radius: 1px; overflow: hidden;
+  border-radius: 2px; overflow: hidden;
 }
 .telemetry-fill {
   display: block; height: 100%; width: 100%;
   background: var(--accent);
   transform-origin: left center;
   transition: transform 0.6s ease;
-  box-shadow: 0 0 6px var(--accent);
+  box-shadow: 0 0 8px var(--accent);
 }
 
 /* 3. Reading body with accent marker ----------------------------------- */
 .reading-frame {
-  display: flex; align-items: flex-start; gap: 14px;
-  padding: 6px 0;
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 4px 0;
 }
 .reading-marker {
   flex-shrink: 0;
-  width: 2px;
+  width: 3px;
   align-self: stretch;
   min-height: 32px;
   background: var(--accent);
-  opacity: 0.7;
-  border-radius: 1px;
+  opacity: 0.6;
+  border-radius: 2px;
 }
 .reading-body {
   margin: 0;
   font-size: 14px;
-  line-height: 1.55;
-  color: var(--tribe-ink, #e8e2d9);
+  line-height: 1.5;
+  color: #e8ecf8;
   font-family: 'Inter', system-ui, sans-serif;
 }
 .reading-body.empty {
-  color: var(--tribe-smoke, #8a8a82);
+  color: #667;
   font-style: italic;
 }
 
 /* 4. Dashed-pulse divider ---------------------------------------------- */
 .dashed-divider {
-  border-top: 1px dashed var(--tribe-hair, rgba(255, 255, 255, 0.10));
-  margin: 14px 0 10px;
+  border-top: 1px dashed rgba(180, 200, 255, 0.18);
+  margin: 12px 0 8px;
 }
 
 /* 5. Footer cite + runtime --------------------------------------------- */
@@ -242,10 +225,10 @@ const runtimeLabel = computed(() => {
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 0.8px;
+  font-size: 10px;
+  letter-spacing: 0.6px;
   text-transform: lowercase;
-  color: var(--tribe-smoke, #8a8a82);
+  color: #6677aa;
 }
 .footer-cite {
   flex: 1; min-width: 0;
@@ -253,23 +236,19 @@ const runtimeLabel = computed(() => {
 }
 .footer-runtime {
   flex-shrink: 0;
-  color: var(--tribe-smoke, #8a8a82);
+  color: #6677aa;
 }
 
 /* Loading state -------------------------------------------------------- */
 .popup-loading {
   display: flex; align-items: center; gap: 12px;
-  font-size: 12px;
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: 0.6px;
-  text-transform: lowercase;
-  color: var(--tribe-smoke, #8a8a82);
+  font-size: 13px; color: #aab4cc;
   padding: 8px 0 4px;
 }
 .spinner {
-  width: 14px; height: 14px;
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
-  border-top-color: var(--tribe-ink, #e8e2d9);
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

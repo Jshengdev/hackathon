@@ -10,11 +10,6 @@
         :show-hud="true"
         :interactive="false"
       />
-
-      <!-- Correlation legend pinned top-right of the brain pane -->
-      <div class="legend-anchor">
-        <Legend label="correlation" :min="0.0" :max="0.4" />
-      </div>
     </div>
 
     <!-- RIGHT: stacked panels with the iterative loop sandwiched IN BETWEEN —
@@ -50,7 +45,7 @@
     </div>
 
     <!-- Loading state -->
-    <div v-if="loading" class="cmp-loading">loading comparison…</div>
+    <div v-if="loading" class="cmp-loading">Loading comparison…</div>
     <div v-else-if="error" class="cmp-error">{{ error }}</div>
   </div>
 </template>
@@ -60,7 +55,6 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import BrainScene from '../components/BrainScene.vue'
 import AnalysisPanel from '../components/AnalysisPanel.vue'
 import IterativeLoop from '../components/IterativeLoop.vue'
-import Legend from '../components/Legend.vue'
 import { fetchComparison } from '../api/index.js'
 import { NETWORK_COLORS } from '../utils/colors.js'
 
@@ -135,9 +129,9 @@ onBeforeUnmount(() => {
 .comparison-stage {
   position: relative;
   width: 100vw; height: 100vh;
-  background: var(--tribe-bg, #000000);
+  background: #050510;
   display: flex;
-  color: var(--tribe-ink, #ffffff);
+  color: #d0d8ee;
   font-family: 'Inter', system-ui, sans-serif;
   overflow: hidden;
 }
@@ -146,14 +140,7 @@ onBeforeUnmount(() => {
   width: 50%;
   height: 100%;
   position: relative;
-  background: var(--tribe-bg, #000000);
-  border-right: 1px solid var(--tribe-hair, rgba(255, 255, 255, 0.08));
-}
-
-.legend-anchor {
-  position: absolute;
-  top: 16px; right: 16px;
-  z-index: 5;
+  border-right: 1px solid #1a1a2a;
 }
 
 .panels-pane {
@@ -163,14 +150,18 @@ onBeforeUnmount(() => {
   flex-direction: column;
   padding: 56px 16px 16px 16px;
   gap: 12px;
-  background: var(--tribe-bg, #000000);
 }
 
+/* Each AnalysisPanel gets equal vertical share. min-height floor of 160px
+   guarantees the body has room for Summary + Emotional Assessment +
+   Cognitive Processes even at 720p; at 1080p flex grow lifts each to ~280-320px. */
 .panel-slot {
   flex: 1 1 0;
   min-height: 160px;
 }
 
+/* IterativeLoop: prefer its natural ~341px height, but allow shrinking down
+   to ~260px on small viewports so the panel-slot floors win. */
 .loop-slot {
   flex: 0 1 auto;
   min-height: 260px;
@@ -180,34 +171,31 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 16px; left: calc(50% + 18px);
   display: flex; align-items: center; gap: 10px;
-  font-family: 'Space Mono', 'JetBrains Mono', ui-monospace, monospace;
   font-size: 11px;
-  letter-spacing: 0.6px;
-  text-transform: lowercase;
-  color: var(--tribe-smoke, #465a69);
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #99a3bb;
   z-index: 5;
 }
 .cmp-header code {
-  font-family: 'Space Mono', 'JetBrains Mono', ui-monospace, monospace;
-  color: var(--tribe-ink, #ffffff);
+  font-family: 'JetBrains Mono', monospace;
+  color: #4ecdc4;
   letter-spacing: normal;
   text-transform: lowercase;
-  margin-left: 2px;
+  margin-left: 4px;
 }
 .brand-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--tribe-ink, #ffffff);
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #82e0aa;
+  box-shadow: 0 0 8px #82e0aa;
 }
 
 .cmp-loading, .cmp-error {
   position: absolute;
   top: 50%; left: 75%;
   transform: translate(-50%, -50%);
-  font-family: 'Space Mono', 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 12px;
-  color: var(--tribe-smoke, #465a69);
-  letter-spacing: 0.4px;
-  text-transform: lowercase;
+  font-size: 12px; color: #6677aa;
+  letter-spacing: 1.2px; text-transform: uppercase;
 }
-.cmp-error { color: #d83a00; }
+.cmp-error { color: #ff8866; }
 </style>

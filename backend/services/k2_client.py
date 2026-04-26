@@ -53,6 +53,9 @@ class K2Client:
         #      "Final answer:" itself.
         #   3. Generous budget — measured: clean K2 calls use ~250 tokens;
         #      runaway-reasoning calls hit 3000+. Min 3500 keeps demo reliable.
+        #      (We tested 1500 — output truncates before FINAL ANSWER and
+        #      api.k2think.ai is ~50 tok/s regardless, so a smaller budget
+        #      doesn't actually save wall-clock, it just kills quality.)
         #   4. Temperature 0.3 — same prompt should converge on roughly the
         #      same final answer instead of diverging into fresh tangents.
         system_with_directive = (

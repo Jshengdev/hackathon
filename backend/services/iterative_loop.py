@@ -3,7 +3,7 @@
 K2 swarm acts as evaluator: each round fires 7 parallel K2 calls (one per
 Yeo7 network) rating how well the candidate paragraph captures that region's
 reading. Aggregate -> round_score. Plateau-exit on |Δ|<0.02 over 2 rounds,
-or 8 rounds max.
+or 3 rounds max.
 """
 from __future__ import annotations
 import asyncio
@@ -141,7 +141,7 @@ async def run_iterative_loop(
     vision_report: dict,
     swarm_readings: dict,
     scenario: str,
-    max_rounds: int = 8,
+    max_rounds: int = 3,
     plateau_threshold: float = 0.02,
 ) -> dict:
     from services.empathy_synthesis import synthesize  # local import: agent-K2's file

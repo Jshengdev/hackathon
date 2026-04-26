@@ -162,9 +162,11 @@ function pushLog(target, msg) {
 }
 
 async function runVision() {
-  // Tick a fake progress while fetching, then snap to 100 once data lands
+  // Tick a fake progress while fetching, then snap to 100 once data lands.
+  // When the clip is fully prebaked, drop the min-floor so we don't stall on
+  // a sub-second cached fetch.
   const start = performance.now()
-  const minMs = 3500
+  const minMs = prebakedAtStart.value ? 600 : 3500
   pushLog(visionLogs, VISION_LOGS[0])
   let logIdx = 1
 
@@ -197,7 +199,7 @@ async function runVision() {
 
 async function runTribe() {
   const start = performance.now()
-  const minMs = 4200
+  const minMs = prebakedAtStart.value ? 600 : 4200
   pushLog(tribeLogs, TRIBE_LOGS[0])
   let logIdx = 1
 

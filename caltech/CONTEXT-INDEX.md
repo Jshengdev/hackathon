@@ -66,7 +66,7 @@ If you need anything that USED to be in `caltech/`, it's now in `archive/` per t
 | Frontend code | `frontend/src/` |
 | Pre-rendered cache | `backend/prerendered/<clip>/` |
 | Strategic + technical PRDs (v2.1) | `_bmad-output/planning-artifacts/ironsight-listenlabs-{technical-prd,prd}.md` |
-| Research (sponsors, papers, wiki) | `research/` (with `research/INDEX.md`) |
+| Research (sponsors, papers, wiki) | `research/` (with `archive/research/INDEX.md`) |
 | Refactor scaffolding (shards, scripts) | `archive/refactor/` (audit-time historical) |
 | Repo-level navigation | `CLAUDE.md` (root) |
 

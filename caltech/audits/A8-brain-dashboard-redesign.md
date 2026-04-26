@@ -90,7 +90,7 @@ State that crosses stage boundaries (App.vue:39–42): `clipId`, `scenario`, `sc
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
-| Greenchain analog (`research/sponsors/k2-think/clones/greenchain/docs/screenshots/dashboard.png`) | Our dashboard panel |
+| Greenchain analog (`archive/research/sponsors/k2-think/clones/greenchain/docs/screenshots/dashboard.png`) | Our dashboard panel |
 |---|---|
 | globe-hero (centered, ringed) | brain-hero (fsaverage5 mesh, atmosphere halo + 2 orbit ellipses already in `BrainScene.vue:170-209`) |
 | filter chips top | scenario chip + persona switcher top |
@@ -209,7 +209,7 @@ This is a per-frame brain-tick channel, not a per-K2-call event channel. The das
 
 2. **WS retrofit:** extend the WS broadcast to include a per-network K2 event when the iterative loop fires Stage 1B/2/3. Requires modifying `services/iterative_loop.py` to emit ws messages mid-loop. Latency win is real (you'd see rounds happen live), but the loop itself takes ≤ 60s already and the demo's "single-page everything happens together" framing reads well even when the loop has already converged. **Skip for v1.**
 
-3. **SSE per-clip**: new `GET /demo/swarm-stream/{clip_id}` that yields `event: round\ndata: {...}\n\n` while warmup runs. Greenchain uses this pattern (`research/sponsors/k2-think/clones/greenchain/backend/CLAUDE.md` shows `StreamingResponse` over `/search`). **Skip for v1** unless option 1 reads as static.
+3. **SSE per-clip**: new `GET /demo/swarm-stream/{clip_id}` that yields `event: round\ndata: {...}\n\n` while warmup runs. Greenchain uses this pattern (`archive/research/sponsors/k2-think/clones/greenchain/backend/CLAUDE.md` shows `StreamingResponse` over `/search`). **Skip for v1** unless option 1 reads as static.
 
 **Recommendation:** Option 1 for the dashboard ship. Add a 7-row "specialist readings" view bound to cached `swarm_readings`, with each row pulsing when its network is currently `top_region` per `BrainScene.vue:530`'s tracked frame. **No WS changes** in A8 scope.
 

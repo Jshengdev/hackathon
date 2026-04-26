@@ -130,7 +130,7 @@ R8 will collapse this into a single `/dashboard/:clip_id` with Loading as a brie
 
 ## Verification mandate (Junsu's task list)
 
-Run the 15-step walkthrough in `caltech/3-PERSON-PARALLEL-PLAN.md` §4. Each step has a real verification command + expected result. Write findings to `refactor/audits/V-junsu-frontend.md` using the template in §2.
+Run the 15-step walkthrough in `caltech/3-PERSON-PARALLEL-PLAN.md` §4. Each step has a real verification command + expected result. Write findings to `caltech/audits/V-junsu-frontend.md` using the template in §2.
 
 **P0 fixes (after verification surfaces them):**
 - U.5 LoadingStage fake `'✓ ready'` log on backend failure
@@ -147,10 +147,10 @@ Run the 15-step walkthrough in `caltech/3-PERSON-PARALLEL-PLAN.md` §4. Each ste
 
 ## Audit reports relevant to frontend
 
-- `refactor/audits/A4-frontend-empathy-wiring.md` — what frontend actually does today (with surprising find: ComparisonStage already cut from route)
-- `refactor/audits/A4-deepdive.md` — field-name resolution + LoadingStage gating fix + EmpathyDocumentStage soft-fallback list
-- `refactor/audits/A8-brain-dashboard-redesign.md` — dashboard target (greenchain layout × icarus hover anchors); also picks Option 1 for swarm-readings panel + UnrealBloomPass-only
-- `refactor/audits/A9-doc-audit-and-cleanup.md` §5 — frontend lint findings (long lines, console.log, dead components)
+- `caltech/audits/A4-frontend-empathy-wiring.md` — what frontend actually does today (with surprising find: ComparisonStage already cut from route)
+- `caltech/audits/A4-deepdive.md` — field-name resolution + LoadingStage gating fix + EmpathyDocumentStage soft-fallback list
+- `caltech/audits/A8-brain-dashboard-redesign.md` — dashboard target (greenchain layout × icarus hover anchors); also picks Option 1 for swarm-readings panel + UnrealBloomPass-only
+- `caltech/audits/A9-doc-audit-and-cleanup.md` §5 — frontend lint findings (long lines, console.log, dead components)
 - `caltech/pitch-deck/DESIGN.md` — Clay design system (canonical)
 
 ---
@@ -191,9 +191,9 @@ find src -type f \( -name "*.vue" -o -name "*.js" -o -name "*.ts" \) \
 
 ## Hand-off contracts
 
-**From Jacob (backend):** Junsu consumes Jacob's endpoints. If a panel needs a new field that doesn't exist, file a 1-line ask in `refactor/audits/B-asks.md` — Jacob picks up.
+**From Jacob (backend):** Junsu consumes Jacob's endpoints. If a panel needs a new field that doesn't exist, file a 1-line ask in `caltech/audits/B-asks.md` — Jacob picks up.
 
-**To Johnny (demo):** Junsu publishes `refactor/audits/V-junsu-frontend.md` with all 15 verification entries. Johnny gates on it: zero P0 broken means demo can ship.
+**To Johnny (demo):** Junsu publishes `caltech/audits/V-junsu-frontend.md` with all 15 verification entries. Johnny gates on it: zero P0 broken means demo can ship.
 
 ---
 
@@ -203,6 +203,6 @@ find src -type f \( -name "*.vue" -o -name "*.js" -o -name "*.ts" \) \
 - Demo-day runbook + pitch deck → see `caltech/README.md`
 - Architecture rationale → see `caltech/architecture-overview.md` (long-form prose)
 - The pipeline as a single doc → see `caltech/NEW-ARCHITECTURE.md`
-- Greenchain + icarus design references → see `caltech/NEW-ARCHITECTURE.md` §5 + `research/INDEX.md`
+- Greenchain + icarus design references → see `caltech/NEW-ARCHITECTURE.md` §5 + `archive/research/INDEX.md`
 
-If anything's ambiguous: read those + `refactor/CONSTRAINTS.md`. If still ambiguous, escalate to the orchestrator with `[ESCALATE]` tag in your verification report.
+If anything's ambiguous: read those + `caltech/CONSTRAINTS.md`. If still ambiguous, escalate to the orchestrator with `[ESCALATE]` tag in your verification report.

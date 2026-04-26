@@ -37,7 +37,7 @@ Audit-time scaffolding (historical, not load-bearing): `archive/refactor/`
 1. **`caltech/NEW-ARCHITECTURE.md`** — canonical v2 pipeline + locked rules + repo layout. **Single source of truth.**
 2. **`caltech/CONSTRAINTS.md`** — locked rules (no silent stubs, TRIBE not live, swarm-loop merged, real data only).
 3. **`caltech/CONTRACTS.md`** — cross-shard data schemas (activity.json, EmpathyDocument, API surface).
-4. **`research/INDEX.md`** — research folder navigation (sponsors, wiki, papers, clones).
+4. **`archive/research/INDEX.md`** — research folder navigation (sponsors, wiki, papers, clones).
 
 If your task touches design/UI, also read `caltech/pitch-deck/DESIGN.md` (Clay-inspired tokens — colors, typography, shadows).
 
@@ -94,7 +94,7 @@ hackathon/
 │   ├── shards/A1...A8.md              ← 8 audit shards
 │   ├── audits/                        ← reports land here
 │   └── spawn-audit-swarm.sh           ← tmux launcher
-├── research/                          ← read research/INDEX.md first
+├── research/                          ← read archive/research/INDEX.md first
 │   ├── INDEX.md                       ← navigation map
 │   ├── sources/                       ← raw papers, repos, transcripts
 │   ├── sponsors/{ironsight,k2-think,listen-labs}/
@@ -206,4 +206,4 @@ hackathon/
 
 ## Current refactor status
 
-We have 8 audit shards ready to spawn (`refactor/shards/A1-A8.md`). Each runs in its own worktree + tmux window via `bash refactor/spawn-audit-swarm.sh spawn`. Reports land in `caltech/audits/`. After audits, the orchestrator window QAs them and writes refactor execution shards (R1–R8 + R-DOCS).
+We have 8 audit shards ready to spawn (`archive/refactor/shards/A1-A9.md`). Each runs in its own worktree + tmux window via `bash refactor/spawn-audit-swarm.sh spawn`. Reports land in `caltech/audits/`. After audits, the orchestrator window QAs them and writes refactor execution shards (R1–R8 + R-DOCS).

@@ -219,7 +219,7 @@ hackathon/
 ├── _bmad/                      ← BMAD workflow config
 ├── refactor/                   ← THIS refactor's shards + audits + launcher
 ├── research/                   ← sponsor cloned repos, wikis, sources
-│   └── INDEX.md                ← (NEW — see research/INDEX.md)
+│   └── INDEX.md                ← (NEW — see archive/research/INDEX.md)
 ├── archive/                    ← historical artifacts (Mirofish ref, old docs)
 └── junsoo/, feesh/             ← scratch areas (review for archive/cleanup)
 ```
@@ -265,7 +265,7 @@ The structure consolidation shard (A7) audits the actual moves needed; refactor 
 - Technical PRD v2: `_bmad-output/planning-artifacts/ironsight-listenlabs-technical-prd.md` (§3 + §4 authoritative; §13 + §14 carry v1 with `[v2-superseded]` tags)
 - Architecture overview v2: `caltech/architecture-overview.md`
 - Mirofish swarm patterns: `archive/MIROFISH-REFERENCE.md`
-- Greenchain dashboard: `research/sponsors/k2-think/clones/greenchain/backend/CLAUDE.md`
+- Greenchain dashboard: `archive/research/sponsors/k2-think/clones/greenchain/backend/CLAUDE.md`
 - Icarus 3D hover anchors: `/Users/johnnysheng/code/icarus/web/src/three/`
 - Refactor shards: `refactor/shards/A{1-8}-*.md`
 - Refactor constraints: `caltech/CONSTRAINTS.md`

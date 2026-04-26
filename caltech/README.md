@@ -211,6 +211,6 @@ curl -s http://localhost:8000/demo/empathy/30s_ironsite | jq '.best_paragraph'
 - Frontend internals → see `frontend/README.md`
 - Architecture rationale → `caltech/architecture-overview.md` (long-form)
 - Pipeline single-doc → `caltech/NEW-ARCHITECTURE.md`
-- The exact PRD requirements → `_bmad-output/planning-artifacts/ironsight-listenlabs-{technical-prd,prd}.md` (v2.1, post-R-DOCS)
+- The exact PRD requirements → `_bmad-output/planning-artifacts/ironsight-listenlabs-technical-prd.md` + `ironsight-listenlabs-prd.md` (v2.1, post-R-DOCS)
 
 If anything's ambiguous: read those + `caltech/CONSTRAINTS.md`. If still ambiguous, escalate to the orchestrator.

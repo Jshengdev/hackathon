@@ -180,7 +180,7 @@ OPUS_POLISH=                                       # 1 to enable; default OFF
 
 ## Verification mandate (Jacob's task list)
 
-Run the 16-step walkthrough in `caltech/3-PERSON-PARALLEL-PLAN.md` §3. Each step has a real verification command and an expected result. Write your findings to `refactor/audits/V-jacob-backend.md` using the template in `caltech/3-PERSON-PARALLEL-PLAN.md` §2.
+Run the 16-step walkthrough in `caltech/3-PERSON-PARALLEL-PLAN.md` §3. Each step has a real verification command and an expected result. Write your findings to `caltech/audits/V-jacob-backend.md` using the template in `caltech/3-PERSON-PARALLEL-PLAN.md` §2.
 
 **P0 fixes (after verification surfaces them):**
 - J.10 falsification `delta=0.0` (demo-blocking — A1 + A3 + A5 all flagged this)
@@ -197,12 +197,12 @@ Run the 16-step walkthrough in `caltech/3-PERSON-PARALLEL-PLAN.md` §3. Each ste
 
 ## Audit reports relevant to backend
 
-- `refactor/audits/A1-prerender-cache.md` — cache layout + TRIBE-not-live audit
-- `refactor/audits/A1-deepdive.md` — control-clip strategy + guardrail bug exact line
-- `refactor/audits/A2-stub-fallbacks.md` — silent-stub catalog with file:line + exact replacement code
-- `refactor/audits/A3-swarm-loop-merge.md` — v2 architecture conformance
-- `refactor/audits/A3-deepdive.md` — Stage 4 Opus polish SHIP decision + `services/empathy_polish.py` sketch
-- `refactor/audits/A6-qa-eval-harness.md` — eval recipes you'll run during verification
+- `caltech/audits/A1-prerender-cache.md` — cache layout + TRIBE-not-live audit
+- `caltech/audits/A1-deepdive.md` — control-clip strategy + guardrail bug exact line
+- `caltech/audits/A2-stub-fallbacks.md` — silent-stub catalog with file:line + exact replacement code
+- `caltech/audits/A3-swarm-loop-merge.md` — v2 architecture conformance
+- `caltech/audits/A3-deepdive.md` — Stage 4 Opus polish SHIP decision + `services/empathy_polish.py` sketch
+- `caltech/audits/A6-qa-eval-harness.md` — eval recipes you'll run during verification
 
 ---
 
@@ -239,9 +239,9 @@ find . -name "*.py" -not -path "*/__pycache__/*" -not -path "*/.venv/*" \
 
 ## Hand-off contracts
 
-**To Junsu (frontend):** the `EmpathyDocument` JSON shape from `/demo/empathy/{clip_id}` is the contract. If you change any field name, ping Junsu same-day. Field names locked per `refactor/CONTRACTS.md` C2 (short-form).
+**To Junsu (frontend):** the `EmpathyDocument` JSON shape from `/demo/empathy/{clip_id}` is the contract. If you change any field name, ping Junsu same-day. Field names locked per `caltech/CONTRACTS.md` C2 (short-form).
 
-**To Johnny (demo):** you publish `refactor/audits/V-jacob-backend.md` with all 16 verification entries. Johnny gates on it: zero P0 broken means demo can ship.
+**To Johnny (demo):** you publish `caltech/audits/V-jacob-backend.md` with all 16 verification entries. Johnny gates on it: zero P0 broken means demo can ship.
 
 ---
 
@@ -253,4 +253,4 @@ find . -name "*.py" -not -path "*/__pycache__/*" -not -path "*/.venv/*" \
 - The pipeline as a single doc → see `caltech/NEW-ARCHITECTURE.md`
 - The exact PRD requirements → see `_bmad-output/planning-artifacts/ironsight-listenlabs-technical-prd.md` v2.1
 
-If anything's ambiguous: read those + `refactor/CONSTRAINTS.md`. If still ambiguous, escalate to the orchestrator with `[ESCALATE]` tag in your verification report.
+If anything's ambiguous: read those + `caltech/CONSTRAINTS.md`. If still ambiguous, escalate to the orchestrator with `[ESCALATE]` tag in your verification report.

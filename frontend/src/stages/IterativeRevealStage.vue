@@ -20,7 +20,8 @@
     </transition>
 
     <div v-if="done" class="final">
-      <div class="final-score">final · {{ (currentScore || 0).toFixed(2) }}</div>
+      <div v-if="hasFinalScore" class="final-score">final · {{ finalScore.toFixed(2) }}</div>
+      <div v-else class="final-score failed">final · FAILED — score missing</div>
       <button class="next-btn" @click="$emit('reveal-done')">view full document →</button>
     </div>
 
@@ -29,7 +30,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import RoundScoreBar from '../components/RoundScoreBar.vue'
 import { fetchIterativeTrajectory } from '../api/index.js'
 
@@ -44,6 +45,8 @@ const prevScore    = ref(0)
 const excerpt      = ref('')
 const done         = ref(false)
 const error        = ref('')
+const finalScore   = ref(null)
+const hasFinalScore = computed(() => Number.isFinite(finalScore.value))
 
 let timer = null
 
@@ -57,6 +60,13 @@ async function loadAndPlay() {
     }
     trajectory.value = rt
     totalRounds.value = rt.length
+    finalScore.value = data?.final_score
+    if (!Number.isFinite(finalScore.value)) {
+      console.error('[iterative-reveal] final_score missing or non-finite', {
+        clip_id: props.clipId,
+        received: data?.final_score,
+      })
+    }
 
     let i = 0
     const step = () => {
@@ -124,6 +134,14 @@ onBeforeUnmount(() => { if (timer) clearTimeout(timer) })
   font-size: 20px;
   color: #4ecdc4;
   letter-spacing: 2px;
+}
+.final-score.failed {
+  color: #ff6b6b;
+  font-size: 14px;
+  letter-spacing: 1.6px;
+  border: 1px solid #6a2a2a;
+  padding: 6px 14px;
+  border-radius: 4px;
 }
 .next-btn {
   background: rgba(10, 10, 28, 0.92);

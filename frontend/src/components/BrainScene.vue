@@ -22,6 +22,9 @@ const props = defineProps({
   // Driving inputs (frontend-driven mode)
   clipId:       { type: String, default: '' },       // current clip — used by Phase-3 per-vertex probe
   activityData: { type: Object, default: null },     // activity.json contents
+  // Extra multiplier applied on top of the auto-gain. Useful for clips where
+  // even gain-normalized peaks read too cool (raise) or too saturated (lower).
+  levelGainBoost: { type: Number, default: 1.0 },
   currentTime:  { type: Number, default: 0 },        // seconds (fractional ok)
   isPlaying:    { type: Boolean, default: false },
 
@@ -53,6 +56,26 @@ const boostedSet = ref(new Set())
 // Mesh networks (exposed to parent via mesh-ready emit)
 const meshNetworks = shallowRef(null)
 const nVertices    = ref(0)
+
+// activity.json values are z-scored (~ -0.1 to +0.3 in practice) but the
+// colormap + glow thresholds expect 0..1. Compute a per-clip auto-gain when
+// activityData arrives so peak activation maps to ~1.0. Without this every
+// network reads as near-baseline cortex and nothing visibly lights up.
+let levelGain = 1.0
+function recomputeLevelGain(activity) {
+  levelGain = 1.0
+  const frames = activity?.frames
+  if (!Array.isArray(frames) || !frames.length) return
+  let peak = 0
+  for (const f of frames) {
+    const r = f.regions || {}
+    for (const v of Object.values(r)) if (v > peak) peak = v
+  }
+  if (peak <= 0) return
+  // Target peak activation ≈ 0.95 in colormap space (just below white-hot).
+  // Clamp to [1, 25] so a noisy/empty clip can't spike to wild gains.
+  levelGain = Math.max(1, Math.min(25, 0.95 / peak))
+}
 
 // ── Three.js handles ───────────────────────────────────────────────────────
 let renderer, labelRenderer, scene, camera, controls
@@ -809,8 +832,9 @@ function animate() {
       const r0 = f0.regions || {}
       const r1 = f1.regions || {}
       const levels = {}
+      const gain = levelGain * (props.levelGainBoost || 1.0)
       for (const k of Object.keys(r0)) {
-        levels[k] = (r0[k] ?? 0) * (1 - alpha) + (r1[k] ?? 0) * alpha
+        levels[k] = ((r0[k] ?? 0) * (1 - alpha) + (r1[k] ?? 0) * alpha) * gain
       }
       // Heatmap dispatch: prefer the per-vertex direct slice when available,
       // otherwise weight-matmul, otherwise legacy hard-label paint.
@@ -1104,6 +1128,15 @@ watch(
 watch(
   () => props.clipId,
   (id) => { loadPerVertex(id) },
+)
+
+// Recompute level-gain whenever activityData arrives or swaps. Without this,
+// z-scored activity values (~0..0.3) never lift the colormap above baseline
+// and the cortex stays grey.
+watch(
+  () => props.activityData,
+  (act) => { recomputeLevelGain(act) },
+  { immediate: true },
 )
 
 // ── Lifecycle ──────────────────────────────────────────────────────────────

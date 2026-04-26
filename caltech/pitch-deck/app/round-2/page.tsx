@@ -90,8 +90,8 @@ const slides: Slide[] = [
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-12 items-start gap-10">
             <div
-              className="lg:col-span-8 relative w-full overflow-hidden rounded-[2px]"
-              style={{ aspectRatio: "16/9" }}
+              className="lg:col-span-8 relative w-full overflow-hidden surface-card-feature"
+              style={{ aspectRatio: "16/9", padding: 0 }}
             >
               <video
                 src="/clips/glasses-scan.mp4"

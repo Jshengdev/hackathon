@@ -23,18 +23,18 @@ type Props = {
   className?: string;
 };
 
-// Palette aligned with globals.css.
+// Palette aligned with globals.css (Clay-fused tokens).
 const C = {
-  ivory: [247, 245, 240] as const,
-  ink: [29, 26, 23] as const,
-  smoke: [61, 56, 50] as const,
-  mute: [138, 132, 122] as const,
-  sepia: [107, 93, 76] as const,
-  accent: [55, 48, 163] as const, // deep indigo
-  accentSoft: [109, 101, 212] as const,
+  ivory: [250, 249, 247] as const, // warm-cream
+  ink: [0, 0, 0] as const, // clay-black
+  smoke: [85, 83, 78] as const, // warm-charcoal
+  mute: [159, 155, 147] as const, // warm-silver
+  sepia: [85, 83, 78] as const, // alias to warm-charcoal
+  accent: [1, 65, 141] as const, // blueberry-800
+  accentSoft: [109, 166, 232] as const, // blueberry-300
   warm: [196, 69, 105] as const, // activation-warm (pink)
   hot: [245, 161, 66] as const, // activation-hot (amber)
-  hair: [29, 26, 23, 24] as const, // ink @ 9%
+  hair: [0, 0, 0, 24] as const,
 };
 
 // Linear interpolation across the activation gradient: cool indigo → warm pink → hot amber.

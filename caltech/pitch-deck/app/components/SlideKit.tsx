@@ -86,6 +86,45 @@ export function AnchorQuote({
   );
 }
 
+/** Clay-style card surface — white on warm-cream, oat border, level-1 elevation. */
+export function Card({
+  children,
+  variant = "card",
+  className = "",
+}: {
+  children: ReactNode;
+  variant?: "card" | "feature" | "dashed";
+  className?: string;
+}) {
+  const cls =
+    variant === "feature"
+      ? "surface-card-feature"
+      : variant === "dashed"
+        ? "surface-card-dashed"
+        : "surface-card";
+  return <div className={`${cls} p-6 md:p-8 ${className}`}>{children}</div>;
+}
+
+/** Clay-style button-as-link. */
+export function Button({
+  href,
+  children,
+  variant = "primary",
+  pill = false,
+}: {
+  href: string;
+  children: ReactNode;
+  variant?: "primary" | "white" | "ghost";
+  pill?: boolean;
+}) {
+  const cls = `btn btn-${variant}${pill ? " btn-pill" : ""}`;
+  return (
+    <a href={href} className={cls}>
+      {children}
+    </a>
+  );
+}
+
 /** [TBD-FINAL-PASS] marker rendered inline as a soft sepia chip. */
 export function TBD({ note }: { note: string }) {
   return (

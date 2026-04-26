@@ -23,9 +23,6 @@ npm-debug.log*
 # Local-only Claude state (don't sync chat history across machines)
 .claude/projects/
 
-# BMad output artifacts (regenerated)
-_bmad-output/
-
 # Nested project workspace — tracked in its own repo (Jshengdev/feesh)
 feesh/
 

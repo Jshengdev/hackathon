@@ -1,82 +1,192 @@
 <template>
   <div class="landing">
-    <div class="bg-grid" />
-    <div class="bg-glow" />
-
-    <!-- Orbital backdrop: two faint, slow-rotating ellipses -->
-    <svg class="landing-orbital-svg" viewBox="0 0 800 800" aria-hidden="true">
-      <g class="landing-orbital-group">
-        <ellipse
-          class="landing-orbital landing-orbital--outer"
-          cx="400" cy="400"
-          rx="320" ry="190"
-          transform="rotate(-18 400 400)"
-        />
-        <ellipse
-          class="landing-orbital landing-orbital--inner"
-          cx="400" cy="400"
-          rx="220" ry="130"
-          transform="rotate(24 400 400)"
-        />
-      </g>
-    </svg>
-
-    <!-- Vignette: accent glow at center, fades to transparent -->
-    <div class="landing-vignette" />
-
-    <div class="hero">
-      <div class="brand-line">
-        <span class="brand-dot" />
-        TRIBE&nbsp;V2 ·  brain-swarm demo
+    <!-- Top rail -->
+    <header class="rail">
+      <div class="rail-mark">
+        <span class="rail-mark-title">TRIBE&nbsp;v2</span>
+        <span class="rail-mark-sub">Empathy Layer · brain-swarm demo</span>
       </div>
-      <h1>See what the brain is doing<br/>while it watches.</h1>
-      <p class="sub">
-        Drop in a video clip — we'll match it against our prerendered TRIBE V2
-        neural predictions and walk you through what each cortical network is
-        seeing, second by second.
-      </p>
+      <div class="rail-links">
+        <a class="rail-link" href="#" @click.prevent>Code</a>
+        <a class="rail-link" href="#" @click.prevent>Weights</a>
+        <a class="rail-link" href="#" @click.prevent>Paper</a>
+      </div>
+    </header>
 
-      <div
-        class="dropzone"
-        :class="{ 'is-dragging': isDragging, 'is-loading': loading, 'has-error': !!error }"
-        @click="onClickPick"
-        @dragover.prevent="isDragging = true"
-        @dragleave.prevent="isDragging = false"
-        @drop.prevent="onDrop"
-      >
-        <input
-          ref="fileInput"
-          type="file"
-          accept="video/mp4,video/*"
-          @change="onFileChange"
-          hidden
-        />
+    <!-- Hero: flanking brain meshes + centered text -->
+    <main class="hero-wrap">
+      <!-- Left brain ghost (silhouette + stylized warm patches) -->
+      <figure class="brain-ghost brain-ghost--left" aria-hidden="true">
+        <span class="ghost-eyebrow">Actual brain activity</span>
+        <svg viewBox="0 0 320 320" class="ghost-svg" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <radialGradient id="patchA" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0%"  stop-color="#ffd84a" stop-opacity="0.95" />
+              <stop offset="55%" stop-color="#d83a00" stop-opacity="0.55" />
+              <stop offset="100%" stop-color="#1a0000" stop-opacity="0" />
+            </radialGradient>
+            <radialGradient id="patchB" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0%"  stop-color="#f9a000" stop-opacity="0.85" />
+              <stop offset="60%" stop-color="#5a1100" stop-opacity="0.4" />
+              <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+            </radialGradient>
+            <radialGradient id="silhouette" cx="0.5" cy="0.5" r="0.7">
+              <stop offset="0%"  stop-color="#1f1f1f" stop-opacity="1" />
+              <stop offset="80%" stop-color="#0a0a0a" stop-opacity="1" />
+              <stop offset="100%" stop-color="#000000" stop-opacity="1" />
+            </radialGradient>
+          </defs>
 
-        <div v-if="!loading && !error" class="dz-content">
-          <div class="dz-icon">↑</div>
-          <div class="dz-title">Drop an MP4 here</div>
-          <div class="dz-sub">or click to browse · try <code>30s_ironsite.mp4</code></div>
+          <!-- Hemisphere silhouette: rough cortex shape, left-facing -->
+          <path
+            d="M 60 160
+               C 60 90, 130 38, 200 50
+               C 252 60, 280 110, 282 160
+               C 282 200, 268 240, 232 268
+               C 200 290, 150 296, 110 280
+               C 80 268, 60 232, 60 200 Z"
+            fill="url(#silhouette)"
+            stroke="rgba(255,255,255,0.05)"
+            stroke-width="1"
+          />
+
+          <!-- Activation patches -->
+          <ellipse cx="170" cy="130" rx="46" ry="28" fill="url(#patchA)" />
+          <ellipse cx="218" cy="180" rx="32" ry="22" fill="url(#patchB)" />
+          <ellipse cx="140" cy="210" rx="22" ry="14" fill="url(#patchB)" />
+          <ellipse cx="200" cy="240" rx="18" ry="10" fill="url(#patchA)" />
+          <ellipse cx="100" cy="170" rx="14" ry="9"  fill="url(#patchB)" />
+
+          <!-- Brain-stem hint -->
+          <path
+            d="M 170 285
+               C 168 304, 170 314, 174 318"
+            fill="none"
+            stroke="rgba(255,255,255,0.08)"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </figure>
+
+      <!-- Centered hero text -->
+      <section class="hero">
+        <div class="kicker">
+          <span class="kicker-dot" />
+          TRIBE&nbsp;V2 · Empathy&nbsp;Layer
         </div>
 
-        <div v-else-if="loading" class="dz-content">
-          <div class="spinner" />
-          <div class="dz-title">Matching clip…</div>
-          <div class="dz-sub">{{ filename }}</div>
+        <h1 class="title">
+          What it took<br/>
+          <em class="title-em">— not just what was done.</em>
+        </h1>
+
+        <p class="sub">
+          Drop a clip. We match it against pre-rendered TRIBE&nbsp;V2
+          cortical activations and walk you through what each network
+          was doing, second by second.
+        </p>
+
+        <div
+          class="dropzone"
+          :class="{ 'is-dragging': isDragging, 'is-loading': loading, 'has-error': !!error }"
+          @click="onClickPick"
+          @dragover.prevent="isDragging = true"
+          @dragleave.prevent="isDragging = false"
+          @drop.prevent="onDrop"
+        >
+          <input
+            ref="fileInput"
+            type="file"
+            accept="video/mp4,video/*"
+            @change="onFileChange"
+            hidden
+          />
+
+          <div v-if="!loading && !error" class="dz-content">
+            <span class="dz-arrow">↑</span>
+            <span class="dz-title">Drop an MP4 here</span>
+            <span class="dz-sub">
+              or click to browse · try
+              <code>30s_ironsite.mp4</code>
+            </span>
+          </div>
+
+          <div v-else-if="loading" class="dz-content">
+            <span class="spinner" />
+            <span class="dz-title">Matching clip…</span>
+            <span class="dz-sub">{{ filename }}</span>
+          </div>
+
+          <div v-else class="dz-content">
+            <span class="dz-arrow dz-arrow--error">!</span>
+            <span class="dz-title">{{ error }}</span>
+            <span class="dz-sub">Try again with a supported clip.</span>
+          </div>
         </div>
 
-        <div v-else class="dz-content">
-          <div class="dz-icon error">!</div>
-          <div class="dz-title">{{ error }}</div>
-          <div class="dz-sub">Try again with a supported clip.</div>
-        </div>
-      </div>
+        <p class="tip">
+          <span class="tip-key">tip</span>
+          Filename is what's matched, not the bytes. Anything named
+          <code>30s_ironsite.mp4</code> or
+          <code>30s_twitter.mp4</code> works.
+        </p>
+      </section>
 
-      <div class="hint">
-        <span class="key">tip</span>
-        Filename is what's matched, not the bytes. Anything named
-        <code>30s_ironsite.mp4</code> or <code>30s_twitter.mp4</code> works.
-      </div>
-    </div>
+      <!-- Right brain ghost (mirrored) -->
+      <figure class="brain-ghost brain-ghost--right" aria-hidden="true">
+        <span class="ghost-eyebrow">Predicted brain activity</span>
+        <svg viewBox="0 0 320 320" class="ghost-svg" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <radialGradient id="patchC" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0%"  stop-color="#ffd84a" stop-opacity="0.9" />
+              <stop offset="55%" stop-color="#d83a00" stop-opacity="0.5" />
+              <stop offset="100%" stop-color="#1a0000" stop-opacity="0" />
+            </radialGradient>
+            <radialGradient id="patchD" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0%"  stop-color="#f9a000" stop-opacity="0.8" />
+              <stop offset="60%" stop-color="#5a1100" stop-opacity="0.35" />
+              <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+
+          <g transform="scale(-1, 1) translate(-320, 0)">
+            <path
+              d="M 60 160
+                 C 60 90, 130 38, 200 50
+                 C 252 60, 280 110, 282 160
+                 C 282 200, 268 240, 232 268
+                 C 200 290, 150 296, 110 280
+                 C 80 268, 60 232, 60 200 Z"
+              fill="url(#silhouette)"
+              stroke="rgba(255,255,255,0.05)"
+              stroke-width="1"
+            />
+            <ellipse cx="170" cy="130" rx="42" ry="26" fill="url(#patchC)" />
+            <ellipse cx="218" cy="180" rx="34" ry="22" fill="url(#patchD)" />
+            <ellipse cx="142" cy="216" rx="24" ry="14" fill="url(#patchD)" />
+            <ellipse cx="198" cy="244" rx="20" ry="12" fill="url(#patchC)" />
+            <ellipse cx="106" cy="172" rx="14" ry="9"  fill="url(#patchD)" />
+            <path
+              d="M 170 285
+                 C 168 304, 170 314, 174 318"
+              fill="none"
+              stroke="rgba(255,255,255,0.08)"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </g>
+        </svg>
+      </figure>
+    </main>
+
+    <!-- Legend bar bottom-right (echoing TRIBE's correlation legend) -->
+    <aside class="legend" aria-hidden="true">
+      <span class="legend-tick">Low</span>
+      <span class="legend-strip" />
+      <span class="legend-tick">High</span>
+      <span class="legend-caption">Activity</span>
+    </aside>
   </div>
 </template>
 
@@ -104,7 +214,6 @@ async function handleFile(file) {
   loading.value = true
   try {
     const result = await postDemoMatch(file.name)
-    // Brief pause so UI doesn't flash
     await new Promise(r => setTimeout(r, 400))
     emit('matched', result)
   } catch (e) {
@@ -130,179 +239,302 @@ function onFileChange(ev) {
 <style scoped>
 .landing {
   position: relative;
-  width: 100vw; height: 100vh;
-  background: #050510;
-  display: flex; align-items: center; justify-content: center;
+  width: 100vw;
+  min-height: 100vh;
+  background: var(--tribe-bg);
+  color: var(--tribe-smoke);
+  font-family: var(--tribe-font-body);
   overflow: hidden;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: #d0d8ee;
+  display: flex;
+  flex-direction: column;
 }
 
-.bg-grid {
-  position: absolute; inset: 0;
-  background-image:
-    linear-gradient(rgba(120, 160, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 160, 255, 0.04) 1px, transparent 1px);
-  background-size: 48px 48px;
-  pointer-events: none;
-  mask-image: radial-gradient(circle at center, #000 30%, transparent 75%);
+/* ---------- Top rail ---------- */
+.rail {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
 }
-.bg-glow {
-  position: absolute; inset: 0;
-  background: radial-gradient(circle at 30% 40%, rgba(78, 205, 196, 0.10), transparent 50%),
-              radial-gradient(circle at 70% 60%, rgba(187, 143, 206, 0.10), transparent 50%);
-  pointer-events: none;
+.rail-mark {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-
-/* Orbital backdrop — slow-rotating SVG ellipses, CSS-only animation */
-.landing-orbital-svg {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: min(120vmin, 1100px);
-  height: min(120vmin, 1100px);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  overflow: visible;
-  opacity: 0.9;
+.rail-mark-title {
+  font-family: var(--tribe-font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--tribe-ink);
 }
-.landing-orbital {
-  fill: none;
-  stroke-width: 1;
-  transform-origin: 400px 400px;
-  transform-box: fill-box;
-}
-.landing-orbital--outer {
-  stroke: rgba(180, 200, 255, 0.10);
-  animation: orbit-spin 60s linear infinite;
-}
-.landing-orbital--inner {
-  stroke: rgba(180, 200, 255, 0.06);
-  animation: orbit-spin 35s linear infinite reverse;
-}
-@keyframes orbit-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-/* Vignette — accent glow at center, fades to transparent */
-.landing-vignette {
-  position: absolute; inset: 0;
-  background: radial-gradient(circle at 50% 50%,
-    rgba(130, 224, 170, 0.08) 0%,
-    rgba(130, 224, 170, 0) 55%);
-  pointer-events: none;
-}
-
-.hero {
-  position: relative; z-index: 1;
-  max-width: 640px;
-  text-align: center;
-  padding: 0 24px;
-}
-
-.brand-line {
-  font-size: 11px; letter-spacing: 2.5px;
+.rail-mark-sub {
+  font-size: 11px;
+  letter-spacing: var(--tribe-track-label);
   text-transform: uppercase;
-  color: #6677aa;
-  display: inline-flex; align-items: center; gap: 8px;
-  margin-bottom: 24px;
+  color: var(--tribe-smoke);
+}
+.rail-links {
+  display: flex;
+  gap: 24px;
+}
+.rail-link {
+  font-size: 13px;
+  color: var(--tribe-ink-soft);
+  text-decoration: none;
+  transition: color var(--tribe-dur-fast) var(--tribe-easing);
+}
+.rail-link:hover {
+  color: var(--tribe-accent);
+}
+.rail-link::after {
+  content: ' ↗';
+  color: var(--tribe-smoke);
+  font-size: 11px;
+}
+
+/* ---------- Hero layout ---------- */
+.hero-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(420px, 720px) minmax(220px, 1fr);
+  align-items: center;
+  gap: 32px;
+  padding: 24px 64px 96px;
+}
+
+@media (max-width: 1100px) {
+  .hero-wrap {
+    grid-template-columns: 1fr;
+    padding: 24px 32px 64px;
+  }
+  .brain-ghost { display: none; }
+}
+
+/* ---------- Brain ghosts ---------- */
+.brain-ghost {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  opacity: 0.85;
+}
+.brain-ghost--left  { justify-self: end; }
+.brain-ghost--right { justify-self: start; }
+
+.ghost-eyebrow {
+  font-size: 11px;
+  letter-spacing: var(--tribe-track-label);
+  text-transform: uppercase;
+  color: var(--tribe-smoke);
   font-weight: 500;
 }
-.brand-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #4ecdc4;
-  box-shadow: 0 0 8px #4ecdc4;
-  animation: pulse 2s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+.ghost-svg {
+  width: clamp(220px, 22vw, 320px);
+  height: auto;
+  filter: drop-shadow(0 0 24px rgba(216, 58, 0, 0.18));
 }
 
-h1 {
-  font-size: 44px;
+/* ---------- Hero text ---------- */
+.hero {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 640px;
+  justify-self: center;
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: var(--tribe-track-label);
+  text-transform: uppercase;
+  color: var(--tribe-smoke);
+  font-weight: 500;
+  margin-bottom: 28px;
+}
+.kicker-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tribe-accent);
+  box-shadow: 0 0 8px rgba(249, 200, 80, 0.6);
+}
+
+.title {
+  font-family: var(--tribe-font-display);
+  font-size: var(--tribe-hero-title);
   font-weight: 600;
-  line-height: 1.1;
-  color: #f0f4ff;
-  letter-spacing: -1px;
-  margin-bottom: 18px;
+  line-height: 1.04;
+  letter-spacing: var(--tribe-track-display);
+  color: var(--tribe-ink);
+  margin: 0 0 24px;
+}
+.title-em {
+  font-style: normal;
+  color: var(--tribe-smoke);
+  font-weight: 500;
 }
 
 .sub {
-  font-size: 15px;
-  line-height: 1.55;
-  color: #aab4cc;
-  margin-bottom: 36px;
+  font-family: var(--tribe-font-body);
+  font-size: var(--tribe-hero-sub);
+  line-height: 1.6;
+  color: var(--tribe-smoke);
+  max-width: 520px;
+  margin: 0 auto 40px;
 }
 
+/* ---------- Drop zone ---------- */
 .dropzone {
-  border: 1.5px dashed #2a3a6a;
-  border-radius: 10px;
-  padding: 38px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--tribe-r-pill);
+  border: 1px solid var(--tribe-hair);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 18px 32px;
+  min-width: 360px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  background: rgba(10, 10, 28, 0.5);
+  transition:
+    border-color var(--tribe-dur-base) var(--tribe-easing),
+    background   var(--tribe-dur-base) var(--tribe-easing),
+    transform    var(--tribe-dur-base) var(--tribe-easing);
 }
-.dropzone:hover, .dropzone.is-dragging {
-  border-color: #4ecdc4;
-  background: rgba(20, 28, 48, 0.7);
+.dropzone:hover,
+.dropzone.is-dragging {
+  border-color: var(--tribe-accent);
+  background: rgba(249, 200, 80, 0.04);
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(78, 205, 196, 0.12);
 }
-.dropzone.is-loading { cursor: wait; border-color: #f7dc6f; }
-.dropzone.has-error  { border-color: #ff6b6b; }
+.dropzone.is-loading {
+  cursor: wait;
+  border-color: var(--tribe-accent-warm);
+}
+.dropzone.has-error {
+  border-color: var(--tribe-fail);
+  background: rgba(252, 121, 129, 0.05);
+}
 
 .dz-content {
-  display: flex; flex-direction: column;
-  align-items: center; gap: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
-.dz-icon {
-  width: 44px; height: 44px;
-  border: 1.5px solid #4ecdc4;
+.dz-arrow {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; color: #4ecdc4;
-  margin-bottom: 8px;
+  border: 1px solid var(--tribe-hair-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--tribe-ink);
 }
-.dz-icon.error { border-color: #ff6b6b; color: #ff6b6b; }
-
+.dropzone:hover .dz-arrow {
+  border-color: var(--tribe-accent);
+  color: var(--tribe-accent);
+}
+.dz-arrow--error {
+  border-color: var(--tribe-fail);
+  color: var(--tribe-fail);
+}
 .dz-title {
-  font-size: 15px; font-weight: 500;
-  color: #f0f4ff;
+  font-family: var(--tribe-font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tribe-ink);
 }
 .dz-sub {
-  font-size: 12px; color: #6677aa;
+  font-size: 12px;
+  color: var(--tribe-smoke);
 }
 .dz-sub code {
-  font-family: 'JetBrains Mono', monospace;
-  background: rgba(78, 205, 196, 0.08);
-  padding: 1px 6px; border-radius: 3px;
-  color: #4ecdc4;
+  font-family: var(--tribe-font-mono);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1px 6px;
+  border-radius: var(--tribe-r-sharp);
+  color: var(--tribe-ink-soft);
+  font-size: 11px;
 }
 
+/* ---------- Spinner ---------- */
 .spinner {
-  width: 32px; height: 32px;
-  border: 2.5px solid rgba(247, 220, 111, 0.15);
-  border-top-color: #f7dc6f;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid rgba(249, 160, 0, 0.2);
+  border-top-color: var(--tribe-accent-warm);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 4px;
+  animation: spin 0.9s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.hint {
-  margin-top: 20px;
-  font-size: 11px; color: #556688;
-  display: flex; align-items: center; gap: 8px; justify-content: center;
+/* ---------- Tip ---------- */
+.tip {
+  margin-top: 28px;
+  font-size: 12px;
+  color: var(--tribe-mute);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
-.hint .key {
-  background: #1a1a2a; padding: 2px 7px;
-  border-radius: 3px; border: 1px solid #2a3a6a;
-  text-transform: uppercase; letter-spacing: 1px;
-  color: #99a3bb; font-size: 9.5px;
+.tip-key {
+  font-family: var(--tribe-font-mono);
+  background: transparent;
+  padding: 2px 8px;
+  border-radius: var(--tribe-r-sharp);
+  border: 1px solid var(--tribe-hair);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--tribe-smoke);
+  font-size: 10px;
 }
-.hint code {
-  font-family: 'JetBrains Mono', monospace;
-  color: #aab4cc;
+.tip code {
+  font-family: var(--tribe-font-mono);
+  color: var(--tribe-ink-soft);
+  font-size: 11px;
+}
+
+/* ---------- Legend (correlation strip) ---------- */
+.legend {
+  position: absolute;
+  right: 32px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--tribe-smoke-soft);
+}
+.legend-strip {
+  width: 96px;
+  height: 5px;
+  border-radius: 2px;
+  background: var(--tribe-heat-gradient);
+}
+.legend-tick {
+  font-family: var(--tribe-font-mono);
+  letter-spacing: 0.08em;
+  color: var(--tribe-smoke);
+}
+.legend-caption {
+  margin-left: 6px;
+  font-family: var(--tribe-font-body);
+  font-size: 11px;
+  letter-spacing: var(--tribe-track-label);
+  text-transform: uppercase;
+  color: var(--tribe-smoke);
 }
 </style>

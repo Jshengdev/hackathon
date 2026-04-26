@@ -105,6 +105,10 @@ const warmupProgress = ref(0)
 const warmupReady = ref(false)
 const swarmDoneCount = ref(0)
 const warmupLogs = ref([])
+// Set to true on first pollWarmup tick if /demo/warmup-status reports
+// ready=true — signals that all caches are already on disk so vision/tribe
+// fetches can drop their fake-pacing floor too.
+const prebakedAtStart = ref(false)
 
 const visionLogs = ref([])
 const tribeLogs  = ref([])
@@ -166,7 +170,7 @@ async function runVision() {
   // When the clip is fully prebaked, drop the min-floor so we don't stall on
   // a sub-second cached fetch.
   const start = performance.now()
-  const minMs = prebakedAtStart.value ? 600 : 3500
+  const minMs = prebakedAtStart.value ? 0 : 3500
   pushLog(visionLogs, VISION_LOGS[0])
   let logIdx = 1
 
@@ -199,7 +203,7 @@ async function runVision() {
 
 async function runTribe() {
   const start = performance.now()
-  const minMs = prebakedAtStart.value ? 600 : 4200
+  const minMs = prebakedAtStart.value ? 0 : 4200
   pushLog(tribeLogs, TRIBE_LOGS[0])
   let logIdx = 1
 
@@ -237,12 +241,16 @@ async function runTribe() {
 // MIN_MS floor: even when the backend is instant (cached/placeholder), the bar
 // rises over MIN_MS and the swarm-count "lights up" one specialist per ~2.6s,
 // so the loading screen feels like the swarm is actually working.
-const WARMUP_MIN_MS = 20000           // 20s minimum loading duration
-const SWARM_TICK_MS = WARMUP_MIN_MS / 7 // ~2.86s per specialist reveal
+const WARMUP_MIN_MS_FULL = 20000      // 20s when backend has real work to do
+const WARMUP_MIN_MS_PREBAKED = 0      // skip the floor entirely when cached
 async function pollWarmup(maxMs = 180000, intervalMs = 600) {
   const start = performance.now()
   let lastShownCount = 0
   let backendReady = false
+  // Lock in min-floor on first poll: if backend is already ready we skip the
+  // theatrical 20s pacing and let the bar settle in ~1.5s.
+  let minFloor = WARMUP_MIN_MS_FULL
+  let floorLocked = false
   while (performance.now() - start < maxMs) {
     let backendBar = 0
     let backendSwarm = 0
@@ -264,9 +272,16 @@ async function pollWarmup(maxMs = 180000, intervalMs = 600) {
       backendReady = false
     }
 
+    if (!floorLocked) {
+      minFloor = backendReady ? WARMUP_MIN_MS_PREBAKED : WARMUP_MIN_MS_FULL
+      prebakedAtStart.value = backendReady
+      floorLocked = true
+    }
+
+    const swarmTickMs = minFloor / 7
     const elapsed = performance.now() - start
-    const timeFraction = Math.min(1, elapsed / WARMUP_MIN_MS)
-    const timeSwarm = Math.min(7, Math.floor(elapsed / SWARM_TICK_MS) + 1)
+    const timeFraction = Math.min(1, elapsed / minFloor)
+    const timeSwarm = Math.min(7, Math.floor(elapsed / swarmTickMs) + 1)
 
     // Bar = min of real backend progress and time-floor — never finishes
     // before MIN_MS even if backend is instant.
@@ -291,8 +306,13 @@ async function pollWarmup(maxMs = 180000, intervalMs = 600) {
     }
     swarmDoneCount.value = shown
 
-    // Exit when both real readiness AND minimum time floor have been met.
-    if (backendReady && elapsed >= WARMUP_MIN_MS) {
+    // Exit gating:
+    //   - Prebaked path: backendReady=true on first tick → exit immediately.
+    //   - Non-prebaked path: wait only for the 7 K2 swarm specialists to
+    //     compile their region readings; empathy + k2_region_cache keep
+    //     baking in the background while the demo proceeds.
+    const swarmDoneAll = backendSwarm >= 7
+    if ((backendReady || swarmDoneAll) && elapsed >= minFloor) {
       warmupProgress.value = 1
       warmupReady.value = true
       swarmDoneCount.value = 7
@@ -306,8 +326,16 @@ async function pollWarmup(maxMs = 180000, intervalMs = 600) {
 
 onMounted(async () => {
   pushLog(warmupLogs, 'spawning K2 specialists…')
+  // Probe warmup once up-front so runVision/runTribe can decide to skip
+  // their min-floor when everything's already cached.
+  try {
+    const status = await fetchWarmupStatus(props.clipId)
+    prebakedAtStart.value = !!status?.ready
+  } catch {
+    prebakedAtStart.value = false
+  }
   await Promise.all([runVision(), runTribe(), pollWarmup()])
-  await new Promise((r) => setTimeout(r, 600))
+  await new Promise((r) => setTimeout(r, prebakedAtStart.value ? 0 : 600))
   emit('done', { vision: visionResult, activity: tribeResult })
 })
 

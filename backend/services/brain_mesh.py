@@ -46,11 +46,14 @@ class BrainMesh:
     def load(self):
         from nilearn import datasets, surface
 
-        print("BrainMesh: loading fsaverage5 inflated surface...")
+        print("BrainMesh: loading fsaverage5 pial surface...")
         fsaverage = datasets.fetch_surf_fsaverage("fsaverage5")
 
-        coords_l, faces_l = surface.load_surf_mesh(fsaverage.infl_left)
-        coords_r, faces_r = surface.load_surf_mesh(fsaverage.infl_right)
+        # Pial surface — the actual cortex with visible gyri/sulci. Matches
+        # TRIBE V2's hero render. Inflated surface (infl_*) is the alternative
+        # but reads as featureless ovoids in 3D and isn't what TRIBE shows.
+        coords_l, faces_l = surface.load_surf_mesh(fsaverage.pial_left)
+        coords_r, faces_r = surface.load_surf_mesh(fsaverage.pial_right)
 
         self.n_left = len(coords_l)
 

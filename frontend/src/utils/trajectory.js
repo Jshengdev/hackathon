@@ -14,11 +14,17 @@ const NETWORKS = new Set([
 
 export function isMalformedRoundExcerpt(text) {
   if (!text) return true
-  const lines = String(text)
-    .trim()
-    .split(/\r?\n/)
-    .map(l => l.trim())
-    .filter(Boolean)
+  const trimmed = String(text).trim()
+  // Pattern A: backend timeout/parse error string leaks through as the
+  // candidate paragraph. Shape: "[empathy_synthesis error: TimeoutError: ]"
+  // or "[empathy_synthesis retry error: ...]" or "[parse error: ...]".
+  // Matches any bracket-wrapped string mentioning "error".
+  if (/^\[[^\]]*\berror\b[^\]]*\]?/i.test(trimmed)) {
+    return true
+  }
+  // Pattern B: K2 mirrored the per_region_miss input format and returned a
+  // list of `network: value` lines instead of prose.
+  const lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
   if (!lines.length) return true
   let regionLineCount = 0
   for (const ln of lines) {

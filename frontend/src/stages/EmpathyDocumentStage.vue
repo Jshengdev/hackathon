@@ -65,6 +65,9 @@
             </ol>
           </details>
         </section>
+
+        <!-- §D Opus chat — viewer Q&A grounded in this clip's brain trace -->
+        <EmpathyChat :clip-id="clipId" />
       </template>
     </div>
   </PersonaShell>
@@ -73,6 +76,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import PersonaShell from '../components/PersonaShell.vue'
+import EmpathyChat from '../components/EmpathyChat.vue'
 import { fetchEmpathyDocument } from '../api/index.js'
 import { filterRealRounds } from '../utils/trajectory.js'
 

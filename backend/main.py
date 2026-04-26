@@ -462,6 +462,30 @@ async def get_falsification(clip_id: str):
     return falsif
 
 
+@app.post("/demo/empathy-chat/{clip_id}")
+async def post_empathy_chat(clip_id: str, payload: dict):
+    """Opus 4.7 viewer Q&A grounded in the clip's empathy.json. Honors the
+    same forbidden-claim guardrails as moderator_synthesis (no reverse
+    inference, no clinical claims) — see prompts/empathy_chat.md."""
+    _clip_dir(clip_id)
+    history = (payload or {}).get("messages")
+    if not isinstance(history, list) or not history:
+        raise HTTPException(status_code=400, detail="messages (list) required")
+    empathy = await _ensure_empathy(clip_id)
+    activity = _load_activity(clip_id)
+    try:
+        from services.empathy_chat import answer
+        reply = await answer(clip_id, history, empathy, activity)
+    except ValueError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"chat failed: {type(e).__name__}: {e}",
+        )
+    return {"reply": reply}
+
+
 @app.get("/demo/per-vertex/{clip_id}")
 async def get_per_vertex(clip_id: str):
     """Stub today — no clip has per_vertex.bin baked yet. Frontend probes once per clip and falls back to network-weight matmul on 404."""

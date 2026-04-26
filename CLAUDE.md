@@ -199,7 +199,7 @@ hackathon/
 
 1. **TRIBE V2 NEVER live.** Pre-rendered `activity.json` only.
 2. **No silent stubs.** Failures log structurally + render visible "FAILED" badge. Dev-mode mocks gated behind `import.meta.env.DEV` / `MOCK_*=1`.
-3. **Swarm-loop merged.** K2 plays 3 roles on one surface (specialists + moderator + evaluators). Opus is Stage 4 polish only, cut-line.
+3. **Swarm-loop merged.** K2 plays 3 roles on one surface (specialists + moderator + evaluators). Opus 4.7 is Stage 4 — the active terminal synthesis layer that produces the structured `EmpathySynthesisDocument` (CONTRACTS C6) via `backend/services/empathy_polish.py`. Runs ONCE per clip (terminal, never inside the iterative loop). Gated by `OPUS_POLISH=1` + `ANTHROPIC_API_KEY`; if either is missing, `synthesis_document` and `polished_paragraph` are `null` and the frontend falls back to `best_paragraph` (no silent stub).
 4. **Frontend dashboard.** Single page (greenchain layout × icarus 3D hover anchors), brain-hero center.
 5. **Real data only.** Every panel consumes a real backend endpoint.
 6. **Don't be a blocker.** Constraints are guardrails — flag conflicts as findings, don't freeze.

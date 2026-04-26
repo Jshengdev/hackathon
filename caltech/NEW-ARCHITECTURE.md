@@ -57,17 +57,27 @@ This is the **single doc** that every Claude instance — orchestrator, audit sh
                 └──────────────────┬─────────────────────────┘          │
                                    ▼                                    │
                 ┌──────────────────────────────────────────┐            │
-                │ STAGE 4 — OPUS POLISH (CUT-LINE; gated)  │            │
+                │ STAGE 4 — OPUS SYNTHESIS (terminal; gated)│            │
                 │ Anthropic Claude Opus 4.7                 │            │
                 │ Impl: services/empathy_polish.py           │            │
-                │ ENV-FLAG: OPUS_POLISH=1 (default OFF).     │            │
-                │ ONE call. ~140 output tokens. ~100-word    │            │
-                │ literary polish over best_paragraph.       │            │
-                │ Fallback (failure / guardrail / flag-off): │            │
+                │ Prompt: prompts/opus_synthesis.md          │            │
+                │ ENV-GATE: OPUS_POLISH=1 AND               │            │
+                │   ANTHROPIC_API_KEY set (else skip → null).│            │
+                │ ONE call. Emits EmpathySynthesisDocument   │            │
+                │  (CONTRACTS C6): headline, synthesis_      │            │
+                │  paragraph, temporal_arc[], neural_        │            │
+                │  evidence[], inflection_moment,            │            │
+                │  falsification.explanation, scenario_lens  │            │
+                │  (ironside | listenlabs), model_metadata.  │            │
+                │ Fallback (env-off / API fail / JSON parse  │            │
+                │  fail / missing top-level keys):           │            │
+                │  synthesis_document: null AND              │            │
                 │  polished_paragraph: null; frontend prefers│            │
-                │  polished || best. Logger.error structured.│            │
-                │ Cut-line @ 8 PM Sat = OPUS_POLISH=0 re-bake│            │
-                │  of cache JSON; NOT a code rollback.       │            │
+                │  synthesis_paragraph || polished || best.  │            │
+                │  Logger.error structured. NO silent stub.  │            │
+                │ "Cut-line" = flip OPUS_POLISH=0 (or unset  │            │
+                │  ANTHROPIC_API_KEY) and re-bake cache;     │            │
+                │  NOT a code rollback.                      │            │
                 │ ≤ 5s; runs in warmup BackgroundTask.       │            │
                 └──────────────────┬─────────────────────────┘            │
                                    ▼                                      │
@@ -93,10 +103,13 @@ This is the **single doc** that every Claude instance — orchestrator, audit sh
                 ┌──────────────────────────────────────────┐                │
                 │ EMPATHY-LAYER DOCUMENT (frontend)        │                │
                 │ §A Vision Report (Stage 1A)              │                │
-                │ §B Empathy Paragraph                     │                │
-                │     (polished_paragraph if OPUS_POLISH=1 │                │
-                │      and Stage 4 succeeded; else         │                │
-                │      best_paragraph from Stage 3)        │                │
+                │ §B Empathy Paragraph + Synthesis         │                │
+                │     synthesis_document.synthesis_paragraph│               │
+                │      (full C6 doc) when OPUS_POLISH=1 +  │                │
+                │      ANTHROPIC_API_KEY set and Stage 4   │                │
+                │      succeeded; falls through to         │                │
+                │      polished_paragraph, then            │                │
+                │      best_paragraph from Stage 3.        │                │
                 │ §C Falsification Evidence (Stage 5):     │                │
                 │     {main_score, control_score, delta,   │                │
                 │      verdict} + per-region attribution   │                │
@@ -106,7 +119,7 @@ This is the **single doc** that every Claude instance — orchestrator, audit sh
                 │   pavilion (per scenario.json)           │                │
                 └──────────────────────────────────────────┘                │
                                                                             │
-Fan-in summary: TRIBE = pre-rendered ONLY (offline). Live = Qwen3-VL + 3×K2 + Opus polish + proxy.
+Fan-in summary: TRIBE = pre-rendered ONLY (offline). Live = Qwen3-VL + 3×K2 + Opus synthesis (gated) + proxy.
 ```
 
 ## 2. Stack (model + API per stage)
@@ -117,7 +130,7 @@ Fan-in summary: TRIBE = pre-rendered ONLY (offline). Live = Qwen3-VL + 3×K2 + O
 | 1B Swarm specialists | Cerebras K2 Think | `MBZUAI-IFM/K2-Think-v2` | `https://api.k2think.ai/v1` | Free (sponsor) |
 | 2 Moderator | Cerebras K2 Think (same surface) | `MBZUAI-IFM/K2-Think-v2` | same | Free |
 | 3 Evaluator swarm | Cerebras K2 Think (same surface) | `MBZUAI-IFM/K2-Think-v2` | same | Free |
-| 4 Polish | Anthropic Claude Opus 4.7 | `claude-opus-4-7` | Messages API | $5/$25 per M tokens |
+| 4 Synthesis | Anthropic Claude Opus 4.7 | `claude-opus-4-7` | Messages API | $5/$25 per M tokens |
 | 5 Falsification | sentence-transformers (CPU) | `all-MiniLM-L6-v2` | local | Free |
 
 K2 plays three roles on one surface — same auth, three prompt files (`backend/prompts/{network}.md` × 7 + `moderator_synthesis.md` + `evaluator_score.md`).
@@ -135,11 +148,15 @@ backend/prerendered/<clip_id>/
 │                                     (instant brain-3D click responses)
 ├── empathy.json                   ← Stages 2 + 3 + 4 result
 │                                     {best_paragraph, polished_paragraph,
+│                                      synthesis_document (C6) | null,
 │                                      polish_status, polish_error,
 │                                      final_score, round_trajectory[],
 │                                      per_region_attribution{}, falsification:
 │                                       {main_score, control_score, delta,
 │                                        verdict}}
+├── synthesis.json                 ← Stage 4 cache (C6 EmpathySynthesisDocument;
+│                                     present only when OPUS_POLISH=1 +
+│                                     ANTHROPIC_API_KEY set + call succeeded)
 ├── falsification.json             ← Stage 5 result
 └── (control_activity.json optional — only on control clips for falsification)
 ```
@@ -184,8 +201,8 @@ backend/prerendered/<clip_id>/
 │ └──────────────┘         │                  │  └────────────────────┘│
 │                          │                  │  ┌────────────────────┐│
 │                          │  hover→insight   │  │ Empathy Paragraph  ││
-│                          │  card (icarus)   │  │ (Stage 4 polished, ││
-│                          │                  │  │  literature-grade) ││
+│                          │  card (icarus)   │  │ (Stage 4 Opus      ││
+│                          │                  │  │  synthesis doc)    ││
 │                          └──────────────────┘  └────────────────────┘│
 │ ┌──────────────────────────────────────────────────────────────────┐ │
 │ │ Falsification: delta=0.57 anchored · per-region attribution       │ │
@@ -237,7 +254,7 @@ The structure consolidation shard (A7) audits the actual moves needed; refactor 
 
 1. **TRIBE V2 NEVER live.** Pre-rendered activity.json only. Cache miss → log + 404.
 2. **No silent stubs.** Failures log structurally + return error payloads + render visibly. Dev-mode mocks gated behind `import.meta.env.DEV` / `MOCK_*=1`.
-3. **Swarm-loop merged.** K2 specialists fire INSIDE each loop round (Stages 1B + 2 + 3 are one K2 surface). Opus is Stage 4 polish only, runs ONCE post-loop, cut-line. **Stage 4 ship path:** `services/empathy_polish.py`, gated `OPUS_POLISH=1` (default OFF), single Anthropic Messages API call (~140 output tokens), K2-best fallback on any failure or guardrail violation. Cut-line at 8 PM Saturday is implemented as `OPUS_POLISH=0` re-bake of the cache JSON — frontend already prefers `polished_paragraph || best_paragraph`; no code rollback required.
+3. **Swarm-loop merged.** K2 specialists fire INSIDE each loop round (Stages 1B + 2 + 3 are one K2 surface). Opus 4.7 is Stage 4 — terminal synthesis only, runs ONCE post-loop. **Stage 4 ship path:** `services/empathy_polish.py` + `prompts/opus_synthesis.md`, gated by `OPUS_POLISH=1` AND `ANTHROPIC_API_KEY` set, single Anthropic Messages API call emitting the structured `EmpathySynthesisDocument` (CONTRACTS C6). On env-off, API failure, JSON-parse failure, or missing required keys: `synthesis_document` and `polished_paragraph` land as `null`; frontend falls back through `synthesis_document.synthesis_paragraph || polished_paragraph || best_paragraph`. The original "8 PM Saturday cut-line" is now graceful env-driven degradation: flip `OPUS_POLISH=0` (or unset `ANTHROPIC_API_KEY`) and re-bake the cache JSON; no code rollback required.
 4. **Frontend dashboard.** Single page, brain-hero + ringed panels (greenchain layout), icarus-style hover anchors with insight cards.
 5. **Real data only.** Every panel consumes a real backend endpoint; missing data renders "REAL DATA MISSING" red badge in PROD.
 6. **Don't be a blocker.** Constraints are guardrails. If a real demo-day deadline conflicts, surface as audit finding, don't freeze.

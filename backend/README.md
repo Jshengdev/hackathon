@@ -149,15 +149,15 @@ K2_API_KEY=IFM-...                                # IFM-prefixed → api.k2think
 K2_BASE_URL=https://api.k2think.ai/v1
 K2_MODEL=MBZUAI-IFM/K2-Think-v2
 K2_TIMEOUT=45.0
-VISION_API_KEY=sk-or-v1-...                       # OpenRouter → Qwen3-VL
-VISION_PROVIDER=openrouter
+VISION_API_KEY=sk-or-v1-...                       # OpenRouter → Qwen3-VL (code is hardcoded to OpenRouter)
 VISION_MODEL=qwen/qwen3-vl-235b-a22b-instruct
 VISION_TIMEOUT=60.0
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 OPENROUTER_HTTP_REFERER=http://localhost:3000
 OPENROUTER_APP_TITLE=brain-swarm-demo
-ANTHROPIC_API_KEY=sk-ant-...                      # for Stage 4 Opus polish (post-J.9)
-OPUS_POLISH=                                       # 1 to enable; default OFF
+ANTHROPIC_API_KEY=sk-ant-...                      # Stage 4 Opus 4.7 synthesis
+ANTHROPIC_MODEL=claude-opus-4-7
+OPUS_POLISH=1                                      # 1 to enable; 0 or unset → Stage 4 skipped
 ```
 
 **IMPORTANT: IFM-prefixed K2 keys MUST hit `api.k2think.ai`, NOT Cerebras.** `api.cerebras.ai/v1` returns 401 for IFM keys. This was the cause of the original parser bug.

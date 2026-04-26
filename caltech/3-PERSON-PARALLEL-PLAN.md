@@ -123,7 +123,7 @@ The verification entries become the QA gate. Johnny reads them to know if the de
 | **J.6** | Stage 1B K2 swarm (`services/swarm_runner.py`) | `python -c "import asyncio, json; from services.swarm_runner import run_swarm; r=asyncio.run(run_swarm(json.load(open('prerendered/30s_ironsite/activity.json')), '30s_ironsite')); print({k:v.get('reading','EMPTY')[:80] for k,v in r['regions'].items()})"` | Each of 7 networks returns a real reading (no `EMPTY` strings, no `[K2 error]`) |
 | **J.7** | Stage 2 K2 moderator (`services/empathy_synthesis.py`) | `curl -s http://localhost:8000/demo/empathy/30s_ironsite \| jq '.best_paragraph \| length'` | > 200 chars of real prose |
 | **J.8** | Stage 3 iterative loop (`services/iterative_loop.py`) | `curl -s http://localhost:8000/demo/iterative-trajectory/30s_ironsite \| jq '.round_trajectory \| length'` | 1-8 rounds; scores monotonic-ish |
-| **J.9** | Stage 4 Opus polish (`services/empathy_polish.py`, gated) | `OPUS_POLISH=1 curl -s http://localhost:8000/demo/empathy/30s_ironsite \| jq '.polished_paragraph'` | Non-null, ~100 words, literary tone — OR `null` (cut-line ok if A3-deepdive ship-path not yet built) |
+| **J.9** | Stage 4 Opus synthesis (`services/empathy_polish.py`, gated) — BUILT | `OPUS_POLISH=1 ANTHROPIC_API_KEY=... curl -s http://localhost:8000/demo/empathy/30s_ironsite \| jq '.synthesis_document, .polished_paragraph'` | `synthesis_document` is a full C6 doc (`headline`, `synthesis_paragraph`, `temporal_arc[]`, `neural_evidence[]`, `inflection_moment`, `falsification`, `scenario_lens` (`ironside`\|`listenlabs`), `model_metadata`); `polished_paragraph` mirrors `synthesis_document.synthesis_paragraph`. With env unset / `OPUS_POLISH=0`: BOTH fields are `null` and frontend falls back to `best_paragraph` (no silent stub). |
 | **J.10** | Stage 5 falsification (`services/falsification.py`) | `curl -s http://localhost:8000/demo/falsification/30s_ironsite \| jq '.delta, .verdict'` | `delta > 0.4` + `"anchored"` — **NOT** `delta=0.0 + "generic_plausible"` (the demo-blocking bug per A1+A3) |
 | **J.11** | Region popup (`POST /demo/k2-region`) | `curl -s -X POST http://localhost:8000/demo/k2-region -H 'Content-Type: application/json' -d '{"clip_id":"30s_ironsite","network":"visual","t":4}' \| jq '.text, .confidence, .cite'` | All three populated, no `[K2 error]` |
 | **J.12** | No-stub compliance | `grep -rn '"stub":\s*True\|return _stub_report' backend/services/` | Returns 0 lines (post-R2) |
@@ -139,7 +139,7 @@ The verification entries become the QA gate. Johnny reads them to know if the de
 ### Fix priority queue (run after verification done)
 - **P0** — anything `delta=0.0` falsification (J.10) — demo-blocking
 - **P0** — any `[K2 error]` in J.6 / J.11 — silent failure that A2 catalogues
-- **P1** — Stage 4 Opus polish missing (J.9) — A3-deepdive recommends ship
+- ~~**P1** — Stage 4 Opus polish missing (J.9) — A3-deepdive recommends ship~~ DONE: `services/empathy_polish.py` + `prompts/opus_synthesis.md` shipped; emits C6 `EmpathySynthesisDocument`; env-gated by `OPUS_POLISH=1` + `ANTHROPIC_API_KEY`. J.9 verification step now confirms wiring, not absence.
 - **P1** — guardrail truthiness bug (J.13)
 - **P2** — code-quality lint (long lines, debug prints, bare excepts) — A9 §4
 

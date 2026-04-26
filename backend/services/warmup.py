@@ -164,6 +164,8 @@ async def _build_empathy(
     scenario: dict,
     main_activity: dict,
     control_activity: dict,
+    clip_id: str,
+    clip_dir: Path,
 ) -> dict:
     """Wraps iterative_loop.run_iterative_loop + falsification.compute_falsification.
 
@@ -181,6 +183,8 @@ async def _build_empathy(
     )
 
     best_paragraph = loop_result.get("best_paragraph", "")
+    round_trajectory = loop_result.get("round_trajectory", [])
+    per_region_attribution = loop_result.get("per_region_attribution", {})
 
     falsification_block: dict[str, Any]
     try:
@@ -203,17 +207,49 @@ async def _build_empathy(
             "error": str(e),
         }
 
+    synthesis_document: dict | None = None
+    try:
+        from services.empathy_polish import synthesize_document
+
+        synthesis_document = await synthesize_document(
+            clip_id=clip_id,
+            scenario=scenario_name,
+            vision_report=vision_report,
+            activity=main_activity,
+            swarm_readings=swarm_readings,
+            round_trajectory=round_trajectory,
+            per_region_attribution=per_region_attribution,
+            falsification=falsification_block,
+            best_paragraph=best_paragraph,
+            clip_dir=clip_dir,
+        )
+    except Exception as e:
+        logger.warning(
+            "[empathy_polish] unexpected error clip=%s err=%s: %s",
+            clip_id,
+            type(e).__name__,
+            e,
+        )
+        synthesis_document = None
+
+    polished_paragraph = (
+        synthesis_document.get("synthesis_paragraph")
+        if isinstance(synthesis_document, dict)
+        else None
+    )
+
     return {
         "scenario": scenario_name,
         "scenario_label": scenario_label,
         "vision_report": vision_report,
         "swarm_readings": swarm_readings,
         "best_paragraph": best_paragraph,
-        "polished_paragraph": loop_result.get("polished_paragraph"),
+        "polished_paragraph": polished_paragraph,
         "final_score": loop_result.get("final_score", 0.0),
-        "round_trajectory": loop_result.get("round_trajectory", []),
-        "per_region_attribution": loop_result.get("per_region_attribution", {}),
+        "round_trajectory": round_trajectory,
+        "per_region_attribution": per_region_attribution,
         "falsification": falsification_block,
+        "synthesis_document": synthesis_document,
     }
 
 
@@ -317,6 +353,8 @@ async def warmup_clip(prerendered_dir: Path, clip_id: str) -> dict:
                 scenario=scenario,
                 main_activity=activity,
                 control_activity=control_activity,
+                clip_id=clip_id,
+                clip_dir=Path(prerendered_dir) / clip_id,
             )
             empathy["clip_id"] = clip_id
             write_cached(prerendered_dir, clip_id, "empathy", empathy)

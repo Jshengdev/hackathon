@@ -378,18 +378,49 @@ async def _ensure_empathy(clip_id: str) -> dict:
         control_activity,
     )
 
+    best_paragraph = loop_result.get("best_paragraph") or ""
+    round_trajectory = loop_result.get("round_trajectory") or []
+    per_region_attribution = loop_result.get("per_region_attribution") or {}
+
+    synthesis_document: Optional[dict] = None
+    try:
+        from services.empathy_polish import synthesize_document
+
+        synthesis_document = await synthesize_document(
+            clip_id=clip_id,
+            scenario=scenario["scenario"],
+            vision_report=vision_report,
+            activity=main_activity,
+            swarm_readings=swarm_readings,
+            round_trajectory=round_trajectory,
+            per_region_attribution=per_region_attribution,
+            falsification=falsif,
+            best_paragraph=best_paragraph,
+            clip_dir=_clip_dir(clip_id),
+        )
+    except Exception as e:
+        print(f"[empathy_polish] unexpected error clip={clip_id} err={type(e).__name__}: {e}")
+        synthesis_document = None
+
+    polished_paragraph = (
+        synthesis_document.get("synthesis_paragraph")
+        if isinstance(synthesis_document, dict)
+        else None
+    )
+
     empathy = {
         "clip_id": clip_id,
         "scenario": scenario["scenario"],
         "scenario_label": scenario["label"],
         "vision_report": vision_report,
         "swarm_readings": swarm_readings,
-        "best_paragraph": loop_result.get("best_paragraph"),
-        "polished_paragraph": None,
+        "best_paragraph": best_paragraph,
+        "polished_paragraph": polished_paragraph,
         "final_score": loop_result.get("final_score"),
-        "round_trajectory": loop_result.get("round_trajectory") or [],
-        "per_region_attribution": loop_result.get("per_region_attribution") or {},
+        "round_trajectory": round_trajectory,
+        "per_region_attribution": per_region_attribution,
         "falsification": falsif,
+        "synthesis_document": synthesis_document,
     }
     write_cached(PRERENDERED_DIR, clip_id, "empathy", empathy)
     return empathy

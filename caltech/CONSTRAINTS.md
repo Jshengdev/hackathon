@@ -59,13 +59,13 @@ K2 plays THREE roles on one surface (per technical PRD §4.3):
 - **Stage 2 — Moderator.** ONE K2 call combines vision_report + swarm_readings (+ prior_score / per_region_miss on rounds ≥ 2) into a candidate paragraph. Code: `services/empathy_synthesis.py`. **Note: v2 swapped this from Opus 4.7 to K2 because the loop fires Stage 2 once per round and Opus latency × 8 rounds was the budget killer.**
 - **Stage 3 — Evaluator swarm.** Per round, 7 parallel K2 evaluators rate the candidate paragraph; mean = round_score. Plateau-exit on |Δ|<0.02 over 2 rounds OR round 8. Code: `services/iterative_loop.py`.
 
-**Stage 4 — Opus 4.7 polish (CUT-LINE).** ~100-word literary polish over the K2 best paragraph. ONE call. Cut entirely if behind 8 PM Saturday — K2's `best_paragraph` ships as-is. This is the ONLY place Opus 4.7 runs.
+**Stage 4 — Opus 4.7 synthesis.** Terminal-only: ONE Anthropic Messages API call per clip, post-loop, that braids vision report + swarm readings + iterative trajectory + per-region attribution + falsification + best_paragraph into a structured `EmpathySynthesisDocument` (CONTRACTS C6 — `headline`, `synthesis_paragraph`, `temporal_arc[]`, `neural_evidence[]`, `inflection_moment`, `falsification` explanation, `scenario_lens`, `model_metadata`). Code: `services/empathy_polish.py`; prompt: `prompts/opus_synthesis.md`. **Never inside the iterative loop** — Opus latency × 8 rounds was the original budget killer; Stage 4 is once-per-clip only. Gated by `OPUS_POLISH=1` + `ANTHROPIC_API_KEY`. If either env is missing (or the call fails / JSON-parse fails / required keys missing), `synthesize_document` returns `None`, `synthesis_document` and `polished_paragraph` land as `null` in `empathy.json`, and the frontend renders `best_paragraph`. The original "cut-line at 8 PM Saturday" framing is now implemented as graceful env-driven degradation — flip `OPUS_POLISH=0` (or unset `ANTHROPIC_API_KEY`) and re-bake the cache; no code rollback. This is the ONLY place Opus 4.7 runs.
 
 **Stage 5 — Embedding-proxy falsification.** Sentence-transformer (`all-MiniLM-L6-v2`) → 384-dim → 7-dim Yeo7 projection (W matrix). Cosine vs activity.json (target) and control_activity.json. NOT a TRIBE forward call — proxy stand-in.
 
 **Use-case alignment:**
 - Ironsight prompt = the K2 swarm (Stage 1B + 3) gives the video information it didn't have before (per-region cognitive context).
-- Listen Labs prompt = the modular Opus polish + persona-shell (workplace / consumer / pavilion) lets the same engine generate scenario-appropriate output.
+- Listen Labs prompt = the modular Opus synthesis (`scenario_lens` swap on `clip.scenario` between `ironside` and `listenlabs`) + persona-shell (workplace / consumer / pavilion) lets the same engine generate scenario-appropriate output.
 
 ## 4. Frontend never has inline mock data in shipping code
 

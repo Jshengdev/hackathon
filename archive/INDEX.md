@@ -86,6 +86,11 @@ archive/
 
 ---
 
+- `pitch-story-v1-v2/` — earlier pitch-story drafts (v3 in `caltech/pitch-story-v3-next-level.md` is canonical, plus `caltech/pitch-deck/PITCH-STORY.md` is the deck-anchored version)
+- `builder-prompts/` — one-time scaffolding prompts (PRD-BUILDER, PITCHDECK-BUILDER) that built the original PRD + deck
+- `3-person-build-plan-v1.md` — superseded by `caltech/3-PERSON-PARALLEL-PLAN.md`
+- `emilie-brief.md` — pre-3-person-split packaging brief
+
 ## Provenance
 
 Most moves landed via the A9-doc-audit-and-cleanup recommendation (`refactor/audits/A9-doc-audit-and-cleanup.md`). Anything that arrived earlier is from the original junsoo-merge or the v1→v2 architecture pivot.

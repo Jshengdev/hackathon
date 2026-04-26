@@ -48,15 +48,15 @@ This dir is the **shared brain** for backend (Jacob), frontend (Junsu), and demo
 | `research-context/` | Curated research extracts. |
 | `tier-2-epics/` | Downstream packaging epics (brand, landing, deck, social, tech-writeup). |
 
-## Stale-but-kept (flagged with `[STALE]` banner)
+## What got archived (no longer in caltech/)
 
-| File | Why kept |
-|---|---|
-| `3-person-build-plan.md` | Historical — superseded by `3-PERSON-PARALLEL-PLAN.md`. |
-| `emilie-brief.md` | Historical packaging brief from older lane assignment. |
-| `PRD-BUILDER-ACTIVATION-PROMPT.md`, `PITCHDECK-BUILDER-ACTIVATION-PROMPT.md` | Historical scaffolding prompts. |
+These were historical and are now in `archive/`:
+- `pitch-story-v2-canonical.md` → `archive/pitch-story-v1-v2/` (v3 is canonical)
+- `3-person-build-plan.md` (v1) → `archive/3-person-build-plan-v1.md` (replaced by `3-PERSON-PARALLEL-PLAN.md`)
+- `emilie-brief.md` → `archive/emilie-brief.md`
+- `PRD-BUILDER-ACTIVATION-PROMPT.md`, `PITCHDECK-BUILDER-ACTIVATION-PROMPT.md` → `archive/builder-prompts/`
 
-If you need anything that USED to be in `caltech/`, it's now in `archive/` per the deprecation moves. See `archive/INDEX.md`.
+See `archive/INDEX.md` for the full archive map.
 
 ## What lives elsewhere (not in caltech/)
 

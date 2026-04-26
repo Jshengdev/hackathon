@@ -4,7 +4,7 @@ status: target architecture; refactor in progress
 sources:
   - _bmad-output/planning-artifacts/ironsight-listenlabs-technical-prd.md (v2 — §3 + §4 are authoritative)
   - caltech/architecture-overview.md (v2 — full prose walk-through)
-  - refactor/CONSTRAINTS.md, refactor/CONTRACTS.md
+  - caltech/CONSTRAINTS.md, caltech/CONTRACTS.md
 ---
 
 # Canonical Architecture — Empathy Layer Engine (refactor target)
@@ -233,7 +233,7 @@ hackathon/
 
 The structure consolidation shard (A7) audits the actual moves needed; refactor shard R7 executes them.
 
-## 7. Locked rules (from refactor/CONSTRAINTS.md — abbreviated)
+## 7. Locked rules (from caltech/CONSTRAINTS.md — abbreviated)
 
 1. **TRIBE V2 NEVER live.** Pre-rendered activity.json only. Cache miss → log + 404.
 2. **No silent stubs.** Failures log structurally + return error payloads + render visibly. Dev-mode mocks gated behind `import.meta.env.DEV` / `MOCK_*=1`.
@@ -268,5 +268,5 @@ The structure consolidation shard (A7) audits the actual moves needed; refactor 
 - Greenchain dashboard: `research/sponsors/k2-think/clones/greenchain/backend/CLAUDE.md`
 - Icarus 3D hover anchors: `/Users/johnnysheng/code/icarus/web/src/three/`
 - Refactor shards: `refactor/shards/A{1-8}-*.md`
-- Refactor constraints: `refactor/CONSTRAINTS.md`
-- Refactor contracts: `refactor/CONTRACTS.md`
+- Refactor constraints: `caltech/CONSTRAINTS.md`
+- Refactor contracts: `caltech/CONTRACTS.md`

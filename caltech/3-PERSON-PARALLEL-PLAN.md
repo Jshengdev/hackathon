@@ -11,8 +11,8 @@ The mandate for **Johnny**: get the demo working end-to-end and ship the pitch d
 
 ## §0 What's already done (don't redo this)
 
-- 9 audit reports + 3 deepdives in `refactor/audits/` (5,124 lines) — every gap has been cataloged.
-- `refactor/EXECUTION-PLAN.md` — synthesized 5-phase plan with acceptance gates.
+- 9 audit reports + 3 deepdives in `caltech/audits/` (5,124 lines) — every gap has been cataloged.
+- `caltech/REFACTOR-PLAN.md` — synthesized 5-phase plan with acceptance gates.
 - `refactor/POST-AUDIT-ORCHESTRATION.md` — discipline rules (max effort, yap-alignment, no hardcoding).
 - `caltech/NEW-ARCHITECTURE.md` — canonical v2 pipeline.
 - `CLAUDE.md` (root) — repo navigation map.
@@ -60,13 +60,13 @@ For every component / file / endpoint / panel you own, run this loop:
 
 ### Verification entry template
 
-Each entry lands in `refactor/audits/V-<dev>-<component>.md`:
+Each entry lands in `caltech/audits/V-<dev>-<component>.md`:
 
 ```markdown
 ## V<N>.<seq> — <component name>
 
 **Owner:** Jacob | Junsu | Johnny
-**Spec source:** PRD §<X> / NEW-ARCHITECTURE.md §<Y> / refactor/audits/A<N>.md
+**Spec source:** PRD §<X> / NEW-ARCHITECTURE.md §<Y> / caltech/audits/A<N>.md
 **Status:** ✅ BUILT+WORKING | 🟡 BROKEN | 🔴 NOT BUILT | 🟣 AMBIGUOUS
 
 **What spec says:** [1-2 sentences]
@@ -106,10 +106,10 @@ The verification entries become the QA gate. Johnny reads them to know if the de
 2. `caltech/NEW-ARCHITECTURE.md` (v2 pipeline)
 3. `_bmad-output/planning-artifacts/ironsight-listenlabs-technical-prd.md` §3 + §4 + §6 (after R-DOCS merges)
 4. **Your assigned audit reports** — read these in order:
-   - `refactor/audits/A1-prerender-cache.md` + `A1-deepdive.md` — cache + falsification fix
-   - `refactor/audits/A2-stub-fallbacks.md` — silent-stub catalog (this is your bible)
-   - `refactor/audits/A3-swarm-loop-merge.md` + `A3-deepdive.md` — Stage 4 Opus polish
-   - `refactor/audits/A6-qa-eval-harness.md` — eval recipes you'll run
+   - `caltech/audits/A1-prerender-cache.md` + `A1-deepdive.md` — cache + falsification fix
+   - `caltech/audits/A2-stub-fallbacks.md` — silent-stub catalog (this is your bible)
+   - `caltech/audits/A3-swarm-loop-merge.md` + `A3-deepdive.md` — Stage 4 Opus polish
+   - `caltech/audits/A6-qa-eval-harness.md` — eval recipes you'll run
 
 ### Verification steps (do in order; one entry per step)
 
@@ -133,7 +133,7 @@ The verification entries become the QA gate. Johnny reads them to know if the de
 | **J.16** | WebSocket emits real events | Open WS to `ws://localhost:8000/ws` after `POST /brain/start` and capture 3 frames | Each frame has `{t, regions, top_region, agents, ...}` populated |
 
 ### Deliverable
-- `refactor/audits/V-jacob-backend.md` with 16 verification entries
+- `caltech/audits/V-jacob-backend.md` with 16 verification entries
 - A summary at the top: `BUILT_AND_WORKING: [list], BROKEN: [list with task IDs queued], NOT_BUILT: [list]`
 
 ### Fix priority queue (run after verification done)
@@ -158,8 +158,8 @@ The verification entries become the QA gate. Johnny reads them to know if the de
 2. `caltech/pitch-deck/DESIGN.md` — Clay design system (canonical colors, fonts, shadows)
 3. `caltech/NEW-ARCHITECTURE.md` §5 — frontend dashboard layout (greenchain × icarus)
 4. **Your assigned audit reports:**
-   - `refactor/audits/A4-frontend-empathy-wiring.md` + `A4-deepdive.md` — what the frontend actually does today
-   - `refactor/audits/A8-brain-dashboard-redesign.md` — dashboard target
+   - `caltech/audits/A4-frontend-empathy-wiring.md` + `A4-deepdive.md` — what the frontend actually does today
+   - `caltech/audits/A8-brain-dashboard-redesign.md` — dashboard target
 
 ### Verification steps
 
@@ -182,7 +182,7 @@ The verification entries become the QA gate. Johnny reads them to know if the de
 | **U.15** | Three.js FPS on demo laptop | Open Three.js stats overlay during MainStage | ≥ 30 FPS sustained |
 
 ### Deliverable
-- `refactor/audits/V-junsu-frontend.md` with 15 verification entries
+- `caltech/audits/V-junsu-frontend.md` with 15 verification entries
 - Summary: BUILT_AND_WORKING / BROKEN / NOT_BUILT lists
 
 ### Fix priority queue

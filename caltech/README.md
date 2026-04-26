@@ -118,9 +118,9 @@ Johnny depends on Jacob's + Junsu's verification reports:
 
 | Read this | Before this | Demo can ship if |
 |---|---|---|
-| `refactor/audits/V-jacob-backend.md` | shooting cinematic acts | All 16 J.* entries written; 0 P0 broken; `/demo/empathy/30s_ironsite` returns full real document |
-| `refactor/audits/V-junsu-frontend.md` | recording dashboard footage | All 15 U.* entries written; 0 P0 broken; manual drive-through shows real data at every stage |
-| `refactor/audits/B*-verification.md` × 9 | Devpost submit | All B-pass shards report `ALL_CLOSED` |
+| `caltech/audits/V-jacob-backend.md` | shooting cinematic acts | All 16 J.* entries written; 0 P0 broken; `/demo/empathy/30s_ironsite` returns full real document |
+| `caltech/audits/V-junsu-frontend.md` | recording dashboard footage | All 15 U.* entries written; 0 P0 broken; manual drive-through shows real data at every stage |
+| `caltech/audits/B*-verification.md` × 9 | Devpost submit | All B-pass shards report `ALL_CLOSED` |
 
 If any gate fails, escalate to the dev who owns the lane.
 
@@ -148,9 +148,9 @@ Full table in `caltech/3-PERSON-PARALLEL-PLAN.md` §5. Highlights:
 
 ## Audit reports relevant to demo + deck
 
-- `refactor/audits/A5-prd-alignment-master.md` — sponsor pitch alignment per track + use-case differentiation between clips
-- `refactor/audits/A8-brain-dashboard-redesign.md` — dashboard target (what Junsu's R8 will build for you to film)
-- `refactor/audits/A9-doc-audit-and-cleanup.md` §2 — deprecation catalog (which `caltech/` docs are stale; might affect pitch-deck source material)
+- `caltech/audits/A5-prd-alignment-master.md` — sponsor pitch alignment per track + use-case differentiation between clips
+- `caltech/audits/A8-brain-dashboard-redesign.md` — dashboard target (what Junsu's R8 will build for you to film)
+- `caltech/audits/A9-doc-audit-and-cleanup.md` §2 — deprecation catalog (which `caltech/` docs are stale; might affect pitch-deck source material)
 - `caltech/pitch-deck/DESIGN.md` — your design language (Clay tokens, Roobert + Space Mono, hover micro-animations)
 - `caltech/yaps/2026-04-25-team-execution-status/00-raw-yap.md` — your latest team-state yap (read this first)
 
@@ -201,7 +201,7 @@ curl -s http://localhost:8000/demo/empathy/30s_ironsite | jq '.best_paragraph'
 
 **From Junsu:** the V-junsu-frontend.md report is your gate. Read it before recording dashboard footage. Also: Junsu's R8 dashboard rebuild is the visual surface for your launch video — coordinate timing.
 
-**To both Jacob + Junsu:** if you spot a demo-day risk in their domain (e.g. "the falsification number looked weird at 0.27"), file an ask in `refactor/audits/JS-asks.md` — they pick up.
+**To both Jacob + Junsu:** if you spot a demo-day risk in their domain (e.g. "the falsification number looked weird at 0.27"), file an ask in `caltech/audits/JS-asks.md` — they pick up.
 
 ---
 
@@ -213,4 +213,4 @@ curl -s http://localhost:8000/demo/empathy/30s_ironsite | jq '.best_paragraph'
 - Pipeline single-doc → `caltech/NEW-ARCHITECTURE.md`
 - The exact PRD requirements → `_bmad-output/planning-artifacts/ironsight-listenlabs-{technical-prd,prd}.md` (v2.1, post-R-DOCS)
 
-If anything's ambiguous: read those + `refactor/CONSTRAINTS.md`. If still ambiguous, escalate to the orchestrator.
+If anything's ambiguous: read those + `caltech/CONSTRAINTS.md`. If still ambiguous, escalate to the orchestrator.

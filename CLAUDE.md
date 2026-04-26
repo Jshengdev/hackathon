@@ -8,11 +8,35 @@ A demo that takes a 30s video, runs **K2 swarm + iterative scoring loop** over a
 
 **TRIBE V2 is NOT run live** — `backend/prerendered/<clip_id>/activity.json` is the canonical brain artifact. See `caltech/NEW-ARCHITECTURE.md` for the full pipeline.
 
+## Where to feed off canonical context (load-bearing for every dev session)
+
+The standing QA contract + audits + plans live at **`caltech/`** — backend and frontend BOTH read from here:
+
+| What | Where | When to read |
+|---|---|---|
+| Locked rules (no silent stubs, TRIBE not live, design system, etc.) | `caltech/CONSTRAINTS.md` | Before any code change |
+| v2 data schemas (`activity.json`, `EmpathyDocument`, API surface) | `caltech/CONTRACTS.md` | Before changing any data shape |
+| 5-phase refactor plan | `caltech/REFACTOR-PLAN.md` | When sequencing work |
+| 13 audit reports (5,124 lines of findings) | `caltech/audits/` | Before fixing anything — find your task in A1..A9 |
+| Canonical pipeline (one-doc) | `caltech/NEW-ARCHITECTURE.md` | First read of any session |
+| 3-dev split (Jacob/Junsu/Johnny) | `caltech/3-PERSON-PARALLEL-PLAN.md` | Find your lane and task list |
+| Index of everything in caltech/ | `caltech/CONTEXT-INDEX.md` | When you need to find something |
+
+PRDs (v2.1, post-R-DOCS):
+- `_bmad-output/planning-artifacts/ironsight-listenlabs-technical-prd.md`
+- `_bmad-output/planning-artifacts/ironsight-listenlabs-prd.md`
+
+Architecture overview (v2 long-form prose): `caltech/architecture-overview.md`
+
+Audit-time scaffolding (historical, not load-bearing): `archive/refactor/`
+
+---
+
 ## Read these first (in order)
 
 1. **`caltech/NEW-ARCHITECTURE.md`** — canonical v2 pipeline + locked rules + repo layout. **Single source of truth.**
-2. **`refactor/CONSTRAINTS.md`** — locked rules (no silent stubs, TRIBE not live, swarm-loop merged, real data only).
-3. **`refactor/CONTRACTS.md`** — cross-shard data schemas (activity.json, EmpathyDocument, API surface).
+2. **`caltech/CONSTRAINTS.md`** — locked rules (no silent stubs, TRIBE not live, swarm-loop merged, real data only).
+3. **`caltech/CONTRACTS.md`** — cross-shard data schemas (activity.json, EmpathyDocument, API surface).
 4. **`research/INDEX.md`** — research folder navigation (sponsors, wiki, papers, clones).
 
 If your task touches design/UI, also read `caltech/pitch-deck/DESIGN.md` (Clay-inspired tokens — colors, typography, shadows).
@@ -182,4 +206,4 @@ hackathon/
 
 ## Current refactor status
 
-We have 8 audit shards ready to spawn (`refactor/shards/A1-A8.md`). Each runs in its own worktree + tmux window via `bash refactor/spawn-audit-swarm.sh spawn`. Reports land in `refactor/audits/`. After audits, the orchestrator window QAs them and writes refactor execution shards (R1–R8 + R-DOCS).
+We have 8 audit shards ready to spawn (`refactor/shards/A1-A8.md`). Each runs in its own worktree + tmux window via `bash refactor/spawn-audit-swarm.sh spawn`. Reports land in `caltech/audits/`. After audits, the orchestrator window QAs them and writes refactor execution shards (R1–R8 + R-DOCS).

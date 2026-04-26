@@ -13,7 +13,9 @@ export type BrainVariant =
   | "divergence" // one line branching out into many paths
   | "swarm-bridges" // n nodes (specialists) with flickering edges
   | "activation-pulse" // single region pulsing fire-colormap
-  | "feed-grid"; // grid of phone-screens with synchronized scroll
+  | "feed-grid" // grid of phone-screens with synchronized scroll
+  | "score-climb" // iterative-loop hero reveal: 8-round score climbing toward target
+  | "vision-vs-brain"; // Stage 1 vision text vs TRIBE brain pattern, side by side
 
 type Props = {
   variant: BrainVariant;
@@ -83,7 +85,11 @@ function makeSketch(
       p.noiseSeed(seed);
       t0 = p.millis();
 
-      if (variant === "swarm-bridges" || variant === "activation-pulse") {
+      if (
+        variant === "swarm-bridges" ||
+        variant === "activation-pulse" ||
+        variant === "score-climb"
+      ) {
         p.frameRate(24);
       } else {
         p.noLoop();
@@ -112,9 +118,168 @@ function makeSketch(
         case "feed-grid":
           drawFeedGrid(p, canvasSize);
           break;
+        case "score-climb":
+          drawScoreClimb(p, canvasSize, tElapsed);
+          break;
+        case "vision-vs-brain":
+          drawVisionVsBrain(p, canvasSize);
+          break;
       }
     };
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// SCORE CLIMB — iterative-loop hero reveal: 8 rounds climbing toward target
+// (cosine similarity of candidate paragraph vs target brain pattern)
+// ─────────────────────────────────────────────────────────────────────
+function drawScoreClimb(p: any, S: number, tSec: number) {
+  // Per architecture-overview.md §11: round trajectory 0.42 → 0.58 → 0.65 → 0.71 → 0.78 → 0.81 → 0.83 → 0.84
+  const rounds = [0.42, 0.58, 0.65, 0.71, 0.75, 0.78, 0.82, 0.84];
+  const padX = S * 0.1;
+  const padY = S * 0.14;
+  const w = S - padX * 2;
+  const h = S - padY * 2;
+
+  // Gridlines (similarity 0.0 → 1.0)
+  p.stroke(C.ink[0], C.ink[1], C.ink[2], 14);
+  p.strokeWeight(0.5);
+  for (let g = 0; g <= 10; g++) {
+    const y = padY + (1 - g / 10) * h;
+    p.line(padX, y, padX + w, y);
+  }
+
+  // Target line at y=1.0
+  p.stroke(C.smoke[0], C.smoke[1], C.smoke[2], 60);
+  p.strokeWeight(1);
+  p.drawingContext.setLineDash([4, 4]);
+  p.line(padX, padY, padX + w, padY);
+  p.drawingContext.setLineDash([]);
+
+  // Animated reveal: walk through rounds based on tSec (1 round per 0.6s, loop)
+  const cycle = 8 + 2; // 8 rounds + 2s pause
+  const t = (tSec * 0.6) % cycle;
+  const visibleRound = Math.min(Math.floor(t), rounds.length - 1);
+  const subT = Math.min(t - visibleRound, 1);
+
+  // Plot the climbing line
+  p.noFill();
+  p.stroke(C.accent[0], C.accent[1], C.accent[2], 220);
+  p.strokeWeight(2);
+  p.beginShape();
+  for (let i = 0; i <= visibleRound; i++) {
+    const x = padX + (i / (rounds.length - 1)) * w;
+    const score = rounds[i];
+    const y = padY + (1 - score) * h;
+    p.vertex(x, y);
+  }
+  if (visibleRound < rounds.length - 1) {
+    const xA = padX + (visibleRound / (rounds.length - 1)) * w;
+    const xB = padX + ((visibleRound + 1) / (rounds.length - 1)) * w;
+    const yA = padY + (1 - rounds[visibleRound]) * h;
+    const yB = padY + (1 - rounds[visibleRound + 1]) * h;
+    p.vertex(xA + (xB - xA) * subT, yA + (yB - yA) * subT);
+  }
+  p.endShape();
+
+  // Round dots
+  p.noStroke();
+  for (let i = 0; i <= visibleRound; i++) {
+    const x = padX + (i / (rounds.length - 1)) * w;
+    const score = rounds[i];
+    const y = padY + (1 - score) * h;
+    const isLatest = i === visibleRound && subT < 0.5;
+    p.fill(C.accent[0], C.accent[1], C.accent[2], isLatest ? 100 : 60);
+    p.circle(x, y, isLatest ? 18 : 10);
+    p.fill(C.accent[0], C.accent[1], C.accent[2]);
+    p.circle(x, y, 5);
+  }
+
+  // Axis labels
+  p.fill(C.smoke[0], C.smoke[1], C.smoke[2], 200);
+  p.textFont("monospace");
+  p.textSize(9);
+  p.textAlign(p.LEFT);
+  p.text("similarity 1.00", padX, padY - 6);
+  p.text("0.00", padX, padY + h + 12);
+  p.textAlign(p.RIGHT);
+  p.text(`round ${visibleRound + 1} / 8`, padX + w, padY - 6);
+
+  // Latest score label
+  const latest = rounds[visibleRound];
+  p.textAlign(p.RIGHT);
+  p.textSize(11);
+  p.fill(C.accent[0], C.accent[1], C.accent[2]);
+  p.text(latest.toFixed(2), padX + w, padY + h + 12);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// VISION vs BRAIN — side-by-side: Stage 1 vision report (text) vs TRIBE brain
+// ─────────────────────────────────────────────────────────────────────
+function drawVisionVsBrain(p: any, S: number) {
+  const half = S / 2;
+  const padY = S * 0.1;
+
+  // Left half: vision-report text rectangles (action-data baseline)
+  const textPad = S * 0.06;
+  p.noStroke();
+  p.fill(C.smoke[0], C.smoke[1], C.smoke[2], 90);
+  p.textFont("monospace");
+  p.textSize(8);
+  p.textAlign(p.LEFT);
+  p.text("STAGE 1 · VISION", textPad, padY);
+  // Faux text lines.
+  const lines = [
+    "scene_summary:",
+    "  nurse in patient room,",
+    "  30 min duration,",
+    "  IV adjustment, hand",
+    "  contact noted.",
+    "actions: [sit, adjust,",
+    "  hold_hand, observe]",
+    "duration_s: 1800",
+    "threshold_s: 600",
+    "flag: OVER_THRESHOLD",
+  ];
+  p.fill(C.ink[0], C.ink[1], C.ink[2], 140);
+  for (let i = 0; i < lines.length; i++) {
+    p.text(lines[i], textPad, padY + 22 + i * 14);
+  }
+
+  // Vertical divider
+  p.stroke(C.ink[0], C.ink[1], C.ink[2], 30);
+  p.strokeWeight(0.6);
+  p.line(half, padY * 0.4, half, S - padY * 0.4);
+  p.noStroke();
+
+  // Right half: TRIBE brain pattern (a stippled cortical region with activation gradient)
+  const cx = half + half / 2;
+  const cy = S / 2;
+  const baseR = S * 0.22;
+  p.fill(C.smoke[0], C.smoke[1], C.smoke[2], 90);
+  p.textAlign(p.LEFT);
+  p.text("TRIBE V2 · BRAIN PATTERN", half + textPad, padY);
+
+  for (let i = 0; i < 1500; i++) {
+    const u = p.random();
+    const v = p.random();
+    const r = Math.sqrt(u) * baseR;
+    const theta = v * Math.PI * 2;
+    const x = cx + Math.cos(theta) * r;
+    const y = cy + Math.sin(theta) * r;
+    const noise = p.noise(x * 0.02, y * 0.02);
+    if (noise < 0.4) continue;
+    const t = 1 - r / baseR;
+    const [rr, gg, bb] = activation(0.3 + t * 0.7);
+    p.fill(rr, gg, bb, 80 + t * 120);
+    p.circle(x, y, 1.2 + t * 1.5);
+  }
+
+  // Region label
+  p.fill(C.smoke[0], C.smoke[1], C.smoke[2], 200);
+  p.textAlign(p.CENTER);
+  p.textSize(8);
+  p.text("emotional-processing · prefrontal · default-mode", cx, cy + baseR + 22);
 }
 
 // ─────────────────────────────────────────────────────────────────────

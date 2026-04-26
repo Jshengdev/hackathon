@@ -26,7 +26,7 @@ except Exception:  # pragma: no cover - fail-soft if module missing
 _PROMPTS_DIR = Path(__file__).parents[1] / "prompts"
 _SYSTEM_PROMPT_PATH = _PROMPTS_DIR / "moderator_synthesis.md"
 _MAX_TOKENS = 600
-_TIMEOUT_S = 240.0
+_TIMEOUT_S = 120.0
 
 _NETWORKS: tuple[str, ...] = (
     "visual",

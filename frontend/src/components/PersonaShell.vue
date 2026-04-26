@@ -16,8 +16,7 @@ defineProps({
 
 <style scoped>
 .persona-shell {
-  height: 100vh;
-  overflow-y: auto;
+  min-height: 100vh;
   background: #050510;
   color: #d0d8ee;
 }

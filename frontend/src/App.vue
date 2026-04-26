@@ -1,5 +1,5 @@
 <template>
-  <div class="app-root">
+  <div class="app-root" :class="`stage-${currentStage}`">
     <transition name="stage" mode="out-in">
       <component
         :is="stageComponent"
@@ -109,6 +109,12 @@ function onRevealDone() {
   position: relative;
   background: #050510;
   overflow: hidden;
+}
+.app-root.stage-empathy-document {
+  height: auto;
+  min-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .stage-indicator {

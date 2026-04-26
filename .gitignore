@@ -62,3 +62,7 @@ junsoo/report_card/__pycache__/
 
 caltech/engine/__pycache__/
 junsoo/brain/__pycache__/
+
+# Worktrees (audit-time scratch; reports preserved in caltech/audits/)
+worktrees/
+archive/worktrees/

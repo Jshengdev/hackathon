@@ -2,6 +2,15 @@
   <div class="empathy-chat">
     <div class="section-label">§D · ask about the brain trace</div>
 
+    <div class="ethics-banner">
+      <span class="ethics-tag">heads up</span>
+      Answers are <strong>interpretive reads of the brain trace</strong>,
+      not definitive accounts of what the person felt or thought. Brain
+      activity is one signal among many — body language, context, and the
+      person's own report tell the rest. Treat anything Opus says here as
+      a starting hypothesis, not a verdict.
+    </div>
+
     <div v-if="turns.length" class="chat-log">
       <div
         v-for="(t, i) in turns"
@@ -77,6 +86,34 @@ async function onSubmit() {
   font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 16px;
+}
+
+.ethics-banner {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #d8c896;
+  background: rgba(247, 220, 111, 0.06);
+  border-left: 2px solid #f7dc6f;
+  padding: 12px 14px;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 22px;
+}
+.ethics-banner strong {
+  color: #f7dc6f;
+  font-weight: 600;
+}
+.ethics-tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #f7dc6f;
+  background: rgba(247, 220, 111, 0.10);
+  padding: 2px 7px;
+  border-radius: 3px;
+  margin-right: 8px;
+  vertical-align: 1px;
 }
 
 .chat-log {

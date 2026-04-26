@@ -55,3 +55,6 @@ _bmad/brain-swarm/backend/cache/
 _bmad/brain-swarm/frontend/node_modules/
 _bmad/brain-swarm/frontend/dist/
 junsoo/report_card/__pycache__/
+
+caltech/engine/__pycache__/
+junsoo/brain/__pycache__/

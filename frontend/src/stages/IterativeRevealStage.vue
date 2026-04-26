@@ -104,6 +104,7 @@ onBeforeUnmount(() => { if (timer) clearTimeout(timer) })
   padding: 0 10vw;
   font-family: 'Inter', system-ui, sans-serif;
   color: #d0d8ee;
+  overflow: hidden;
 }
 .title {
   font-size: 28px; font-weight: 600;

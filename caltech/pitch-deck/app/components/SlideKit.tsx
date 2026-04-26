@@ -86,6 +86,72 @@ export function AnchorQuote({
   );
 }
 
+/**
+ * Empathy-Layer Document — the hero artifact a manager / user reads.
+ * Three sections per architecture-overview.md §4:
+ *   §A Vision Report (small, action-data baseline)
+ *   §B Empathy Paragraph (BIG, magazine-cover, the takeaway)
+ *   §C Falsification Evidence (small, scientific grounding)
+ */
+export function EmpathyDocument({
+  visionReport,
+  empathyParagraph,
+  similarity,
+  falsificationDelta,
+  scenarioLabel = "workplace · empathy-layer document",
+}: {
+  visionReport: string;
+  empathyParagraph: ReactNode;
+  similarity: number;
+  falsificationDelta: number;
+  scenarioLabel?: string;
+}) {
+  return (
+    <div className="surface-card-feature flex flex-col gap-5 max-w-2xl" style={{ padding: "28px 32px" }}>
+      <p className="kicker" style={{ color: "var(--accent)" }}>
+        {scenarioLabel}
+      </p>
+
+      {/* §A — Vision Report */}
+      <div className="flex flex-col gap-1.5">
+        <p className="kicker">§a · vision report</p>
+        <p className="mono text-sm smoke leading-relaxed">{visionReport}</p>
+      </div>
+
+      {/* §B — Empathy Paragraph (hero) */}
+      <div
+        className="flex flex-col gap-2 pt-2"
+        style={{ borderTop: "1px solid var(--hair)" }}
+      >
+        <p className="kicker">§b · empathy layer</p>
+        <div className="serif text-base md:text-lg ink leading-relaxed">
+          {empathyParagraph}
+        </div>
+      </div>
+
+      {/* §C — Falsification Evidence */}
+      <div
+        className="grid grid-cols-2 gap-4 pt-3"
+        style={{ borderTop: "1px solid var(--hair)" }}
+      >
+        <div className="flex flex-col gap-1">
+          <p className="kicker">similarity · this scene</p>
+          <p className="numeral text-3xl ink">{similarity.toFixed(2)}</p>
+        </div>
+        <div className="flex flex-col gap-1">
+          <p className="kicker">falsification · control</p>
+          <p
+            className="numeral text-3xl"
+            style={{ color: "var(--accent)" }}
+          >
+            {falsificationDelta.toFixed(2)}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Clay-style card surface — white on warm-cream, oat border, level-1 elevation. */
 export function Card({
   children,

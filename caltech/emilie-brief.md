@@ -1,3 +1,6 @@
+> ⚠️ **[STALE — pre-3-person split]** Lane assignments superseded by `caltech/3-PERSON-PARALLEL-PLAN.md` (Jacob backend / Junsu frontend / Johnny demo). Kept as historical packaging brief.
+
+
 ---
 title: "Emilie — Hackathon Packaging Brief"
 status: scaffold (Johnny review pending; Emilie owns final execution)

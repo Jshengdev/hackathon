@@ -1,3 +1,6 @@
+> ⚠️ **[STALE — superseded by `caltech/3-PERSON-PARALLEL-PLAN.md`]** This v1 lane split predates the swarm-loop merge + the Jacob/Junsu/Johnny split. Read it for historical context only.
+
+
 ---
 title: "Empathy Layer — 3-Person Build Plan (Caltech HackTech 2026)"
 codename: Empathy Layer

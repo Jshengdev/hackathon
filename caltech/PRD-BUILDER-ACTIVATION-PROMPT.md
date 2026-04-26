@@ -1,3 +1,6 @@
+> ⚠️ **[ARCHIVED — one-time scaffolding]** This was the prompt that built the original PRD/deck. Output is canonical; this prompt is historical.
+
+
 ---
 title: "PRD-Builder Activation Prompt — paste this into the new pane verbatim"
 status: spawn-ready

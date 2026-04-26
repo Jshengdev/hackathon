@@ -1,3 +1,6 @@
+> ⚠️ **[ARCHIVED — one-time scaffolding]** This was the prompt that built the original PRD/deck. Output is canonical; this prompt is historical.
+
+
 ---
 title: "Pitch-Deck Builder Activation Prompt — paste verbatim into the new pane"
 status: spawn-ready

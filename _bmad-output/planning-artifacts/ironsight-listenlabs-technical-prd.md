@@ -3,12 +3,46 @@ title: "Ironsight / Listen Labs — TECHNICAL PRD (Empathy Layer Engine)"
 project_name: ironsight-listenlabs-empathy-engine
 codename: Empathy Layer
 date: 2026-04-25
-version: 1.0 (technical PRD; complement to strategic PRD)
+version: 2.0 (post-TRIBE-cut — reflects what actually shipped)
 workflowType: technical-prd
 build_window: 2026-04-25 (Friday eve) → 2026-04-26 11 PM PDT (Saturday submit)
 freeze: 2026-04-26 8 PM PDT
 submit: 2026-04-26 11 PM PDT
 hardDeadline: 2026-04-27 9 AM PDT
+v2_changelog: |
+  2026-04-25 evening — architecture re-locked with team. Updated this doc in place
+  rather than fork. Key changes vs v1.0:
+    - TRIBE V2 forward-direction inference DROPPED. activity.json on disk is the
+      only TRIBE artifact; live TRIBE never runs in any direction.
+    - Stage 2 empathy synthesis runs on K2 (moderator role), NOT Anthropic Opus.
+      Opus is now Stage 4 polish only — cut-line cherry.
+    - NEW Stage 1B: K2 swarm reads activity.json (7 parallel calls) producing
+      per-region "readings" before synthesis.
+    - Stage 3 iterative loop scored by K2-swarm-as-evaluator instead of TRIBE
+      forward. Plateau exit + per-region attribution preserved.
+    - Stage 5 falsification uses sentence-transformer embedding proxy
+      (all-MiniLM-L6-v2 → 7-dim Yeo7 projection W) in lieu of TRIBE forward.
+    - Without-TRIBE comparison pass killed. /demo/comparison endpoint removed.
+    - Per-scenario specialist roster collapsed to one shared 7-network roster
+      (the existing backend/prompts/{network}.md set).
+    - SynthDebate-on-Brain confirmed scoped OUT (was already Q4 in v1.0).
+    - Cache + warmup layer added: BackgroundTask pre-bakes all five Layer 1
+      JSON files (vision_report, swarm_readings, k2_region_cache, empathy,
+      iterative_trajectory) on /demo/match so brain-3D interactions never
+      block on a live LLM call.
+  Companion plan: caltech/build-plan-locked.md
+v2_endpoints_shipped:
+  - POST /demo/match                            # triggers warmup BackgroundTask
+  - GET  /demo/clips
+  - GET  /demo/activity/{clip_id}
+  - GET  /demo/vision-report/{clip_id}
+  - POST /demo/k2-region                        # per-network click handler
+  - GET  /demo/empathy/{clip_id}                # NEW — full pipeline result
+  - GET  /demo/iterative-trajectory/{clip_id}   # NEW — BEAT-3 reveal data
+  - GET  /demo/falsification/{clip_id}          # NEW — main vs control delta
+  - GET  /demo/warmup-status/{clip_id}          # NEW — readiness poll
+v2_endpoints_killed:
+  - GET  /demo/comparison/{clip_id}             # without-TRIBE pass dropped
 
 scope: |
   This document is the TECHNICAL PRD — the engineering-readable, build-ready specification
@@ -87,19 +121,21 @@ verbatim_johnny_yaps_load_bearing_for_PRD:
 **Date:** 2026-04-25
 **Codename:** Empathy Layer
 
-> **One product. One engine. Two demo scenarios on the same overarching architecture. Same TRIBE V2 + two-stage agent pipeline + iterative-scoring loop. Different data sources per scenario. Different processing parameters per scenario. Different beneficiary stories per scenario. Build is splittable across 3 parallel execution lanes. This document is the engineering-grade specification — strategic framing lives in `./ironsight-listenlabs-prd.md`.**
+> **One product. One engine. Two demo scenarios on the same overarching architecture. Pre-rendered TRIBE V2 activity JSON + Qwen vision + K2 swarm + K2 moderator + K2-swarm-as-evaluator iterative loop + embedding-proxy falsification + (optional) Opus polish. Different data sources per scenario; same engine binary. Build splittable across 3 parallel execution lanes. This document is the engineering-grade specification — strategic framing lives in `./ironsight-listenlabs-prd.md`. Companion build plan with file-level lane assignments: `caltech/build-plan-locked.md`.**
 
 ---
 
 ## §0. Reading Order for Engineers
 
-For Junsoo (TRIBE V2 lane) → start at §3 (architecture), §6 (data contracts §6.1-§6.3), §7 (Stage 0/1/iteration scoring), §10 (smoke tests #1, #5), §13 (LANE-J FRs).
+For Junsoo (LANE-J — embedding proxy + control bake; TRIBE forward DROPPED) → §3 (architecture), §6.2 (activity.json schema as source-of-truth), §6.5 (embedding proxy contract), §10 (smoke tests #1, #7), §13 (LANE-J FRs revised).
 
-For Jacob (K2 + iterative loop lane) → §3, §6 (data contracts §6.4), §8 (Stage 2 + iterative loop), §10 (smoke tests #2, #6, #7), §13 (LANE-K FRs).
+For Jacob (LANE-K — K2 swarm + moderator + iterative loop) → §3, §6.3-§6.6 (data contracts), §8 (Stage 2 + iterative loop), §10 (smoke tests #2, #6, #7), §13 (LANE-K FRs revised).
 
-For Johnny (Orchestration + frontend lane) → §3, §4 (stack), §6 (all contracts), §9 (orchestration glue + frontend), §10 (smoke tests #3, #4, #8), §13 (LANE-O FRs).
+For Johnny (LANE-O — Stage 1A vision + frontend + endpoints) → §3, §4 (stack), §6 (all contracts), §9 (orchestration glue + frontend), §10 (smoke tests #3, #4, #8), §13 (LANE-O FRs).
 
-For Emilie (Packaging + UI lane) → §3, §11 (output document UI), §12 (demo execution), §13 (LANE-E FRs).
+For Emilie (LANE-E — packaging + UI) → §3, §11 (output document UI), §12 (demo execution), §13 (LANE-E FRs).
+
+**v2 lock:** TRIBE V2 is pre-rendered ONLY. No live forward, no live reverse. activity.json files in `backend/prerendered/{clip_id}/activity.json` are the canonical brain-data artifact and were generated offline before this build window. Anyone reading "TRIBE forward" in older sections of this PRD should mentally substitute "embedding proxy" or "K2 swarm-as-evaluator" depending on context.
 
 ---
 
@@ -132,195 +168,162 @@ For Emilie (Packaging + UI lane) → §3, §11 (output document UI), §12 (demo 
 
 ---
 
-## §3. Architecture Diagram (the engine)
+## §3. Architecture Diagram (the engine — v2)
 
 ```
-                          [INPUT: Video file (MP4, ≥720p, 30-90s)]
-                                          │
-                                          ▼
-              ┌─────────────────────────────────────────────────────┐
-              │                STAGE 1                              │
-              │       Vision Classification Agent                   │
-              │                                                     │
-              │  Tool: Qwen3-VL (235B-A22B-Instruct)                │
-              │        via OpenRouter                               │
-              │  Model ID: "qwen/qwen3-vl-235b-a22b-instruct"      │
-              │  Cost: $0.20 in / $0.88 out per M tokens            │
-              │                                                     │
-              │  Job: Describe what happened in the scene —         │
-              │       actions, environment, tools, temporal         │
-              │       sequence, spatial relationships               │
-              │                                                     │
-              │  Output: Vision Report JSON                         │
-              │   { scene_summary, actions[],                       │
-              │     temporal_sequence[],                            │
-              │     spatial_relationships[] }                       │
-              │                                                     │
-              │  Lane owner: [LANE-O] Johnny (integration)          │
-              │  Latency budget: ≤ 10s for 30s clip                 │
-              │  Pre-cache fallback: hand-baked vision-reports      │
-              │    for demo-input clips                             │
-              └────────────────────┬────────────────────────────────┘
-                                   │
-                ┌──────────────────┴───────────────────┐
-                ▼                                      │
-   ┌────────────────────────────────┐                  │
-   │     TRIBE V2 (REVERSE)         │                  │
-   │     Brain-Encoding Inference   │                  │
-   │                                │                  │
-   │ Tool: facebookresearch/tribev2 │                  │
-   │   (Meta FAIR; CC-BY-NC-4.0)    │                  │
-   │ Local GPU OR pre-cached JSON   │                  │
-   │                                │                  │
-   │ Job: Run input video through   │                  │
-   │   TRIBE V2 → per-second        │                  │
-   │   per-region brain-response    │                  │
-   │   data layer (~20K vertices,   │                  │
-   │   fsaverage5 mesh, 1Hz,        │                  │
-   │   5s HRF lag)                  │                  │
-   │                                │                  │
-   │ Output: BRAIN-PATTERN TARGET   │                  │
-   │   per-second JSON              │                  │
-   │   { time_s, region_id,         │                  │
-   │     activation, vertices[] }   │                  │
-   │                                │                  │
-   │ Lane owner: [LANE-J] Junsoo    │                  │
-   │ Latency: 20-30s for 30s clip   │                  │
-   │   (live; risky)                │                  │
-   │ Pre-cache: MANDATORY per       │                  │
-   │   sub-agent C — bake all       │                  │
-   │   demo-input brain JSON        │                  │
-   │   Saturday 8 AM                │                  │
-   └────────────┬───────────────────┘                  │
-                │                                      │
-                │       ┌──────────────────────────────┘
-                ▼       ▼
-      ┌────────────────────────────────────────────────────────┐
-      │                    STAGE 2                             │
-      │          Empathy Synthesis Agent                       │
-      │                                                        │
-      │  Tool: Anthropic Claude Opus 4.7                       │
-      │  Cost: $5 in / $25 out per M tokens                    │
-      │                                                        │
-      │  Inputs:                                               │
-      │   1. Vision Report (Stage 1)                           │
-      │   2. BRAIN-PATTERN TARGET (TRIBE V2)                   │
-      │   3. (Optional) Per-scenario specialist roster +       │
-      │      Opus synthesis prompt (per prompt registry §4.5)  │
-      │   4. Prior-round score + per-region miss               │
-      │      (if iterative round > 1)                          │
-      │                                                        │
-      │  Job: Generate emotionally-intelligent paragraph       │
-      │       describing what the human felt during the        │
-      │       footage, grounded in brain-pattern evidence.     │
-      │       Honor forbidden-claim guardrails (§5).           │
-      │                                                        │
-      │  Output: Candidate Paragraph #N (~150-300 words)       │
-      │                                                        │
-      │  Lane owner: [LANE-O] Johnny (prompt) +                │
-      │              [LANE-K] Jacob (orchestration)            │
-      │  Latency: ≤ 5s per candidate                           │
-      └─────────────────────┬──────────────────────────────────┘
-                            │
-                            ▼
-      ┌────────────────────────────────────────────────────────┐
-      │           ITERATIVE SCORING LOOP                       │
-      │      (Clair de Lune protocol INVERTED)                 │
-      │                                                        │
-      │  Orchestrator: Cerebras K2 Think                       │
-      │  Speed: ~2000 tok/s (sub-1s loop controller)           │
-      │  API: OpenAI-compatible chat-completions               │
-      │                                                        │
-      │  For up to 8 rounds:                                   │
-      │   ┌──────────────────────────────────────────┐         │
-      │   │ a) Score Candidate #N via TRIBE V2       │         │
-      │   │    FORWARD direction: paragraph text     │         │
-      │   │    → predicted brain-pattern             │         │
-      │   │                                          │         │
-      │   │ b) Cosine similarity:                    │         │
-      │   │    candidate_brain_pattern vs.           │         │
-      │   │    BRAIN-PATTERN TARGET = SCORE          │         │
-      │   │                                          │         │
-      │   │ c) IF score plateaus (delta < 0.02       │         │
-      │   │    over 2 rounds) OR round == 8:         │         │
-      │   │      RETURN best paragraph               │         │
-      │   │    ELSE:                                 │         │
-      │   │      Pass score + per-region miss back   │         │
-      │   │      to Stage 2; generate Candidate #N+1 │         │
-      │   └──────────────────────────────────────────┘         │
-      │                                                        │
-      │  Output: BEST PARAGRAPH + FINAL SCORE +                │
-      │          ROUND-BY-ROUND SCORE TRAJECTORY               │
-      │                                                        │
-      │  Lane owner: [LANE-K] Jacob                            │
-      │  Latency budget (8 rounds): ~60s live; ≤ 35s for       │
-      │    5-round shortened version; pre-cached fallback      │
-      │    if exceeded                                         │
-      └────────────────────┬───────────────────────────────────┘
-                           │
-                           ▼
-      ┌────────────────────────────────────────────────────────┐
-      │             FALSIFICATION CHECK                        │
-      │                                                        │
-      │   Score the BEST PARAGRAPH against a CONTROL VIDEO's   │
-      │   brain-pattern (different human OR same human on      │
-      │   different scene).                                    │
-      │                                                        │
-      │   If FALSIFICATION DELTA (= main_score − control_score)│
-      │   is large (e.g., > 0.40), the paragraph is PROVABLY   │
-      │   ANCHORED to the original scene, not generically      │
-      │   plausible.                                           │
-      │                                                        │
-      │   Output: FALSIFICATION DELTA + per-region attribution │
-      │                                                        │
-      │   Lane owner: [LANE-J] Junsoo (control brain JSON      │
-      │     pre-bake) + [LANE-K] Jacob (delta computation)     │
-      │   Latency: ≤ 3s                                        │
-      └────────────────────┬───────────────────────────────────┘
-                           │
-                           ▼
-      ┌────────────────────────────────────────────────────────┐
-      │             EMPATHY-LAYER DOCUMENT                     │
-      │                                                        │
-      │   Three sections rendered for the decision-maker:      │
-      │                                                        │
-      │   §1. Vision Report                                    │
-      │       (action-data baseline; what action data alone    │
-      │        would have told you)                            │
-      │                                                        │
-      │   §2. Empathy Layer Paragraph                          │
-      │       (best paragraph from iterative loop; the         │
-      │        empathy translation of what the human felt      │
-      │        during the action)                              │
-      │                                                        │
-      │   §3. Falsification Evidence                           │
-      │       (similarity score + control delta + per-region   │
-      │        attribution; proves the empathy layer is        │
-      │        grounded)                                       │
-      │                                                        │
-      │   Persona-driven framing modes:                        │
-      │   • Workplace (boss-facing) → preserves action data    │
-      │     + adds context                                     │
-      │   • Consumer (user-facing) → daily journal entry +     │
-      │     vault accumulation                                 │
-      │   • Pavilion (judge-facing) → demo artifact            │
-      │                                                        │
-      │   Lane owner: [LANE-E] Emilie (UI design) +            │
-      │               [LANE-O] Johnny (frontend integration)   │
-      │   Latency: ≤ 1s                                        │
-      └────────────────────┬───────────────────────────────────┘
-                           │
-                           ▼
-                [DECISION-MAKER reads]
-                    │             │
-          ┌─────────┘             └─────────┐
-          ▼                                 ▼
-    [B2B Manager]                    [B2C User]
-  Reads paragraph                  Saves daily entry
-  before cutting corner            Knowledge graph grows
+                  [INPUT: matched to prerendered/<clip_id>/]
+                              │
+                ┌─────────────┴──────────────┐
+                ▼                            ▼
+   ┌─────────────────────────┐   ┌─────────────────────────────┐
+   │  STAGE 1A — Qwen3-VL    │   │  STAGE 1B — K2 SWARM        │
+   │  (OpenRouter)           │   │  (7 parallel calls)         │
+   │                         │   │                             │
+   │  qwen/qwen3-vl-235b-    │   │  Reads:                     │
+   │   a22b-instruct         │   │   prerendered/<clip>/       │
+   │  $0.20 in / $0.88 out   │   │     activity.json           │
+   │                         │   │   backend/prompts/          │
+   │  Reads 5 video frames.  │   │     {network}.md (× 7)      │
+   │  Outputs vision_report  │   │                             │
+   │  JSON: actions, scene,  │   │  Per region emits:          │
+   │  spatial relations.     │   │   reading (1-2 sentences)   │
+   │  NO emotion claims.     │   │   confidence                │
+   │                         │   │   citation                  │
+   │  Lane: [LANE-O]         │   │                             │
+   │  Latency: ≤ 10s         │   │  Aggregated swarm_readings  │
+   │  Cache: vision_report   │   │  Lane: [LANE-K]             │
+   │    .json                │   │  Latency: ≤ 8s parallel     │
+   │                         │   │  Cache: swarm_readings.json │
+   └────────────┬────────────┘   └──────────────┬──────────────┘
+                │                               │
+                └──────────────┬────────────────┘
+                               ▼
+              ┌──────────────────────────────────────────┐
+              │  STAGE 2 — EMPATHY SYNTHESIS (K2)        │
+              │  K2 Think as moderator                   │
+              │  ~2000 tok/s; OpenAI-compatible          │
+              │                                          │
+              │  System prompt:                          │
+              │   backend/prompts/moderator_synthesis.md │
+              │  Input: vision_report + swarm_readings   │
+              │   (+ prior_score + per_region_miss on    │
+              │    rounds ≥ 2)                           │
+              │                                          │
+              │  Output: ONE paragraph (150-300 words)   │
+              │   literature-grade prose                 │
+              │   forbidden-claim guardrails (§5)        │
+              │                                          │
+              │  Lane: [LANE-K]                          │
+              │  Latency: ≤ 5s per candidate             │
+              └──────────────────┬───────────────────────┘
+                                 ▼
+              ┌──────────────────────────────────────────┐
+              │  STAGE 3 — ITERATIVE LOOP                │
+              │  K2 swarm AS EVALUATOR                   │
+              │  (the Clair-de-Lune-protocol substitute) │
+              │                                          │
+              │  For round in 1..8 (plateau-exit):       │
+              │    a) 7 parallel K2 evaluator calls      │
+              │       prompt: prompts/evaluator_score.md │
+              │       input per call: candidate +        │
+              │              one region's reading        │
+              │       output: score (0..1) +             │
+              │               1-sentence justification   │
+              │    b) overall_score = mean of 7 scores   │
+              │    c) per_region_attribution recorded    │
+              │    d) IF round ≥ 3 AND |Δ| < 0.02 over   │
+              │       2 consecutive rounds OR round==8:  │
+              │         exit                             │
+              │       ELSE: feed per_region_miss to      │
+              │             Stage 2 → next candidate     │
+              │                                          │
+              │  Output:                                 │
+              │   best_paragraph (highest-scoring round) │
+              │   final_score                            │
+              │   round_trajectory (8 rows max)          │
+              │   per_region_attribution                 │
+              │                                          │
+              │  Lane: [LANE-K]                          │
+              │  Latency: ≤ 60s (8 rounds full)          │
+              │  Cache: empathy.json + iterative_        │
+              │         trajectory.json                  │
+              └──────────────────┬───────────────────────┘
+                                 ▼
+              ┌──────────────────────────────────────────┐
+              │  STAGE 4 — POLISH (optional)             │
+              │  Anthropic Claude Opus 4.7               │
+              │                                          │
+              │  ONE call. ~100-word literary polish     │
+              │  pass over best_paragraph.               │
+              │  CUT-LINE — drop first if behind.        │
+              │  K2 best_paragraph ships as-is on cut.   │
+              │                                          │
+              │  Lane: [LANE-O]                          │
+              │  Latency: ≤ 5s                           │
+              └──────────────────┬───────────────────────┘
+                                 ▼
+              ┌──────────────────────────────────────────┐
+              │  STAGE 5 — FALSIFICATION (proxy)         │
+              │  Embedding proxy stand-in for TRIBE      │
+              │  forward (no live TRIBE).                │
+              │                                          │
+              │  embed_text(paragraph)  → 384-dim         │
+              │   (sentence-transformers/all-MiniLM-L6   │
+              │    -v2; CPU; ~50ms; lazy singleton)      │
+              │  project_to_yeo7(emb)   → 7-dim          │
+              │   via W matrix (384 × 7) fit offline     │
+              │   from training_pairs.yaml               │
+              │  activity_target_vector(activity.json)   │
+              │                         → 7-dim mean     │
+              │                                          │
+              │  similarity = cos(projected, target)     │
+              │  control_score = cos(projected, control_ │
+              │                       activity.json)     │
+              │  delta = similarity − control_score      │
+              │  verdict = "anchored" if delta > 0.40    │
+              │            else "generic_plausible"      │
+              │                                          │
+              │  Lane: [LANE-J]                          │
+              │  Latency: ≤ 200ms                        │
+              │  Cache: falsification.json               │
+              └──────────────────┬───────────────────────┘
+                                 ▼
+              ┌──────────────────────────────────────────┐
+              │  EMPATHY-LAYER DOCUMENT (frontend)       │
+              │                                          │
+              │  §A Vision Report (Stage 1A)             │
+              │  §B Empathy Paragraph (Stage 4 if        │
+              │     present, else Stage 3 best)          │
+              │     + brain-pattern similarity readout   │
+              │  §C Falsification Evidence (Stage 5)     │
+              │     + per-region attribution (Stage 3)   │
+              │     + round trajectory (collapsed)       │
+              │                                          │
+              │  PersonaShell variant:                   │
+              │   workplace (ironside)                   │
+              │   consumer  (twitter / listenlabs)       │
+              │   pavilion  (judge-facing)               │
+              │                                          │
+              │  Lane: [LANE-O] frontend +               │
+              │        [LANE-E] design                   │
+              └──────────────────────────────────────────┘
 ```
 
-**End-to-end live latency budget:** ~104s nominal. Targets per stage: Stage 1 ≤ 10s, TRIBE reverse 20-30s (pre-cache mandatory), Stage 2 + iterative loop ~60s (or shorten to 5 rounds for ~35s), Falsification ≤ 3s, Document render ≤ 1s. **Per-component pre-cache fallback per Stream B (orchestration glue) ensures 90s demo always lands.**
+**Pre-warmup contract (the brain-3D-interaction lock).** On `POST /demo/match`,
+a `BackgroundTask` (`services/warmup.py:warmup_clip`) pre-bakes every Layer 1 cache
+file: `vision_report.json`, `swarm_readings.json`, `k2_region_cache.json` (all 7
+networks × N seconds for instant /demo/k2-region clicks), and `empathy.json` (which
+includes `iterative_trajectory` and `falsification` payloads). Frontend polls
+`/demo/warmup-status/{clip_id}` until `ready: true`, then transitions Loading →
+Main. Subsequent UI interactions read from the in-process `SESSION_CACHE` dict
+(O(1) memory) → disk cache → cold compute, in that order. **Brain-3D clicks never
+block on a live LLM call.**
+
+**End-to-end latency budget (post-warmup):** all reads are O(1) — disk or memory.
+Cold warmup: Stage 1A ≤ 10s, Stage 1B ≤ 8s, k2_region_cache pre-bake ~35s with
+`asyncio.Semaphore(6)`, Stage 2+3 iterative ≤ 60s (8 rounds), Stage 5 ≤ 200ms.
+Total cold warmup ≈ 90-110s per clip. Saturday 8 AM pre-cache freeze runs warmup
+once and commits the JSON files to repo, so demo-day warmup is just disk reads.
 
 ---
 
@@ -336,76 +339,102 @@ For Emilie (Packaging + UI lane) → §3, §11 (output document UI), §12 (demo 
 **Auth:** Use Johnny's OpenRouter API key.
 **Risk flag (sub-agent C):** Fix the "Qwen 3.5" naming bug in all docs — referencing the wrong model ID will cause 404s.
 
-### 4.2 Stage 2 — Empathy Synthesis
+### 4.2 Stage 2 — Empathy Synthesis (v2: K2 moderator)
 
-**Tool:** Anthropic Claude Opus 4.7
-**Cost:** $5 input / $25 output per M tokens (new tokenizer +35% bloat applied)
-**Why:** Depth synthesis (per Decision 008 — Opus is the depth layer K2 explicitly is NOT). Johnny's verbatim: *"For the like the processing of the reasoning we can probably throw in your Anthropic. Use like a one Opus 4.7 call just to like summarize right? And then that way we can like balance the cost."*
-**API surface:** Anthropic API (Messages API, vision-capable but vision is unused — Stage 1 handles vision).
-**Auth:** Use Johnny's Anthropic API key.
+**Tool:** Cerebras K2 Think (moderator role; same surface as Stage 1B and Stage 3 evaluator)
+**Cost:** Free (sponsor-eligible IFM K2 CORE track).
+**Why (v2 change):** Stage 2 used to run on Opus 4.7. Two reasons we swapped to K2: (a) the iterative loop fires Stage 2 once per round — Opus latency × 8 rounds was the budget killer; (b) K2 already wrote the per-region readings in Stage 1B, so the moderator role keeps the surface coherent. Opus is now reserved for Stage 4 polish only.
+**Prompt:** `backend/prompts/moderator_synthesis.md`
+**Code:** `backend/services/empathy_synthesis.py:synthesize`
+**Inputs:** `vision_report` (Stage 1A) + `swarm_readings` (Stage 1B) + (rounds ≥ 2) `prior_score` + `per_region_miss`.
+**Output:** ONE candidate paragraph (string, 150-300 words). Forbidden-claim guardrails (§5) enforced via `services.guardrails.pass_guardrail_pre_flight` with one-shot retry on FAIL.
 
-### 4.3 Iterative-Loop Orchestration
+### 4.2b Stage 4 — Optional Polish (the only place Opus 4.7 runs)
+
+**Tool:** Anthropic Claude Opus 4.7 (`claude-opus-4-7`)
+**Cost:** $5 in / $25 out per M tokens (+35% tokenizer bloat).
+**Role:** ~100-word literary polish over the K2 best paragraph. Cut-line cherry — first to drop if behind 8 PM Saturday. K2's `best_paragraph` ships as-is when polish is cut.
+**Latency:** ≤5s.
+
+### 4.3 K2 Think — three roles on one surface (v2)
 
 **Tool:** Cerebras K2 Think
-**Speed:** **~2000 tok/s** (sub-agent C corrected from previously-claimed ~1300 tok/s — actual benchmark per Cerebras press release)
+**Speed:** ~2000 tok/s
 **API surface:** OpenAI-compatible chat-completions at `https://api.k2think.ai/v1`
-**Auth:** Bearer `<K2THINK_API_KEY>` (Jacob has this)
-**Why:** Sub-1s loop controller. Per-region specialist agent fan-out + iterative-loop scoring orchestration. K2 IS the speed layer that makes the iterative loop fit consumer-product latency. **Sponsor-eligible** (IFM K2 CORE track).
-**Integration template:** `asyncio.Semaphore(6)` + Pydantic strict + brace-balanced JSON extractor + 3-attempt retry + 120s timeout. Per `research/wiki/tools/k2-think.md` integration template.
+**Auth:** Bearer `<K2THINK_API_KEY>`
 
-### 4.4 Brain-Encoding Engine
+In v2, K2 plays **three roles** on the same surface (see §3 architecture diagram for placement):
 
-**Tool:** Meta TRIBE V2
+1. **Stage 1B — Per-region specialists.** 7 parallel calls (one per Yeo7 network) read `activity.json` aggregates and emit `(reading, confidence, cite)` per region. Code: `services/swarm_runner.py:run_swarm`.
+2. **Stage 2 — Moderator.** ONE call combines vision + swarm readings (+ prior_score / per_region_miss on rounds ≥ 2) into a candidate paragraph. Code: `services/empathy_synthesis.py:synthesize`.
+3. **Stage 3 — Evaluator swarm.** Per round, 7 parallel evaluator calls — one per network — rate the candidate paragraph. Each emits a 0..1 score + 1-sentence justification. Mean = round_score. Plateau exit on |Δ|<0.02 over 2 consecutive rounds OR round 8. Code: `services/iterative_loop.py:run_iterative_loop`.
+
+**Concurrency:** `asyncio.gather(*calls)` for the 7-call swarms (no semaphore needed inside one stage). Cross-stage `asyncio.Semaphore(6)` only inside the warmup task (`services/warmup.py`) when pre-baking the 7 × N k2_region_cache grid for instant brain-3D clicks.
+
+### 4.4 Brain-Encoding Engine — PRE-RENDERED ONLY (v2)
+
+**Tool:** Meta TRIBE V2 (offline only — never runs live in this build)
 **Availability:** `facebookresearch/tribev2` on GitHub + `facebook/tribev2` on HuggingFace
 **License:** CC-BY-NC-4.0 (attribution required; non-commercial; **hackathon-safe**)
-**Specs:** ~20,000 cortical-surface vertices on fsaverage5 mesh; trained on ~25 deeply-scanned subjects (~451.6 hours fMRI); 1Hz temporal resolution; 5s HRF lag (structural floor — sub-second prediction impossible)
-**OOD degradation (per canonical reference):** 0.32 → 0.17 score collapse on cartoons / silent film. **Construction footage is OOD; expect degraded performance.**
-**Forward-direction text-input scoring:** Confirmed working (per Johnny's prior Clair de Lune work — 90.4% emotion-center match achieved via iterative loop on text input).
-**Live GPU latency:** Risky for demo-day. **Pre-cache offline mandatory** per sub-agent C. Bake all demo-input brain JSON Saturday 8 AM.
-**Forbidden claims (load-bearing):** No reverse inference. No clinical claims. No sub-second predictions. No inflated numbers (~20K vertices / ~25 subjects only). Within-subject contrast only.
+**Specs:** ~20,000 cortical-surface vertices on fsaverage5 mesh; trained on ~25 deeply-scanned subjects (~451.6 hours fMRI); 1Hz temporal resolution; 5s HRF lag.
 
-### 4.5 Prompt Registry (the hot-swap mechanism)
+**v2 rule:** TRIBE V2 was used offline to produce `backend/prerendered/<clip>/activity.json` for each demo clip. The runtime never invokes TRIBE in any direction. The `activity.json` files on disk are the canonical brain-data artifact.
+
+**The forward-direction iterative-loop scoring** (the load-bearing piece in v1.0) is replaced by TWO mechanisms:
+- **Semantic scoring** — K2-swarm-as-evaluator (§4.3 role 3) produces real per-region scores from each region's specialist's read on the candidate paragraph. This is what climbs the BEAT-3 score bar.
+- **Numerical falsification** — sentence-transformer embedding proxy (§4.4b) produces real cosine similarity numbers for §C of the empathy document.
+
+**Forbidden claims (load-bearing — unchanged from v1):** No reverse inference. No clinical claims. No sub-second predictions. No inflated numbers (~20K vertices / ~25 subjects only). Within-subject contrast only.
+
+### 4.4b Embedding Proxy (Stage 5 — v2 only)
+
+**Tool:** `sentence-transformers/all-MiniLM-L6-v2` (CPU, lazy singleton)
+**Code:** `backend/services/embedding_proxy/__init__.py` + `services/falsification.py`
+**Projection map:** 384 × 7 matrix `W` saved to `backend/services/embedding_proxy/projection_map.npy`, fit once via `np.linalg.lstsq` on 10 hand-paired (paragraph, per-network mean activation) examples in `training_pairs.yaml`. Re-fit script: `backend/scripts/fit_projection_map.py`.
+**Math:**
+```
+similarity     = cos(emb @ W, mean(activity.frames[*].regions))
+control_score  = cos(emb @ W, mean(control_activity.frames[*].regions))
+delta          = similarity − control_score
+verdict        = "anchored" if delta > 0.40 else "generic_plausible"
+```
+**Why:** stand-in for live TRIBE forward inference. Deterministic, ~50ms per call, no GPU. Real numbers — not hand-baked. The "anchored" threshold (0.40) inherits from v1.0; recalibrate Saturday 4 AM after smoke #7 if the proxy's score distribution differs materially from TRIBE's.
+
+### 4.5 Prompt Registry — simplified in v2
+
+The per-scenario specialist-roster swap is collapsed in v2: both scenarios run the same 7 Yeo7-network swarm (`backend/prompts/{visual,somatomotor,dorsal_attention,ventral_attention,limbic,frontoparietal,default_mode}.md`). Scenario-specific tuning lives only in the moderator + the frontend persona shell.
+
+The runtime "registry" reduces to:
 
 ```python
-# Per-scenario configuration; runtime-swappable
-PROMPT_REGISTRY = {
-    "ironsight_workplace": {
-        "stage_1_vision_prompt": IRONSIGHT_VISION_PROMPT,  # workplace context
-        "stage_2_synthesis_prompt": WORKPLACE_EMPATHY_SYNTHESIS_PROMPT,
-        "specialist_roster": [
-            "visual_attention", "threat_detection", "spatial_mapping",
-            "motor_planning", "salience_tracking", "prefrontal_engagement",
-            "default_mode", "stress_response"
-        ],
-        "output_renderer": "workplace_boss_facing",
-        "control_video_for_falsification": "workplace_routine_baseline.mp4",
+SCENARIO_CONFIG = {
+    "ironside": {
+        "control_clip_id":    "workplace_routine_baseline",
+        "persona_render_mode":"workplace",   # frontend PersonaShell variant
     },
-    "listenlabs_sideshift_consumer": {
-        "stage_1_vision_prompt": CONSUMER_VISION_PROMPT,  # Reels/TikTok context
-        "stage_2_synthesis_prompt": CONSUMER_EMPATHY_SYNTHESIS_PROMPT,
-        "specialist_roster": [
-            "visual_attention", "emotional_processing", "prefrontal_engagement",
-            "default_mode", "social_pattern", "salience_tracking",
-            "memory_recall", "language_region"
-        ],
-        "output_renderer": "consumer_user_facing",
-        "control_video_for_falsification": "curated_short_film_baseline.mp4",
+    "consumer": {
+        "control_clip_id":    "curated_short_film_baseline",
+        "persona_render_mode":"consumer",
     },
-    # Future scenarios slot here; engine binary unchanged
 }
 ```
 
-**Lane owner:** [LANE-O] Johnny owns the registry definition; prompts split across Johnny + Emilie for per-persona language refinement.
+Scenario tagging is stored in `backend/prerendered/<clip_id>/scenario.json` and read by `main.py:_load_scenario`. Surfaced to the frontend in `/demo/match` and `/demo/clips` responses.
 
-### 4.6 Total Demo Cost Estimate
+The 7 specialist prompts plus the two new prompts (`moderator_synthesis.md`, `evaluator_score.md`) are scenario-agnostic — they work on any activity.json + any candidate paragraph.
 
-**Per 90s demo execution:** ~$0.03 (sub-agent C estimate). Breakdown:
-- Stage 1 Qwen3-VL call: ~$0.01
-- Stage 2 Opus 4.7 calls (8 rounds × ~250 tokens output): ~$0.02
-- TRIBE V2 inference: free (local GPU or pre-cached)
-- K2 Think iterative-loop orchestration: free (Cerebras sponsored)
+**Lane owner:** [LANE-O] for `vision_client.py` + frontend persona render; [LANE-K] for moderator + evaluator prompts.
 
-**Demo-day budget:** even with 50 demo runs across pavilion judging, total cost ~$1.50. Negligible.
+### 4.6 Total Demo Cost Estimate (v2)
+
+**Per 90s demo execution:** ≈ $0.02. Breakdown:
+- Stage 1A Qwen3-VL call: ~$0.01
+- Stage 4 Opus 4.7 polish (single ~150-token call, optional): ~$0.01
+- Stage 1B / Stage 2 / Stage 3 K2 calls: free (Cerebras-sponsored)
+- TRIBE V2: free (pre-rendered, no live inference)
+- Stage 5 embedding-proxy falsification: free (CPU)
+
+**Demo-day budget:** even with 50 demo runs across pavilion judging, total cost ≈ $1.00. Negligible. Once `/demo/match` warmup commits the cache JSON, subsequent demo runs cost $0 (disk reads only).
 
 ---
 
@@ -974,7 +1003,16 @@ Demo runs Saturday-8AM-pre-baked assets primarily. Live attempt runs in backgrou
 
 - Adaptation 2 + SynthDebate would add 100-agent population sim on top of iterative loop
 - 100K-token sim only fits at K2 speed
-- **Resolution:** SCOPED OUT for v1. The iterative-scoring loop IS the simulation per Listen Labs's six questions. SynthDebate becomes verbal-only mention in pitch + future-product roadmap.
+- **Resolution (v1):** SCOPED OUT for v1. The iterative-scoring loop IS the simulation per Listen Labs's six questions.
+- **v2 confirmation 2026-04-25 evening:** SynthDebate remains scoped out. The K2-swarm-as-evaluator iterative loop is the only simulation we ship. Verbal mention in pitch + future-product roadmap stays.
+
+### Q8. TRIBE forward replaced by what? (NEW in v2 — RESOLVED)
+
+- v1.0 architecture relied on TRIBE V2 forward-direction inference for two purposes: (a) per-round iterative-loop scoring; (b) falsification-check cosine similarity.
+- v2 lock: live TRIBE never runs. Replacements:
+  - (a) **K2-swarm-as-evaluator** — `services/iterative_loop.py:evaluate_paragraph`. Each Yeo7 network's K2 specialist scores how faithfully the candidate paragraph captured its reading. Mean of 7 = round_score. Real, semantic, deterministic-ish (K2 temp variability bounded by short prompts).
+  - (b) **Embedding proxy** — `services/embedding_proxy/__init__.py`. all-MiniLM-L6-v2 → 384-dim → 7-dim via projection W (fit offline from training_pairs.yaml). Cosine vs activity target. Real numbers, ~50ms, CPU.
+- **Honesty framing for hostile judges:** "the iterative loop is brain-grounded via the K2 specialists reading per-region activations; falsification numbers come from a sentence-embedding proxy that we calibrated against the activations. Live TRIBE forward is the production path; the proxy is the demo-day stand-in."
 
 ### Q5. T2 (Auditor's external referent)
 
@@ -995,6 +1033,8 @@ Demo runs Saturday-8AM-pre-baked assets primarily. Live attempt runs in backgrou
 
 ## §18. References
 
+- **`caltech/build-plan-locked.md`** — v2 build plan with file-level lane assignments, contracts, and the cache + warmup spec (companion to this PRD post-2026-04-25 evening lock).
+- **`caltech/architecture-overview.md`** — v2 cohesive overview (reader-facing standalone document; same architecture as this doc but framed for newcomers).
 - `_bmad-output/planning-artifacts/ironsight-listenlabs-prd.md` — strategic PRD (companion)
 - `caltech/use-cases/empathy-layer-prd-simplified.md` — build-clarity simplified version
 - `caltech/use-cases/empathy-layer-hero-output.md` — hero-output strategic framing
@@ -1023,12 +1063,15 @@ Demo runs Saturday-8AM-pre-baked assets primarily. Live attempt runs in backgrou
 
 ## §19. Workflow Status
 
-**Technical PRD complete.** All 60 functional requirements split across 4 execution lanes. All 40 non-functional requirements specified. All 8 smoke-test gates defined with thresholds + fallbacks. Per-lane build checklists ready for parallel execution. Critical-path timeline locked.
+**v1.0 (2026-04-25 morning):** Technical PRD complete with 60 FRs / 40 NFRs / 8 smoke gates. Locked for parallel execution.
 
-**Ready for parallel execution:**
-- LANE-J: Junsoo can begin TRIBE V2 reverse + forward pipeline build immediately
-- LANE-K: Jacob can begin K2 + iterative-loop orchestration build immediately
-- LANE-O: Johnny can begin Stage 1 + Stage 2 + frontend integration build immediately
-- LANE-E: Emilie can begin packaging + UI + cinematic shoot immediately
+**v2 (2026-04-25 evening) — what actually shipped:**
+
+- LANE-J: TRIBE forward DROPPED. Embedding proxy + falsification + scenario tags + control activity.json bake delivered (`services/embedding_proxy/`, `services/falsification.py`, `scripts/fit_projection_map.py`).
+- LANE-K: K2 swarm runner + K2 moderator empathy synthesis + K2-swarm-as-evaluator iterative loop + cache + warmup + guardrails delivered (`services/swarm_runner.py`, `empathy_synthesis.py`, `iterative_loop.py`, `session_cache.py`, `warmup.py`, `guardrails.py`, plus `prompts/moderator_synthesis.md`, `prompts/evaluator_score.md`).
+- LANE-O: `services/vision_client.py` rewritten for OpenRouter + Qwen3-VL. Frontend 5-stage routing in place (`App.vue`, `IterativeRevealStage.vue`, `EmpathyDocumentStage.vue`, `RoundScoreBar.vue`, `PersonaShell.vue`, `LoadingStage.vue` warmup-gated). New endpoints wired in `main.py`: `/demo/empathy`, `/demo/iterative-trajectory`, `/demo/falsification`, `/demo/warmup-status`. Old `/demo/comparison` removed. Committed as `78e6c9e` to `origin/main`.
+- LANE-E: in progress (Saturday morning).
+
+**Companion docs current as of 2026-04-25 evening:** `caltech/build-plan-locked.md`, `caltech/architecture-overview.md` (v2 sections marked).
 
 **Humans are not machines. The empathy layer is what AI gives back when AI augments management decisions instead of replacing them.**

@@ -235,16 +235,31 @@ The **Empathy Layer Engine** is a single AI pipeline that takes a video of a hum
 
            ┌──────────────────────────────────────────────────────────────────┐
            │                                                                  │
-           │   STAGE 4 — POLISH (optional, cut-line)                          │
+           │   STAGE 4 — POLISH (optional, cut-line; gated OPUS_POLISH=1)     │
            │                                                                  │
            │  TOOL: Anthropic Claude Opus 4.7  (claude-opus-4-7)              │
+           │  IMPL: backend/services/empathy_polish.py (single Anthropic      │
+           │        Messages API call; ~140 output tokens; ≤5s timeout)      │
+           │  PROMPT: backend/prompts/empathy_polish.md                       │
            │  ROLE: ~100-word literary polish over Stage 3's best paragraph.  │
            │                                                                  │
-           │  This is the ONLY place Opus runs in v2. If the team is behind   │
-           │  schedule at 8 PM Saturday, Stage 4 is the FIRST cut. K2's       │
-           │  best_paragraph ships as-is.                                     │
+           │  This is the ONLY place Opus runs in v2.                         │
+           │  ENV-FLAG GATE:                                                  │
+           │   OPUS_POLISH=1 → polish runs once per clip in warmup, post-     │
+           │                   loop, off the live read path.                  │
+           │   OPUS_POLISH=0 → polish is skipped at runtime; the JSON shape   │
+           │   (default)      is preserved with polished_paragraph: null.    │
+           │  Cut-line at 8 PM Saturday is implemented as OPUS_POLISH=0       │
+           │  re-bake of the cache JSON — NOT a code rollback.                │
            │                                                                  │
-           │  LATENCY: ≤ 5s                                                   │
+           │  FALLBACK CONTRACT (no-silent-stub rule):                        │
+           │   - Empty input → polish_status="cut", no API call.              │
+           │   - Guardrail post-flight violation → drop polished, log         │
+           │     `opus_polish_unavailable`, ship K2 best_paragraph as-is.     │
+           │   - Any failure (network/401/5xx/timeout/parse) → same as above. │
+           │   Frontend already prefers polished_paragraph || best_paragraph. │
+           │                                                                  │
+           │  LATENCY: ≤ 5s; runs in warmup BackgroundTask, not the live path.│
            │                                                                  │
            └────────────────────────────────┬─────────────────────────────────┘
                                             │
@@ -459,7 +474,7 @@ The warmup task lives in `backend/services/warmup.py:warmup_clip` and is trigger
 | **Stage 1A — Vision** | Qwen3-VL via OpenRouter | `qwen/qwen3-vl-235b-a22b-instruct` | $0.20 in / $0.88 out per M tokens | Beats GPT-5 on OCR; competitive vision; Anthropic vision is reportedly weaker per Johnny. |
 | **TRIBE V2 — Brain encoding** | Meta TRIBE V2 (PRE-RENDERED) | activity.json on disk; baked offline | Free (CC-BY-NC-4.0; non-commercial; attribution required) | Live inference is dropped from v2. activity.json files are the canonical artifact. |
 | **Stage 1B / Stage 2 / Stage 3 — K2 (3 roles)** | Cerebras K2 Think | `https://api.k2think.ai/v1` (OpenAI-compatible chat-completions) | Free (sponsor-eligible; IFM K2 CORE track) | ~2000 tok/s. Three roles on the same surface: per-region specialists (Stage 1B), moderator synthesis (Stage 2), per-region evaluators (Stage 3 iterative loop). `asyncio.Semaphore(6)` gates the Stage 3 evaluator fan-out. |
-| **Stage 4 — Polish (optional)** | Anthropic Claude Opus 4.7 | `claude-opus-4-7` (Messages API) | $5 in / $25 out per M tokens (+35% tokenizer bloat) | ~100-word literary polish over the K2 best paragraph. Cut-line; first to drop if behind. |
+| **Stage 4 — Polish (optional, gated `OPUS_POLISH=1`)** | Anthropic Claude Opus 4.7 | `claude-opus-4-7` (Messages API) | $5 in / $25 out per M tokens (+35% tokenizer bloat) | ~100-word literary polish over the K2 best paragraph. Implementation: `backend/services/empathy_polish.py`. Cut-line; first to drop if behind 8 PM Saturday — flip `OPUS_POLISH=0` and re-bake the cache JSON (frontend already falls back to `best_paragraph`); no code rollback required. K2-best fallback on any failure (logger.error + structured `opus_polish_unavailable` event). |
 | **Stage 5 — Falsification proxy** | sentence-transformers/all-MiniLM-L6-v2 | local CPU; 384-dim | Free | Sentence-embedding stand-in for live TRIBE forward. Lazy singleton; ~50ms per call. Projection W (384 × 7) fit offline from `training_pairs.yaml`. |
 | **Frontend** | Vue 3 `<script setup>` + Three.js | (browser-side rendering) | Free | 3D cortical mesh + iterative-loop visualization at ≥30 FPS on demo laptop. PersonaShell wrapper switches workplace/consumer accent treatment. |
 

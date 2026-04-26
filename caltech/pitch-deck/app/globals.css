@@ -1,0 +1,403 @@
+@import "tailwindcss";
+
+:root {
+  /* HackTech register fused with Clay design tokens (DESIGN.md).
+     We keep our cortical-mesh activation gradient for brain visuals; everything
+     else aligns to Clay's warm-cream + clay-black + blueberry + warm neutrals. */
+
+  /* Clay-named tokens (canonical) */
+  --clay-black: #000000;
+  --pure-white: #ffffff;
+  --warm-cream: #faf9f7;
+  --warm-silver: #9f9b93;
+  --warm-charcoal: #55534e;
+  --border-light: #eee9df;
+  --oat-border: #dad4c8;
+  --blueberry-800: #01418d;
+  --blueberry-600: #0a5dbf;
+  --blueberry-300: #6da6e8;
+
+  /* Legacy aliases — slides reference these. Mapped to Clay-aligned values. */
+  --ivory: var(--warm-cream);
+  --ivory-hi: var(--pure-white);
+  --ivory-deep: var(--border-light);
+  --ink: var(--clay-black);
+  --smoke: var(--warm-charcoal);
+  --mute: var(--warm-silver);
+  --sepia: var(--warm-charcoal);
+  --accent: var(--blueberry-800);
+  --accent-deep: #012e63;
+  --accent-soft: var(--blueberry-300);
+  --olive: var(--accent);
+  --olive-deep: var(--accent-deep);
+  --tan: var(--accent);
+  --clay: var(--accent-soft);
+
+  /* Cortical activation gradient stops — kept for the brain visuals.
+     Cool stop now anchors to blueberry-800 to align with brand accent. */
+  --activation-cool: var(--blueberry-800);
+  --activation-warm: #c44569;
+  --activation-hot: #f5a142;
+
+  /* Pomegranate accent (NAY column on the YEA/NAY rubric) */
+  --red: #fc7981;
+  --red-soft: #ff9aa1;
+
+  /* Hairline border + surface tokens */
+  --hair: var(--border-light);
+  --hair-strong: var(--oat-border);
+
+  /* ─── Clay radius scale ─── */
+  --r-sharp: 4px;
+  --r-standard: 8px;
+  --r-card: 12px;
+  --r-feature: 24px;
+  --r-section: 40px;
+  --r-pill: 9999px;
+
+  /* ─── Clay elevation ─── */
+  --elev-0: none;
+  --elev-1:
+    rgba(0, 0, 0, 0.10) 0px 1px 1px,
+    rgba(0, 0, 0, 0.04) 0px -1px 1px inset,
+    rgba(0, 0, 0, 0.05) 0px -0.5px 1px;
+  --focus-ring: rgb(20, 110, 245) solid 2px;
+}
+
+@theme inline {
+  --color-ivory: var(--ivory);
+  --color-ivory-hi: var(--ivory-hi);
+  --color-ivory-deep: var(--ivory-deep);
+  --color-ink: var(--ink);
+  --color-smoke: var(--smoke);
+  --color-mute: var(--mute);
+  --color-sepia: var(--sepia);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-soft: var(--accent-soft);
+  --color-olive: var(--accent);
+  --color-tan: var(--accent);
+  --color-clay: var(--accent-soft);
+  --color-red: var(--red);
+  --color-warm-cream: var(--warm-cream);
+  --color-warm-silver: var(--warm-silver);
+  --color-warm-charcoal: var(--warm-charcoal);
+  --color-border-light: var(--border-light);
+  --color-oat-border: var(--oat-border);
+  --color-blueberry-800: var(--blueberry-800);
+  --font-mono: var(--font-mono);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+}
+
+html,
+body {
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-feature-settings: "ss01", "ss02", "liga";
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100dvh;
+  /* Clay register: flat warm-cream canvas. No texture. */
+  background: var(--warm-cream);
+}
+
+.deck {
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+  height: 100dvh;
+}
+
+.deck > section {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: 100dvh;
+}
+
+/* ============================================================
+   Typography utilities
+   ============================================================ */
+
+.mono {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-feature-settings: "ss01", "ss02", "zero";
+}
+
+.sans {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+.serif {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-feature-settings: "ss01", "zero";
+  letter-spacing: -0.01em;
+}
+
+.display-mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  letter-spacing: -0.055em;
+  font-weight: 400;
+}
+
+.display-sans {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  letter-spacing: -0.045em;
+  font-weight: 500;
+}
+
+/* Roboto display — Clay-aligned tight tracking for billboard headlines.
+   Use on slides where data clarity beats lowercase-mono identity. */
+.display-roboto {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* ============================================================
+   Clay surfaces — radius scale + Level 1 elevation
+   ============================================================ */
+
+.surface-card {
+  background: var(--pure-white);
+  border: 1px solid var(--oat-border);
+  border-radius: var(--r-card);
+  box-shadow: var(--elev-1);
+}
+
+.surface-card-feature {
+  background: var(--pure-white);
+  border: 1px solid var(--oat-border);
+  border-radius: var(--r-feature);
+  box-shadow: var(--elev-1);
+}
+
+.surface-card-dashed {
+  background: transparent;
+  border: 1px dashed var(--oat-border);
+  border-radius: var(--r-card);
+}
+
+.surface-section {
+  border-radius: var(--r-section);
+}
+
+/* Clay button variants — restrained set (no rotateZ playfulness; clean register).
+   Kept the focus ring + clay shadow + hover lift. */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--r-card);
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.16px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 180ms ease;
+  outline: none;
+}
+
+.btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: var(--clay-black);
+  color: var(--pure-white);
+  border: 1px solid var(--clay-black);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: rgb(0, 0, 0) -3px 3px;
+}
+
+.btn-white {
+  background: var(--pure-white);
+  color: var(--clay-black);
+  border: 1px solid var(--oat-border);
+  box-shadow: var(--elev-1);
+}
+
+.btn-white:hover {
+  transform: translateY(-2px);
+  box-shadow: rgb(0, 0, 0) -3px 3px;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--clay-black);
+  border: 1px solid var(--warm-silver);
+  border-radius: var(--r-sharp);
+}
+
+.btn-ghost:hover {
+  background: var(--blueberry-800);
+  color: var(--pure-white);
+  border-color: var(--blueberry-800);
+}
+
+.btn-pill {
+  border-radius: var(--r-pill);
+  padding: 8px 20px;
+}
+
+/* Clay form control */
+.input {
+  background: var(--pure-white);
+  border: 1px solid var(--warm-silver);
+  border-radius: var(--r-sharp);
+  padding: 8px 12px;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 16px;
+  color: var(--clay-black);
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.input:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Uppercase wayfinding label — Clay's 12px / 1.08px tracking system */
+.label-cap {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 1.08px;
+  text-transform: uppercase;
+}
+
+.kicker {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+.numeral {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.07em;
+  font-weight: 400;
+}
+
+/* `.grad` is now a solid accent color — no gradient text on large headers.
+   Left as a class so existing markup continues to read as "accent phrase". */
+.grad {
+  color: var(--accent);
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+}
+
+.grad-deep {
+  color: var(--accent-deep);
+}
+
+.grad-sub {
+  color: var(--accent-soft);
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.hairline {
+  font-weight: 300;
+  letter-spacing: 0.01em;
+}
+
+.muted {
+  color: var(--mute);
+}
+
+.smoke {
+  color: var(--smoke);
+}
+
+.ink {
+  color: var(--ink);
+}
+
+/* ============================================================
+   Micro-interactions
+   ============================================================ */
+
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.4); opacity: 0.3; }
+}
+
+.red-dot::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid var(--red-soft);
+  opacity: 0.45;
+  animation: pulseDot 2.4s ease-in-out infinite;
+}
+
+@keyframes wheelTick {
+  0% { transform: translateY(0); opacity: 1; }
+  70% { transform: translateY(9px); opacity: 0.2; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.wheel-tick {
+  animation: wheelTick 1.8s ease-in-out infinite;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.enter {
+  opacity: 0;
+  animation: fadeUp 1000ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.enter-delay-1 { animation-delay: 120ms; }
+.enter-delay-2 { animation-delay: 220ms; }
+.enter-delay-3 { animation-delay: 320ms; }
+
+/* ============================================================
+   Selection + chrome
+   ============================================================ */
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--ink);
+}
+
+.deck::-webkit-scrollbar { width: 0; }
+.deck { scrollbar-width: none; }
+
+.rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--hair-strong), transparent);
+}
+
+.hair {
+  border-color: var(--hair);
+}

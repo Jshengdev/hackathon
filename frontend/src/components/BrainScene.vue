@@ -36,11 +36,6 @@ const props = defineProps({
 
   // Whether clicks on regions should emit
   interactive:  { type: Boolean, default: true },
-
-  // K2 swarm readings keyed by network — when a reading mentions "high",
-  // that network's swarm-net edges fire faster, brighter, and arc further.
-  // Shape: { visual: { state, text, confidence, ... }, ... }
-  swarmReadings: { type: Object, default: null },
 })
 
 const emit = defineEmits(['region-clicked', 'mesh-ready'])
@@ -48,10 +43,6 @@ const emit = defineEmits(['region-clicked', 'mesh-ready'])
 // ── Reactive UI state ──────────────────────────────────────────────────────
 const container = ref(null)
 const topRegion = ref('')
-
-// Networks whose K2 reading contains "high" — drives boosted firing schedule
-// + larger arc lift + brighter color in updateSwarmNetwork below.
-const boostedSet = ref(new Set())
 
 // Mesh networks (exposed to parent via mesh-ready emit)
 const meshNetworks = shallowRef(null)
@@ -858,13 +849,13 @@ function animate() {
       }
       updateAgentEdges()
       updateRegionEdges(levels)
-      updateSwarmNetwork(now, dt)
+      updateSwarmNetwork(now, dt, levels)
       topRegion.value = (alpha < 0.5 ? f0.top_region : f1.top_region) || ''
     }
   } else {
     // No activity yet — still tick the swarm so it's always alive on stage.
     updateAgentEdges()
-    updateSwarmNetwork(now, dt)
+    updateSwarmNetwork(now, dt, {})
   }
 
   renderer.render(scene, camera)
@@ -987,7 +978,7 @@ function initSwarmNetPairs() {
   }
 }
 
-function updateSwarmNetwork(now, dt) {
+function updateSwarmNetwork(now, dt, levels) {
   if (!swarmNetEdgeLines) return
   if (swarmNetPairs.length === 0) initSwarmNetPairs()
   if (swarmNetPairs.length === 0) return
@@ -995,19 +986,27 @@ function updateSwarmNetwork(now, dt) {
   const positions = swarmNetEdgeLines.geometry.attributes.position.array
   const colors    = swarmNetEdgeLines.geometry.attributes.color.array
   const decay = Math.exp(-SWARM_NET_DECAY_PER_MS * dt)
-  const boosted = boostedSet.value
 
   let segOffset = 0
   for (const pair of swarmNetPairs) {
-    // A pair is boosted if EITHER endpoint network had a "high" reading.
-    // Boosted pairs fire 4x more often, hold higher intensity, and arc
-    // further out beyond the brain volume.
-    const pairBoosted = boosted.has(pair.a) || boosted.has(pair.b)
-    const fireMin = pairBoosted ? SWARM_NET_FIRE_MIN_MS / 4 : SWARM_NET_FIRE_MIN_MS
-    const fireMax = pairBoosted ? SWARM_NET_FIRE_MAX_MS / 4 : SWARM_NET_FIRE_MAX_MS
+    // Continuous per-pair boost driven by the activity.json levels for the
+    // two endpoint networks. The pair's fire rate, peak intensity, and arc
+    // lift all scale with max(level_a, level_b) via a smoothstep ramp from
+    // 0.30 → 0.85. No regex, no "high" keyword — purely numeric.
+    const la = (levels && levels[pair.a]) || 0
+    const lb = (levels && levels[pair.b]) || 0
+    const lvl = la > lb ? la : lb
+    const x = Math.max(0, Math.min(1, (lvl - 0.30) / (0.85 - 0.30)))
+    const k = x * x * (3 - 2 * x)
+    const fireScale = 1.0 + (0.18 - 1.0) * k       // 1.0 → 0.18 (interval shrinks ~5.5×)
+    const peakI    = 1.0 + (1.8  - 1.0) * k
+    const liftCoef = 0.45 + (1.10 - 0.45) * k
+
+    const fireMin = SWARM_NET_FIRE_MIN_MS * fireScale
+    const fireMax = SWARM_NET_FIRE_MAX_MS * fireScale
 
     if (now >= pair.fireAt && pair.intensity < 0.05) {
-      pair.intensity = pairBoosted ? 1.6 : 1.0
+      pair.intensity = peakI
       pair.fireAt = now + fireMin + Math.random() * (fireMax - fireMin)
     } else {
       pair.intensity *= decay
@@ -1021,19 +1020,15 @@ function updateSwarmNetwork(now, dt) {
     const aCol = aMesh.mesh.material.color
     const bCol = bMesh.mesh.material.color
     const I = pair.intensity
-    // Lift coefficient — 0.45 baseline, 1.10 boosted (arc travels well past
-    // the brain volume so high-confidence connections read as "outside the
-    // cortex" loops).
-    const liftCoef = pairBoosted ? 1.10 : 0.45
 
     for (let s = 0; s < SWARM_NET_SEGMENTS; s++) {
       const t0 = s / SWARM_NET_SEGMENTS
       const t1 = (s + 1) / SWARM_NET_SEGMENTS
       const p0 = arcPoint(a, b, t0, liftCoef)
       const p1 = arcPoint(a, b, t1, liftCoef)
-      const k = (segOffset + s) * 6
-      positions[k]     = p0.x; positions[k + 1] = p0.y; positions[k + 2] = p0.z
-      positions[k + 3] = p1.x; positions[k + 4] = p1.y; positions[k + 5] = p1.z
+      const ki = (segOffset + s) * 6
+      positions[ki]     = p0.x; positions[ki + 1] = p0.y; positions[ki + 2] = p0.z
+      positions[ki + 3] = p1.x; positions[ki + 4] = p1.y; positions[ki + 5] = p1.z
 
       // Bright leading head, dim tail — head sits at t=0 on fire and slides
       // out as intensity decays, so a fresh pulse reads as "signal racing
@@ -1041,14 +1036,14 @@ function updateSwarmNetwork(now, dt) {
       const headPos = 1 - Math.min(1, I)
       const distFromHead = Math.abs(t0 - headPos)
       const headGlow = Math.pow(Math.max(0, 1 - distFromHead * 6), 2)
-      const gain = pairBoosted ? 1.7 : 1.0
+      const gain = 1.0 + 0.7 * k
       const baseT = (0.15 + headGlow * 0.85) * Math.min(1, I) * gain
       const blend = t0
       const r = (aCol.r * (1 - blend) + bCol.r * blend) * baseT
       const g = (aCol.g * (1 - blend) + bCol.g * blend) * baseT
       const bl = (aCol.b * (1 - blend) + bCol.b * blend) * baseT
-      colors[k]     = r;  colors[k + 1] = g;  colors[k + 2] = bl
-      colors[k + 3] = r;  colors[k + 4] = g;  colors[k + 5] = bl
+      colors[ki]     = r;  colors[ki + 1] = g;  colors[ki + 2] = bl
+      colors[ki + 3] = r;  colors[ki + 4] = g;  colors[ki + 5] = bl
     }
     segOffset += SWARM_NET_SEGMENTS
   }
@@ -1101,26 +1096,6 @@ watch(() => props.layout, (v) => {
     applyLayout(v)
   })
 })
-
-// Recompute boosted networks when swarmReadings prop changes. A network is
-// "boosted" if any of its reading text fields contains the word "high"
-// (case-insensitive) — that's our cue from the K2 confidence/intensity
-// language that this specialist is actively asserting strong activation.
-watch(
-  () => props.swarmReadings,
-  (sr) => {
-    const next = new Set()
-    if (sr && typeof sr === 'object') {
-      for (const [net, info] of Object.entries(sr)) {
-        if (!info) continue
-        const haystack = `${info.text || info.reading || ''} ${info.confidence || ''}`
-        if (/\bhigh\b/i.test(haystack)) next.add(net)
-      }
-    }
-    boostedSet.value = next
-  },
-  { immediate: true, deep: true },
-)
 
 // Reload the per-vertex direct slice when the clip changes (Phase 3 path).
 // 404 is expected today since no per_vertex.bin is baked yet — loadPerVertex

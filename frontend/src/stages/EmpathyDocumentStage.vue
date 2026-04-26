@@ -24,7 +24,8 @@
           <p class="paragraph">{{ empathyParagraph }}</p>
           <div class="similarity">
             brain-pattern similarity ·
-            <span class="num">{{ (finalScore ?? 0).toFixed(2) }}</span>
+            <span v-if="hasScore" class="num">{{ finalScore.toFixed(2) }}</span>
+            <span v-else class="num-failed">FAILED — score missing</span>
           </div>
         </section>
 
@@ -95,6 +96,7 @@ const empathyParagraph = computed(() =>
   empathy.value?.polished_paragraph || empathy.value?.best_paragraph || '(empathy paragraph not yet generated)'
 )
 const finalScore = computed(() => empathy.value?.final_score)
+const hasScore = computed(() => Number.isFinite(finalScore.value))
 
 const trajectory = computed(() => empathy.value?.round_trajectory || [])
 const attributionRows = computed(() => {
@@ -114,6 +116,12 @@ const verdictClass = computed(() =>
 onMounted(async () => {
   try {
     empathy.value = await fetchEmpathyDocument(props.clipId)
+    if (!Number.isFinite(empathy.value?.final_score)) {
+      console.error('[empathy] final_score missing or non-finite', {
+        clip_id: props.clipId,
+        received: empathy.value?.final_score,
+      })
+    }
   } catch (e) {
     console.error(e)
     error.value = 'could not load empathy document'
@@ -197,6 +205,17 @@ onMounted(async () => {
   color: var(--accent);
   margin-left: 8px;
   letter-spacing: 0;
+}
+.similarity .num-failed {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #ff6b6b;
+  margin-left: 8px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border: 1px solid #6a2a2a;
+  padding: 3px 8px;
+  border-radius: 3px;
 }
 
 .falsif { margin-top: 44px; }

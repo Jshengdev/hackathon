@@ -22,6 +22,8 @@
     <div class="right-pane">
       <div class="video-pane">
         <video
+          v-if="props.videoUrl"
+          v-show="!videoMissing"
           ref="videoEl"
           :src="videoSrc"
           class="video"
@@ -33,16 +35,27 @@
           @seeking="onSeeking"
           @seeked="onSeeked"
           @ended="onEnded"
+          @error="onVideoError"
         />
 
+        <!-- Placeholder when the clip has no .mp4 (e.g. brain-only clips) -->
+        <div v-if="videoMissing" class="video-missing">
+          <div class="vm-title">no video for this clip</div>
+          <div class="vm-sub">brain activity continues to play below.</div>
+        </div>
+
         <!-- Play/pause overlay -->
-        <button class="play-overlay" v-if="!hasStarted" @click="togglePlay">
+        <button
+          class="play-overlay"
+          v-if="!hasStarted && !videoMissing"
+          @click="togglePlay"
+        >
           <span class="play-icon">▶</span>
           <span class="play-label">Play clip</span>
         </button>
 
-        <!-- Bottom video bar (controls + scrubber) -->
-        <div class="video-bar">
+        <!-- Bottom video bar (controls + scrubber) — only when we have a video -->
+        <div class="video-bar" v-if="!videoMissing">
           <button class="vb-btn" @click="togglePlay">
             {{ isPlaying ? '❚❚' : '▶' }}
           </button>
@@ -123,6 +136,7 @@ import { useSwarmProgress } from '../composables/useSwarmProgress.js'
 const props = defineProps({
   clipId:       { type: String, required: true },
   activityData: { type: Object, required: true },
+  videoUrl:     { type: String, default: null },
 })
 
 defineEmits(['next'])
@@ -132,8 +146,9 @@ const currentTime = ref(0)
 const duration    = ref(0)
 const isPlaying   = ref(false)
 const hasStarted  = ref(false)
+const videoMissing = ref(!props.videoUrl)
 
-const videoSrc = computed(() => videoUrl(props.clipId))
+const videoSrc = computed(() => props.videoUrl || videoUrl(props.clipId))
 
 // ── Swarm + iterative + empathy data ───────────────────────────────────────
 const {
@@ -263,13 +278,19 @@ async function onRegionClicked(network) {
 // ── Video controls ─────────────────────────────────────────────────────────
 function togglePlay() {
   const v = videoEl.value
-  if (!v) return
+  if (!v || videoMissing.value) return
   if (v.paused) {
     v.play().catch(err => console.warn('video play blocked:', err))
     hasStarted.value = true
   } else {
     v.pause()
   }
+}
+
+function onVideoError() {
+  videoMissing.value = true
+  isPlaying.value = false
+  hasStarted.value = true
 }
 
 function onTimeUpdate() {
@@ -346,6 +367,8 @@ onMounted(() => {
 watch(() => props.clipId, (id) => {
   iterativeTrajectory.value = null
   empathyData.value = null
+  videoMissing.value = !props.videoUrl
+  hasStarted.value = false
   stopSwarmPolling()
   startSwarmPolling(id)
   loadIterativeAndEmpathy()
@@ -445,6 +468,29 @@ onBeforeUnmount(() => {
   width: 100%; height: 100%;
   object-fit: contain;
   background: #000;
+}
+
+.video-missing {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px;
+  background: #050510;
+  color: #6677aa;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: center;
+  padding: 0 24px;
+}
+.vm-title {
+  font-size: 12px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #aab4cc;
+}
+.vm-sub {
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  color: #557;
 }
 
 .play-overlay {

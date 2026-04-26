@@ -39,6 +39,7 @@ const stageIdx = computed(() => stages.indexOf(currentStage.value))
 const clipId         = ref('')
 const scenario       = ref('')
 const scenarioLabel  = ref('')
+const videoUrl       = ref(null)
 const activityData   = shallowRef(null)
 const visionReport   = shallowRef(null)
 
@@ -56,7 +57,12 @@ const stageProps = computed(() => {
     case 'loading':
       return { clipId: clipId.value }
     case 'main':
-      return { clipId: clipId.value, activityData: activityData.value, scenario: scenario.value }
+      return {
+        clipId: clipId.value,
+        activityData: activityData.value,
+        scenario: scenario.value,
+        videoUrl: videoUrl.value,
+      }
     case 'iterative-reveal':
       return { clipId: clipId.value, scenario: scenario.value }
     case 'empathy-document':
@@ -74,6 +80,7 @@ function onMatched(payload) {
   clipId.value        = payload?.clip_id      || payload?.clipId       || ''
   scenario.value      = payload?.scenario     || 'consumer'
   scenarioLabel.value = payload?.scenarioLabel|| payload?.scenario_label|| ''
+  videoUrl.value      = payload?.video_url    || payload?.videoUrl      || null
   if (!clipId.value) {
     console.warn('No clip_id in match payload', payload)
     return

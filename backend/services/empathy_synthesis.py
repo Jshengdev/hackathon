@@ -26,7 +26,7 @@ except Exception:  # pragma: no cover - fail-soft if module missing
 _PROMPTS_DIR = Path(__file__).parents[1] / "prompts"
 _SYSTEM_PROMPT_PATH = _PROMPTS_DIR / "moderator_synthesis.md"
 _MAX_TOKENS = 600
-_TIMEOUT_S = 120.0
+_TIMEOUT_S = 240.0
 
 _NETWORKS: tuple[str, ...] = (
     "visual",
@@ -186,7 +186,7 @@ async def synthesize(
     try:
         candidate = await _fire_once(system, user)
     except Exception as e:
-        return f"[empathy_synthesis error: {e}]"
+        return f"[empathy_synthesis error: {type(e).__name__}: {e}]"
 
     try:
         ok = bool(pass_guardrail_pre_flight(candidate))
@@ -197,6 +197,6 @@ async def synthesize(
         try:
             candidate = await _fire_once(system + _STRICTER_DIRECTIVE, user)
         except Exception as e:
-            return f"[empathy_synthesis retry error: {e}]"
+            return f"[empathy_synthesis retry error: {type(e).__name__}: {e}]"
 
     return candidate

@@ -7,6 +7,7 @@ from typing import Optional
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
@@ -459,6 +460,34 @@ async def get_falsification(clip_id: str):
     falsif = empathy.get("falsification") or {}
     write_cached(PRERENDERED_DIR, clip_id, "falsification", falsif)
     return falsif
+
+
+@app.get("/demo/per-vertex/{clip_id}")
+async def get_per_vertex(clip_id: str):
+    """Stub today — no clip has per_vertex.bin baked yet. Frontend probes once per clip and falls back to network-weight matmul on 404."""
+    clip_dir = _clip_dir(clip_id)
+    if not (clip_dir / "activity.json").exists():
+        raise HTTPException(status_code=404, detail="clip not found")
+    bin_path = clip_dir / "per_vertex.bin"
+    manifest_path = clip_dir / "per_vertex.json"
+    if not bin_path.exists() or not manifest_path.exists():
+        raise HTTPException(status_code=404, detail="no per-vertex data baked")
+    try:
+        manifest = json.loads(manifest_path.read_text())
+        n_frames = int(manifest["n_frames"])
+        n_vertices = int(manifest["n_vertices"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"failed to parse per_vertex.json: {e}")
+    return FileResponse(
+        str(bin_path),
+        media_type="application/octet-stream",
+        headers={
+            "X-N-Frames": str(n_frames),
+            "X-N-Vertices": str(n_vertices),
+            "X-Dtype": "float32",
+            "X-Byte-Order": "little",
+        },
+    )
 
 
 @app.post("/demo/k2-region")

@@ -3,6 +3,7 @@
     <!-- LEFT: 3D brain -->
     <div class="brain-pane">
       <BrainScene
+        :clip-id="clipId"
         :activity-data="activityData"
         :current-time="currentTime"
         :is-playing="isPlaying"

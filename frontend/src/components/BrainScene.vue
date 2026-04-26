@@ -20,6 +20,7 @@ import { networkHex } from '../utils/colors.js'
 // ── Props / emits ──────────────────────────────────────────────────────────
 const props = defineProps({
   // Driving inputs (frontend-driven mode)
+  clipId:       { type: String, default: '' },       // current clip — used by Phase-3 per-vertex probe
   activityData: { type: Object, default: null },     // activity.json contents
   currentTime:  { type: Number, default: 0 },        // seconds (fractional ok)
   isPlaying:    { type: Boolean, default: false },
@@ -438,6 +439,134 @@ function vertNoise(x, y, z) {
 // Cortical base color — kept in sync with buildBrainMesh's initial fill.
 const BASE_R = 0.82, BASE_G = 0.78, BASE_B = 0.72
 
+// ── Per-vertex network weights (TRIBE-V2-style soft membership paint) ──────
+// vertex_weights.bin is float32 little-endian, shape [n_vertices × 7],
+// row-major. Computed via gaussian centroid distance (sigma=18mm) so each
+// vertex carries soft membership across all 7 Yeo7 networks. Loaded once at
+// mount; if the fetch fails we silently fall back to the legacy
+// applyRegionLevelsToMesh (hard label boundaries).
+let vertexWeights = null              // Float32Array len n_verts*7
+let networkOrder = null               // string[7] from manifest
+let nVerticesWeights = 0              // int from manifest
+const SCRATCH_LV = new Float32Array(7) // pre-allocated lv vector for matmul
+
+// Per-vertex direct slice cache (Phase 3 fallback path). Populated by
+// loadPerVertex when /demo/per-vertex/{clipId} returns 200; otherwise stays
+// null and the matmul path runs.
+let perVertexBuf = null               // Float32Array [n_frames × n_vertices]
+let perVertexNFrames = 0
+
+async function loadVertexWeights() {
+  try {
+    const manifestRes = await fetch('/brain/vertex_weights.json')
+    if (!manifestRes.ok) {
+      console.warn('vertex_weights.json missing — falling back to legacy region paint')
+      return
+    }
+    const manifest = await manifestRes.json()
+    const binRes = await fetch('/brain/vertex_weights.bin')
+    if (!binRes.ok) {
+      console.warn('vertex_weights.bin missing — falling back to legacy region paint')
+      return
+    }
+    const buf = await binRes.arrayBuffer()
+    vertexWeights = new Float32Array(buf)
+    networkOrder = manifest.network_order
+    nVerticesWeights = manifest.n_vertices
+  } catch (err) {
+    console.warn('vertex weights load failed — falling back to legacy region paint:', err)
+    vertexWeights = null
+  }
+}
+
+async function loadPerVertex(clipId) {
+  perVertexBuf = null
+  perVertexNFrames = 0
+  if (!clipId) return
+  try {
+    const r = await fetch(`/demo/per-vertex/${encodeURIComponent(clipId)}`)
+    if (!r.ok) return  // 404 = no data baked yet, fall back to weight matmul
+    const nFrames = parseInt(r.headers.get('X-N-Frames') || '0', 10)
+    const nVerts  = parseInt(r.headers.get('X-N-Vertices') || '0', 10)
+    if (nFrames < 1 || nVerts !== (nVerticesWeights || nVertices.value)) return
+    const buf = await r.arrayBuffer()
+    perVertexBuf = new Float32Array(buf)
+    perVertexNFrames = nFrames
+  } catch { /* network error → fall back silently */ }
+}
+
+// Phase 2 paint path: smooth TRIBE-V2-style heatmap via per-vertex network
+// weight matmul. Each vertex's activation = Σ W[v,n] * level[n], yielding
+// soft regional boundaries instead of hard Yeo7 label edges. Includes a
+// baseline floor + per-vertex jitter so the cortex never reads as flat grey.
+function paintHeatmapFromWeights(levels) {
+  if (!brainMesh || !vertexWeights || !networkOrder) return
+  const colors = brainMesh.geometry.attributes.color.array
+  const positions = brainMesh.geometry.attributes.position.array
+  const tmp = [0, 0, 0]
+  // Cache the 7 levels in canonical network_order — order MUST match
+  // the manifest so column n of W aligns with networkOrder[n].
+  const lv = SCRATCH_LV
+  for (let n = 0; n < 7; n++) lv[n] = levels[networkOrder[n]] ?? 0
+  const N = nVerticesWeights
+  for (let v = 0; v < N; v++) {
+    const base = v * 7
+    let act = 0
+    for (let n = 0; n < 7; n++) act += vertexWeights[base + n] * lv[n]
+    const px = positions[v * 3], py = positions[v * 3 + 1], pz = positions[v * 3 + 2]
+    // Baseline floor + tiny jitter — cortex always carries a faint warm glow.
+    const baseline = 0.04 + 0.03 * vertNoise(px, py, pz)
+    const eff = Math.max(act, baseline)
+    activationToRGB(eff, tmp)
+    // Preserve fissure cue (matches buildBrainMesh's initial fill).
+    const fissure = Math.max(0, 1 - Math.abs(px) / 2.5)
+    const dim = fissure * 0.18
+    const baseR = BASE_R - dim, baseG = BASE_G - dim, baseB = BASE_B - dim
+    const blend = Math.min(1, eff * 1.4)
+    colors[v * 3]     = baseR + (tmp[0] - baseR) * blend
+    colors[v * 3 + 1] = baseG + (tmp[1] - baseG) * blend
+    colors[v * 3 + 2] = baseB + (tmp[2] - baseB) * blend
+  }
+  brainMesh.geometry.attributes.color.needsUpdate = true
+}
+
+// Phase 3 paint path: direct per-vertex activation slice from a pre-baked
+// [n_frames × n_vertices] buffer. Interpolates between adjacent frame slices
+// (same temporal smoothing as Phase 1) and applies the same baseline floor +
+// colormap blend logic as paintHeatmapFromWeights. Active only when
+// perVertexBuf was successfully loaded for the current clip.
+function paintHeatmapFromPerVertex(tFrac) {
+  if (!brainMesh || !perVertexBuf || perVertexNFrames < 1) return
+  const colors = brainMesh.geometry.attributes.color.array
+  const positions = brainMesh.geometry.attributes.position.array
+  const tmp = [0, 0, 0]
+  const N = nVerticesWeights || nVertices.value
+  const i0 = Math.floor(tFrac)
+  const alpha = tFrac - i0
+  const safe0 = ((i0 % perVertexNFrames) + perVertexNFrames) % perVertexNFrames
+  const safe1 = (((i0 + 1) % perVertexNFrames) + perVertexNFrames) % perVertexNFrames
+  const off0 = safe0 * N
+  const off1 = safe1 * N
+  for (let v = 0; v < N; v++) {
+    const a0 = perVertexBuf[off0 + v]
+    const a1 = perVertexBuf[off1 + v]
+    const act = a0 * (1 - alpha) + a1 * alpha
+    const px = positions[v * 3], py = positions[v * 3 + 1], pz = positions[v * 3 + 2]
+    const baseline = 0.04 + 0.03 * vertNoise(px, py, pz)
+    const eff = Math.max(act, baseline)
+    activationToRGB(eff, tmp)
+    const fissure = Math.max(0, 1 - Math.abs(px) / 2.5)
+    const dim = fissure * 0.18
+    const baseR = BASE_R - dim, baseG = BASE_G - dim, baseB = BASE_B - dim
+    const blend = Math.min(1, eff * 1.4)
+    colors[v * 3]     = baseR + (tmp[0] - baseR) * blend
+    colors[v * 3 + 1] = baseG + (tmp[1] - baseG) * blend
+    colors[v * 3 + 2] = baseB + (tmp[2] - baseB) * blend
+  }
+  brainMesh.geometry.attributes.color.needsUpdate = true
+}
+
+// fallback if vertex_weights.bin unavailable.
 // Apply a per-network level dictionary to the mesh's vertex-color buffer.
 // Heat colormap blends OVER the light cortical base — low activation leaves
 // the cortex visible; high activation paints with TRIBE heat patches.
@@ -655,11 +784,32 @@ function animate() {
     const fps = data.fps || 1
     const nFrames = data.frames?.length || 0
     if (nFrames > 0) {
-      const idx = Math.floor((props.currentTime || 0) * fps)
-      const safeIdx = ((idx % nFrames) + nFrames) % nFrames
-      const frame = data.frames[safeIdx]
-      const levels = frame.regions || {}
-      applyRegionLevelsToMesh(levels)
+      // Phase 1: temporal interpolation between adjacent frames so the cortex
+      // glides smoothly at 60fps instead of snapping at 1Hz. levels{} blends
+      // the two flanking frames; downstream consumers (glows, wanderers,
+      // arcs) all benefit from the smoothing for free.
+      const tFrac = (props.currentTime || 0) * fps
+      const i0 = Math.floor(tFrac)
+      const alpha = tFrac - i0
+      const safe0 = ((i0 % nFrames) + nFrames) % nFrames
+      const safe1 = (((i0 + 1) % nFrames) + nFrames) % nFrames
+      const f0 = data.frames[safe0]
+      const f1 = data.frames[safe1]
+      const r0 = f0.regions || {}
+      const r1 = f1.regions || {}
+      const levels = {}
+      for (const k of Object.keys(r0)) {
+        levels[k] = (r0[k] ?? 0) * (1 - alpha) + (r1[k] ?? 0) * alpha
+      }
+      // Heatmap dispatch: prefer the per-vertex direct slice when available,
+      // otherwise weight-matmul, otherwise legacy hard-label paint.
+      if (perVertexBuf) {
+        paintHeatmapFromPerVertex(tFrac)
+      } else if (vertexWeights) {
+        paintHeatmapFromWeights(levels)
+      } else {
+        applyRegionLevelsToMesh(levels)
+      }
       applyRegionGlows(levels)
       updateWanderers(levels, dt / 16.67)  // normalize to ~60fps step units
       // Update atmosphere intensity from peak activation — brain "breathes harder"
@@ -674,7 +824,7 @@ function animate() {
       updateAgentEdges()
       updateRegionEdges(levels)
       updateSwarmNetwork(now, dt)
-      topRegion.value = frame.top_region || ''
+      topRegion.value = (alpha < 0.5 ? f0.top_region : f1.top_region) || ''
     }
   } else {
     // No activity yet — still tick the swarm so it's always alive on stage.
@@ -937,9 +1087,21 @@ watch(
   { immediate: true, deep: true },
 )
 
+// Reload the per-vertex direct slice when the clip changes (Phase 3 path).
+// 404 is expected today since no per_vertex.bin is baked yet — loadPerVertex
+// stays silent in that case and the matmul path takes over.
+watch(
+  () => props.clipId,
+  (id) => { loadPerVertex(id) },
+)
+
 // ── Lifecycle ──────────────────────────────────────────────────────────────
 onMounted(async () => {
   initThree()
+  // Kick off vertex_weights fetch in parallel with the mesh fetch — both are
+  // small and independent. Weights become active in animate() on the first
+  // frame they're available.
+  const weightsP = loadVertexWeights()
   try {
     const meshData = await fetchMesh()
     buildBrainMesh(meshData)
@@ -955,6 +1117,9 @@ onMounted(async () => {
   } catch (err) {
     console.error('Mesh load failed:', err)
   }
+  await weightsP
+  // If clipId was already set at mount, probe per-vertex now.
+  if (props.clipId) loadPerVertex(props.clipId)
   applyLayout(props.layout)
   animate()
 })

@@ -89,7 +89,7 @@ async def _evaluate_one(network: str, region_reading: str, paragraph: str) -> di
     k2 = _get_k2()
     try:
         raw = await asyncio.wait_for(
-            k2.chat(system, user, max_tokens=_PER_CALL_MAX_TOKENS),
+            k2.chat(system, user, max_tokens=_PER_CALL_MAX_TOKENS, tag=f"evaluator:{network}"),
             timeout=_PER_CALL_TIMEOUT_S,
         )
     except Exception as e:

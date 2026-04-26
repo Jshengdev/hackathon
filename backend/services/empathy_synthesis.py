@@ -165,7 +165,7 @@ def _build_user_message(
 async def _fire_once(system: str, user: str) -> str:
     k2 = _get_k2()
     raw = await asyncio.wait_for(
-        k2.chat(system, user, max_tokens=_MAX_TOKENS),
+        k2.chat(system, user, max_tokens=_MAX_TOKENS, tag="moderator"),
         timeout=_TIMEOUT_S,
     )
     return (raw or "").strip()

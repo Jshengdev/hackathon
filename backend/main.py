@@ -531,7 +531,10 @@ async def k2_region(payload: dict):
     )
 
     try:
-        text = await get_k2_client().chat(system_prompt, user, max_tokens=200)
+        text = await get_k2_client().chat(
+            system_prompt, user, max_tokens=200,
+            tag=f"region:{network}_t{t_int}",
+        )
     except Exception as e:
         return {
             "network": network,

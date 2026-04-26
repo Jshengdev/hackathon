@@ -109,7 +109,7 @@ async def _call_one(
     k2 = _get_k2()
     try:
         raw = await asyncio.wait_for(
-            k2.chat(system, user, max_tokens=_PER_CALL_MAX_TOKENS),
+            k2.chat(system, user, max_tokens=_PER_CALL_MAX_TOKENS, tag=f"specialist:{network}"),
             timeout=_PER_CALL_TIMEOUT_S,
         )
         parsed = _parse_observation(raw)

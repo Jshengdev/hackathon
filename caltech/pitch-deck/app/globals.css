@@ -1,0 +1,244 @@
+@import "tailwindcss";
+
+:root {
+  /* HackTech register: ivory + deep indigo + muted sepia.
+     Spatial reference brief = lstud/workshop/deliverables/slide-deck.md.
+     [TBD-FINAL-PASS: pkg-brand-system.md may swap the activation gradient to
+     fire (hot-pink → amber) or bioluminescent-cool — flag for Johnny.] */
+
+  /* Near-white surfaces (warm ivory, not Apple cool) */
+  --ivory: #f7f5f0;
+  --ivory-hi: #fdfcf8;
+  --ivory-deep: #ebe8df;
+
+  /* Ink stack — near-black to muted sepia */
+  --ink: #1d1a17;
+  --smoke: #3d3832;
+  --mute: #8a847a;
+  --sepia: #6b5d4c;
+
+  /* Accent: deep indigo (cortical-mesh signal color) */
+  --accent: #3730a3;
+  --accent-deep: #1e1b6e;
+  --accent-soft: #6d65d4;
+  --olive: var(--accent);
+  --olive-deep: var(--accent-deep);
+  --tan: var(--sepia);
+  --clay: var(--accent-soft);
+
+  /* Cortical activation gradient stops (used in mesh visuals) */
+  --activation-cool: #3730a3;
+  --activation-warm: #c44569;
+  --activation-hot: #f5a142;
+
+  /* Signature red dot (live-indicator — used sparingly) */
+  --red: #c44569;
+  --red-soft: #e07b9b;
+
+  /* Hairline border + surface tokens */
+  --hair: color-mix(in srgb, var(--ink) 9%, transparent);
+  --hair-strong: color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+@theme inline {
+  --color-ivory: var(--ivory);
+  --color-ivory-hi: var(--ivory-hi);
+  --color-ivory-deep: var(--ivory-deep);
+  --color-ink: var(--ink);
+  --color-smoke: var(--smoke);
+  --color-mute: var(--mute);
+  --color-sepia: var(--sepia);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-soft: var(--accent-soft);
+  --color-olive: var(--accent);
+  --color-tan: var(--accent);
+  --color-clay: var(--accent-soft);
+  --color-red: var(--red);
+  --font-mono: var(--font-mono);
+  --font-sans: var(--font-sans);
+}
+
+html,
+body {
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-feature-settings: "ss01", "ss02", "liga";
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100dvh;
+  /* Whisper-thin grid texture — Apple-clean means almost nothing here. */
+  background-image:
+    radial-gradient(circle at 1.5% 1.5%, color-mix(in srgb, var(--ink) 2.5%, transparent) 0.8px, transparent 1.2px),
+    radial-gradient(circle at 98.5% 98.5%, color-mix(in srgb, var(--ink) 2%, transparent) 0.8px, transparent 1.2px);
+  background-size: 22px 22px, 24px 24px;
+  background-position: 0 0, 11px 11px;
+  background-attachment: fixed;
+}
+
+.deck {
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+  height: 100dvh;
+}
+
+.deck > section {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: 100dvh;
+}
+
+/* ============================================================
+   Typography utilities
+   ============================================================ */
+
+.mono {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-feature-settings: "ss01", "ss02", "zero";
+}
+
+.sans {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+.serif {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-feature-settings: "ss01", "zero";
+  letter-spacing: -0.01em;
+}
+
+.display-mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  letter-spacing: -0.055em;
+  font-weight: 400;
+}
+
+.display-sans {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  letter-spacing: -0.045em;
+  font-weight: 500;
+}
+
+.kicker {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--mute);
+}
+
+.numeral {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.07em;
+  font-weight: 400;
+}
+
+/* `.grad` is now a solid accent color — no gradient text on large headers.
+   Left as a class so existing markup continues to read as "accent phrase". */
+.grad {
+  color: var(--accent);
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+}
+
+.grad-deep {
+  color: var(--accent-deep);
+}
+
+.grad-sub {
+  color: var(--accent-soft);
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.hairline {
+  font-weight: 300;
+  letter-spacing: 0.01em;
+}
+
+.muted {
+  color: var(--mute);
+}
+
+.smoke {
+  color: var(--smoke);
+}
+
+.ink {
+  color: var(--ink);
+}
+
+/* ============================================================
+   Micro-interactions
+   ============================================================ */
+
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.4); opacity: 0.3; }
+}
+
+.red-dot::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid var(--red-soft);
+  opacity: 0.45;
+  animation: pulseDot 2.4s ease-in-out infinite;
+}
+
+@keyframes wheelTick {
+  0% { transform: translateY(0); opacity: 1; }
+  70% { transform: translateY(9px); opacity: 0.2; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.wheel-tick {
+  animation: wheelTick 1.8s ease-in-out infinite;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.enter {
+  opacity: 0;
+  animation: fadeUp 1000ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.enter-delay-1 { animation-delay: 120ms; }
+.enter-delay-2 { animation-delay: 220ms; }
+.enter-delay-3 { animation-delay: 320ms; }
+
+/* ============================================================
+   Selection + chrome
+   ============================================================ */
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--ink);
+}
+
+.deck::-webkit-scrollbar { width: 0; }
+.deck { scrollbar-width: none; }
+
+.rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--hair-strong), transparent);
+}
+
+.hair {
+  border-color: var(--hair);
+}

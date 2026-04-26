@@ -4,7 +4,8 @@ Reads two JSON inputs:
     1. activity.json      — per-second Yeo7 activations from aggregate.py
     2. action_segments.json — manually annotated [{start_t, end_t, action}, ...]
 
-Emits per_action_activations.json matching Contract A in PERSON_A_PIPELINE.md:
+Emits per_action_activations.json matching the Person A/B handoff contract
+documented in research/wiki/findings/2026-04-25-ironside-report-card-person-a.md:
 
 [
   {
@@ -113,7 +114,10 @@ def mean_regions(window: list[dict[str, Any]]) -> dict[str, float]:
         n += 1
     if n == 0:
         raise ValueError("mean_regions called on empty window")
-    return {k: sums[k] / n for k in YEO7_KEYS}
+    # Round to 4 decimals — keeps the JSON readable and aggregator output
+    # stable across runs (otherwise floating-point noise from sum-then-divide
+    # produces 0.5491666666666666 instead of a clean 0.5492).
+    return {k: round(sums[k] / n, 4) for k in YEO7_KEYS}
 
 
 def concat_stimulus(window: list[dict[str, Any]]) -> str | None:
@@ -129,7 +133,7 @@ def concat_stimulus(window: list[dict[str, Any]]) -> str | None:
                 parts.append(t)
     if not parts:
         return None
-    return " ".join(parts)
+    return "; ".join(parts)
 
 
 def aggregate_per_action(

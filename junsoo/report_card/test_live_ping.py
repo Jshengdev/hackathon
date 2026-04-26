@@ -7,7 +7,7 @@ on any failure so `make test` catches it.
 Usage:
     python -m junsoo.report_card.test_live_ping
 
-Requires K2_API_KEY (and ANTHROPIC_API_KEY if INSTRUCT_PROVIDER=anthropic).
+Requires K2_API_KEY (Cerebras serves both K2 Think and Llama-3.3-Instruct).
 """
 from __future__ import annotations
 
@@ -64,12 +64,8 @@ async def main() -> int:
     print(f"      response: {snippet}")
 
     # ── Test 2: Instruct model synthesis ──────────────────────────────────
-    provider = os.getenv("INSTRUCT_PROVIDER", "cerebras")
-    print(f"\n[2/2] Instruct model — synthesis (provider={provider})")
-    if provider == "cerebras":
-        print(f"      model={os.getenv('INSTRUCT_MODEL', 'llama-3.3-70b')}")
-    else:
-        print(f"      model={os.getenv('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001')}")
+    print(f"\n[2/2] Instruct model — synthesis (Cerebras)")
+    print(f"      model={os.getenv('INSTRUCT_MODEL', 'llama-3.3-70b')}")
 
     # Reuse the K2 specialist response for all 8 slots so we don't burn 8
     # more K2 calls on a connectivity check. Real runs go through

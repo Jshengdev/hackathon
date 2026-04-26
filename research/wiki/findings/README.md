@@ -46,4 +46,4 @@ Two kinds of files live here:
 
 ## Index
 
-See [Findings section of `index.md`](../index.md#findings--query-time-synthesis--lint-outputs). Current 3: `lint-2026-04-25.md`, `prd-builder-reading-order-verification.md`, `qa-2026-04-25-research-completeness.md`.
+See [Findings section of `index.md`](../index.md#findings--query-time-synthesis--lint-outputs). Current 5: `lint-2026-04-25.md`, `prd-builder-reading-order-verification.md`, `qa-2026-04-25-research-completeness.md`, `2026-04-25-ironside-report-card-person-a.md`, `2026-04-25-ironside-report-card-person-b.md`.

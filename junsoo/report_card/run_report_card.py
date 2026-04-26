@@ -11,12 +11,10 @@ Usage:
         --out         junsoo/prerendered/clip1/ironside_report.json
 
 Env vars (loaded by k2_caller.py via dotenv):
-    K2_API_KEY              required (Cerebras)
-    K2_BASE_URL             default https://api.cerebras.ai/v1
-    K2_MODEL                default k2-think-v2
-    INSTRUCT_MODEL          default llama-3.3-70b
-    INSTRUCT_PROVIDER       'cerebras' (default) or 'anthropic'
-    ANTHROPIC_API_KEY       required if --provider anthropic
+    K2_API_KEY      required (Cerebras)
+    K2_BASE_URL     default https://api.cerebras.ai/v1
+    K2_MODEL        default k2-think-v2
+    INSTRUCT_MODEL  default llama-3.3-70b
 """
 from __future__ import annotations
 
@@ -45,12 +43,6 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         required=True,
         help="Output path for ironside_report.json",
-    )
-    p.add_argument(
-        "--provider",
-        choices=("cerebras", "anthropic"),
-        default=None,
-        help="Override INSTRUCT_PROVIDER env var",
     )
     p.add_argument(
         "--max-parallel",
@@ -83,7 +75,7 @@ async def main_async(args: argparse.Namespace) -> int:
     enriched = await run_specialists_all(actions, max_parallel=args.max_parallel)
 
     print(f"==> [2/2] Synthesizing report cards via instruct model")
-    synthesizer = Synthesizer(provider=args.provider)
+    synthesizer = Synthesizer()
     cards: list[dict[str, Any]] = []
     for i, action in enumerate(enriched):
         print(f"  [synth] action {i+1}/{len(enriched)}: {action.get('action')!r}")

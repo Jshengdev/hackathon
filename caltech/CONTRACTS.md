@@ -78,3 +78,91 @@ Each entry in `round_trajectory[]` carries the per-round simulation snapshot —
 - Folder name `backend/prerendered/<clip_id>/` is the canonical id.
 - Match upload filename to clip_id by stripping extension: `30s_ironsite.mp4` → `30s_ironsite`.
 - No fuzzy matching. No "almost matches" fallback. If `prerendered/<clip_id>/` doesn't exist, log + 404.
+
+## C6 — `EmpathySynthesisDocument` (Stage 4 — Opus 4.7 synthesis output)
+
+This is the document produced by **Stage 4 (Opus 4.7 synthesis)**. It braids the Stage 1A vision report, the Stage 1B/2/3 swarm + iterative-loop output, the Stage 5 falsification result, and the pre-rendered TRIBE V2 brain activations into a single causally-coherent document. Unlike `moderator_synthesis` (Stage 2) which emits ONE freeform paragraph, this document is **structured JSON** with a temporal arc, neural evidence per network, an inflection moment, and a scenario-specific lens. The document shape is constant across the two demo scenarios; only `scenario_lens` swaps based on `clip.scenario`.
+
+**Cut-line / optional:** When `OPUS_POLISH≠1` or `ANTHROPIC_API_KEY` is missing, Stage 4 is skipped and `synthesis_document` is `null` in the `EmpathyDocument` response. Frontend then falls back to rendering `best_paragraph`.
+
+**Addition to `EmpathyDocument`:** `synthesis_document` is added as a **top-level optional field** on the existing `EmpathyDocument` (C2). Do not redefine `EmpathyDocument` here — only the new field is specified:
+
+```jsonc
+// EmpathyDocument additions (top-level, optional)
+{
+  ...,
+  "synthesis_document": EmpathySynthesisDocument | null
+}
+```
+
+Shape:
+```json
+{
+  "headline": "string (≤120 chars; one-line verdict)",
+  "synthesis_paragraph": "string (≈150 words; Opus's polished narrative — replaces best_paragraph for user-facing display, but best_paragraph is preserved separately)",
+  "temporal_arc": [
+    {
+      "t_window": "string (e.g., '0-8s')",
+      "scene": "string (what Qwen3-VL observed in this window — 1 sentence)",
+      "brain_signature": "string (dominant Yeo7 networks during this window — 1 short clause)",
+      "claim": "string (1-2 sentences of causal interpretation tying scene→brain)"
+    }
+  ],
+  "neural_evidence": [
+    {
+      "network": "string (one of: visual, somatomotor, dorsal_attention, ventral_attention, limbic, frontoparietal, default_mode)",
+      "what_it_processed": "string (qualitative reading of this network's role in the clip)",
+      "anchored": "boolean (did this network's signal anchor the paragraph per per_region_attribution?)",
+      "contribution": "string (what this region's signal added to the verdict)"
+    }
+  ],
+  "inflection_moment": {
+    "t_s": "integer (seconds, the single pivot point in the clip)",
+    "scene_event": "string (what was visually happening at t_s)",
+    "neural_event": "string (what shifted in brain-space at t_s)",
+    "why_it_matters": "string (why this is the load-bearing moment of the clip)"
+  },
+  "falsification": {
+    "delta": "float (from Stage 5 falsification.delta)",
+    "verdict": "string ('anchored' | 'generic_plausible')",
+    "explanation": "string (1-3 sentences explaining WHY the delta is what it is — which regions' signals anchored to main vs diverged from control)"
+  },
+  "scenario_lens": "object (exactly one of the two below — selected by clip.scenario)",
+  "model_metadata": {
+    "model": "string (e.g., 'claude-opus-4-7')",
+    "input_tokens": "integer",
+    "output_tokens": "integer",
+    "elapsed_ms": "integer"
+  }
+}
+```
+
+`scenario_lens` when `clip.scenario == "ironsight_workplace"`:
+```json
+{
+  "ironside": {
+    "cognitive_load_index": "float (0..1; synthesized from frontoparietal + dorsal_attention sustainment vs. limbic spikes)",
+    "decision_quality": "string ('engaged' | 'hijacked' | 'distracted' | 'recovering')",
+    "risk_flag": "string (e.g., 't=18s — limbic spike while frontoparietal receded')",
+    "training_target": "string (which network stayed under-engaged across the clip; recommendation phrased in observational language)"
+  }
+}
+```
+
+`scenario_lens` when `clip.scenario == "consumer"`:
+```json
+{
+  "listenlabs": {
+    "shift_signature": "string (which networks dominated; which were recessive)",
+    "argument_lever": "string (the moment/scene that pulled the most regions simultaneously — the lever-frame)",
+    "immunization_brief": "string (≈40 words user-facing — what to watch for)",
+    "brain_card_summary": "string (≤80 chars — shareable Wrapped-style card text)"
+  }
+}
+```
+
+Notes:
+- `synthesis_document` is added as a top-level optional field on the existing `EmpathyDocument` (C2) — do NOT redefine `EmpathyDocument`; only the addition is specified above.
+- Exactly one of `scenario_lens.ironside` or `scenario_lens.listenlabs` must be present per response, never both, never neither (when the document is non-null).
+- `best_paragraph` (from C2) is preserved alongside `synthesis_document.synthesis_paragraph` so frontend can fall back if the synthesis is null.
+- Same forbidden-claim guardrails as `moderator_synthesis` (no reverse inference, no clinical claims, within-subject only, no inflated TRIBE numbers).

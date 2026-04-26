@@ -1,0 +1,16 @@
+{
+  "n_vertices": 20484,
+  "n_networks": 7,
+  "network_order": [
+    "visual",
+    "somatomotor",
+    "dorsal_attention",
+    "ventral_attention",
+    "limbic",
+    "frontoparietal",
+    "default_mode"
+  ],
+  "dtype": "float32",
+  "byte_order": "little",
+  "sigma_mm": 18.0
+}

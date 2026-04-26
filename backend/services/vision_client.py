@@ -361,13 +361,13 @@ class VisionClient:
     """Async vision client with caching + OpenRouter Qwen3-VL provider.
 
     Reads env on construction:
-      - OPENROUTER_API_KEY  : required for live calls; missing = stub fallback
+      - VISION_API_KEY  : required for live calls; missing = stub fallback
       - VISION_MODEL        : OpenRouter model slug (default qwen3-vl-235b)
       - VISION_TIMEOUT      : httpx timeout in seconds (default 60.0)
     """
 
     def __init__(self):
-        self.api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
+        self.api_key = os.getenv("VISION_API_KEY", "").strip()
         self.model = os.getenv(
             "VISION_MODEL", "qwen/qwen3-vl-235b-a22b-instruct"
         ).strip() or "qwen/qwen3-vl-235b-a22b-instruct"
@@ -393,7 +393,7 @@ class VisionClient:
                 pass  # corrupted cache → re-generate
 
         if not self.api_key:
-            report = _stub_report(clip_id, "OPENROUTER_API_KEY not set")
+            report = _stub_report(clip_id, "VISION_API_KEY not set")
             self._save(cache, report)
             return report
 

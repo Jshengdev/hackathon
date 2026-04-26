@@ -36,15 +36,23 @@
           :progress="visionProgress"
           :done="visionDone"
           :logs="visionLogs"
-          accent="#bb8fce"
+          accent="#0a5dbf"
         />
         <ProgressStream
-          label="TRIBE V2 neural prediction"
+          label="amy neural prediction"
           subtitle="prerendered · cached"
           :progress="tribeProgress"
           :done="tribeDone"
           :logs="tribeLogs"
-          accent="#4ecdc4"
+          accent="#01418d"
+        />
+        <ProgressStream
+          :label="`K2 swarm · ${swarmDoneCount}/7 specialists`"
+          subtitle="Cerebras · per-region readings"
+          :progress="warmupProgress"
+          :done="warmupReady"
+          :logs="warmupLogs"
+          accent="#f5a142"
         />
       </div>
 
@@ -89,6 +97,19 @@ const tribeProgress  = ref(0)
 const visionDone = ref(false)
 const tribeDone  = ref(false)
 
+// Warmup / swarm-progress stream (driven by /demo/warmup-status). The bar
+// paces with real backend reality — swarm specialists, k2_region_cache, and
+// empathy each contribute. This is the "slow lane" so the loading screen
+// reflects the actual swarm work instead of snapping to 100% on cached fetches.
+const warmupProgress = ref(0)
+const warmupReady = ref(false)
+const swarmDoneCount = ref(0)
+const warmupLogs = ref([])
+// Set to true on first pollWarmup tick if /demo/warmup-status reports
+// ready=true — signals that all caches are already on disk so vision/tribe
+// fetches can drop their fake-pacing floor too.
+const prebakedAtStart = ref(false)
+
 const visionLogs = ref([])
 const tribeLogs  = ref([])
 
@@ -99,7 +120,7 @@ const VISION_LOGS = [
   'Synthesizing narrative…',
 ]
 const TRIBE_LOGS = [
-  'Loading TRIBE predictions…',
+  'Loading neural predictions…',
   'Aligning to fsaverage5…',
   'Aggregating to Yeo7…',
   'Normalizing per-network…',
@@ -109,10 +130,19 @@ let visionResult = null
 let tribeResult  = null
 let timers = []
 
-const allDone = computed(() => visionDone.value && tribeDone.value)
+const allDone = computed(() =>
+  visionDone.value && tribeDone.value && warmupReady.value
+)
 
-// Overall pipeline progress (mean of the two streams) drives the phase-rail.
-const overallProgress = computed(() => (visionProgress.value + tribeProgress.value) / 2)
+// Weighted overall progress — warmup (swarm + caches) is the slow lane so it
+// dominates pacing. Vision + TRIBE are fast cached fetches, capped to a
+// minor share so the bar can't blow past the swarm.
+const overallProgress = computed(() => {
+  const v = Math.min(visionProgress.value, 1)
+  const t = Math.min(tribeProgress.value, 1)
+  const w = Math.min(warmupProgress.value, 1)
+  return v * 0.10 + t * 0.10 + w * 0.80
+})
 
 const pipelinePhases = [
   { key: 'uploading', label: 'uploading' },
@@ -136,9 +166,11 @@ function pushLog(target, msg) {
 }
 
 async function runVision() {
-  // Tick a fake progress while fetching, then snap to 100 once data lands
+  // Tick a fake progress while fetching, then snap to 100 once data lands.
+  // When the clip is fully prebaked, drop the min-floor so we don't stall on
+  // a sub-second cached fetch.
   const start = performance.now()
-  const minMs = 3500
+  const minMs = prebakedAtStart.value ? 0 : 3500
   pushLog(visionLogs, VISION_LOGS[0])
   let logIdx = 1
 
@@ -171,7 +203,7 @@ async function runVision() {
 
 async function runTribe() {
   const start = performance.now()
-  const minMs = 4200
+  const minMs = prebakedAtStart.value ? 0 : 4200
   pushLog(tribeLogs, TRIBE_LOGS[0])
   let logIdx = 1
 
@@ -201,25 +233,113 @@ async function runTribe() {
   pushLog(tribeLogs, '✓ Activity loaded')
 }
 
-async function waitForWarmup(maxMs = 90000, intervalMs = 1500) {
+// Pace the warmup progress bar with real backend reality, with a minimum
+// animation floor so the bar never finishes faster than the eye can follow.
+//   swarm_readings_progress[net].state === 'done'  → 1/7 of swarm slice (50% of bar)
+//   k2_region_cache present in completed[]          → +25% of bar
+//   empathy present in completed[]                  → +25% of bar
+// MIN_MS floor: even when the backend is instant (cached/placeholder), the bar
+// rises over MIN_MS and the swarm-count "lights up" one specialist per ~2.6s,
+// so the loading screen feels like the swarm is actually working.
+const WARMUP_MIN_MS_FULL = 20000      // 20s when backend has real work to do
+// Min-floor for the prebaked path. Only needed because we ran into
+// accidentally precached data that returned in <100ms; with a real
+// first-run the backend pace IS the pace and no floor is required.
+const WARMUP_MIN_MS_PREBAKED = 0
+// const WARMUP_MIN_MS_PREBAKED = 7000  // ← uncomment locally for demo runs against the prebaked cache
+async function pollWarmup(maxMs = 180000, intervalMs = 600) {
   const start = performance.now()
+  let lastShownCount = 0
+  let backendReady = false
+  // Lock in min-floor on first poll: if backend is already ready we skip the
+  // theatrical 20s pacing and let the bar settle in ~1.5s.
+  let minFloor = WARMUP_MIN_MS_FULL
+  let floorLocked = false
   while (performance.now() - start < maxMs) {
+    let backendBar = 0
+    let backendSwarm = 0
     try {
       const status = await fetchWarmupStatus(props.clipId)
-      if (status?.ready) return true
+      const sp = status?.swarm_readings_progress || {}
+      backendSwarm = Object.values(sp).filter(
+        (s) => s && s.state === 'done',
+      ).length
+      const completed = status?.completed || []
+      const k2reg  = completed.includes('k2_region_cache') ? 1 : 0
+      const empath = completed.includes('empathy') ? 1 : 0
+      backendBar = (backendSwarm / 7) * 0.50 + k2reg * 0.25 + empath * 0.25
+      backendReady = !!status?.ready
     } catch (e) {
-      // Endpoint may not exist on older backends — proceed without gating.
-      return false
+      console.warn('warmup-status fetch failed', e)
+      // Fall back to the time-paced floor if the backend isn't reachable.
+      backendBar = 0
+      backendReady = false
     }
-    await new Promise(r => setTimeout(r, intervalMs))
+
+    if (!floorLocked) {
+      minFloor = backendReady ? WARMUP_MIN_MS_PREBAKED : WARMUP_MIN_MS_FULL
+      prebakedAtStart.value = backendReady
+      floorLocked = true
+    }
+
+    const swarmTickMs = minFloor / 7
+    const elapsed = performance.now() - start
+    const timeFraction = Math.min(1, elapsed / minFloor)
+    const timeSwarm = Math.min(7, Math.floor(elapsed / swarmTickMs) + 1)
+
+    // Bar = min of real backend progress and time-floor — never finishes
+    // before MIN_MS even if backend is instant.
+    const pacedBar = Math.min(
+      backendReady ? 1 : 0.95,
+      Math.max(0.05, Math.min(backendBar, timeFraction)),
+    )
+    warmupProgress.value = pacedBar
+
+    // Reveal swarm specialists one-by-one over time even if cached.
+    const shown = Math.min(backendSwarm, timeSwarm)
+    if (shown > lastShownCount) {
+      lastShownCount = shown
+      // Pick a deterministic-looking label; falls back to a generic line.
+      const sp = (await fetchWarmupStatus(props.clipId).catch(() => null))
+        ?.swarm_readings_progress || {}
+      const names = Object.keys(sp).filter((k) => sp[k]?.state === 'done')
+      const label = names[shown - 1]
+        ? names[shown - 1].replace(/_/g, ' ')
+        : `specialist ${shown}`
+      pushLog(warmupLogs, `✓ ${label}`)
+    }
+    swarmDoneCount.value = shown
+
+    // Exit gating:
+    //   - Prebaked path: backendReady=true on first tick → exit immediately.
+    //   - Non-prebaked path: wait only for the 7 K2 swarm specialists to
+    //     compile their region readings; empathy + k2_region_cache keep
+    //     baking in the background while the demo proceeds.
+    const swarmDoneAll = backendSwarm >= 7
+    if ((backendReady || swarmDoneAll) && elapsed >= minFloor) {
+      warmupProgress.value = 1
+      warmupReady.value = true
+      swarmDoneCount.value = 7
+      pushLog(warmupLogs, '✓ swarm ready · advancing')
+      return true
+    }
+    await new Promise((r) => setTimeout(r, intervalMs))
   }
   return false
 }
 
 onMounted(async () => {
-  await Promise.all([runVision(), runTribe()])
-  await waitForWarmup()
-  await new Promise(r => setTimeout(r, 600))
+  pushLog(warmupLogs, 'spawning K2 specialists…')
+  // Probe warmup once up-front so runVision/runTribe can decide to skip
+  // their min-floor when everything's already cached.
+  try {
+    const status = await fetchWarmupStatus(props.clipId)
+    prebakedAtStart.value = !!status?.ready
+  } catch {
+    prebakedAtStart.value = false
+  }
+  await Promise.all([runVision(), runTribe(), pollWarmup()])
+  await new Promise((r) => setTimeout(r, prebakedAtStart.value ? 0 : 600))
   emit('done', { vision: visionResult, activity: tribeResult })
 })
 
@@ -236,7 +356,7 @@ const ProgressStream = defineComponent({
     progress: { type: Number, default: 0 },
     done:     { type: Boolean, default: false },
     logs:     { type: Array, default: () => [] },
-    accent:   { type: String, default: '#4ecdc4' },
+    accent:   { type: String, default: '#01418d' },
   },
   setup(p) {
     // Tick-rail thresholds: 0.2 / 0.4 / 0.6 / 0.8 / 1.0
@@ -266,7 +386,7 @@ const ProgressStream = defineComponent({
           style: {
             width: `${Math.round(p.progress * 100)}%`,
             background: p.accent,
-            boxShadow: `0 0 10px ${p.accent}88`,
+            boxShadow: `0 0 10px ${p.accent}55`,
           },
         }),
       ]),
@@ -282,17 +402,17 @@ const ProgressStream = defineComponent({
 .loading-stage {
   position: relative;
   width: 100vw; height: 100vh;
-  background: #050510;
-  color: #d0d8ee;
+  background: var(--warm-cream);
+  color: var(--warm-charcoal);
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans), 'DM Sans', system-ui, sans-serif;
   overflow: hidden;
 }
 .bg-grid {
   position: absolute; inset: 0;
   background-image:
-    linear-gradient(rgba(120, 160, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 160, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(circle at center, #000 30%, transparent 75%);
   pointer-events: none;
@@ -316,11 +436,11 @@ const ProgressStream = defineComponent({
   transform-box: fill-box;
 }
 .loading-orbital--outer {
-  stroke: rgba(180, 200, 255, 0.10);
+  stroke: rgba(1, 65, 141, 0.10);
   animation: orbit-spin 60s linear infinite;
 }
 .loading-orbital--inner {
-  stroke: rgba(180, 200, 255, 0.06);
+  stroke: rgba(1, 65, 141, 0.06);
   animation: orbit-spin 35s linear infinite reverse;
 }
 @keyframes orbit-spin {
@@ -332,8 +452,8 @@ const ProgressStream = defineComponent({
 .loading-vignette {
   position: absolute; inset: 0;
   background: radial-gradient(circle at 50% 50%,
-    rgba(130, 224, 170, 0.08) 0%,
-    rgba(130, 224, 170, 0) 55%);
+    rgba(1, 65, 141, 0.05) 0%,
+    rgba(1, 65, 141, 0) 55%);
   pointer-events: none;
 }
 
@@ -346,19 +466,20 @@ const ProgressStream = defineComponent({
 .header {
   display: flex; align-items: center; gap: 10px;
   margin-bottom: 36px;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 12px; letter-spacing: 1.6px;
   text-transform: uppercase;
-  color: #99a3bb;
+  color: var(--warm-charcoal);
 }
 .brand-dot {
   width: 8px; height: 8px; border-radius: 50%;
-  background: #f7dc6f;
-  box-shadow: 0 0 8px #f7dc6f;
+  background: var(--blueberry-600);
+  box-shadow: 0 0 6px rgba(10, 93, 191, 0.45);
   animation: pulse 1.4s ease-in-out infinite;
 }
 .brand-dot.done {
-  background: #82e0aa;
-  box-shadow: 0 0 8px #82e0aa;
+  background: var(--blueberry-800);
+  box-shadow: 0 0 6px rgba(1, 65, 141, 0.50);
   animation: none;
 }
 @keyframes pulse {
@@ -366,8 +487,8 @@ const ProgressStream = defineComponent({
   50% { opacity: 0.35; }
 }
 .header-text code {
-  font-family: 'JetBrains Mono', monospace;
-  color: #4ecdc4;
+  font-family: var(--font-mono), 'DM Mono', monospace;
+  color: var(--blueberry-800);
   letter-spacing: normal;
   text-transform: lowercase;
   margin-left: 4px;
@@ -379,14 +500,15 @@ const ProgressStream = defineComponent({
 }
 
 :deep(.stream) {
-  background: rgba(10, 10, 25, 0.6);
-  border: 1px solid #1f2a4a;
-  border-radius: 6px;
+  background: var(--pure-white);
+  border: 1px solid var(--oat-border);
+  border-radius: var(--r-card);
   padding: 16px 20px;
   transition: border-color 0.3s ease;
+  box-shadow: var(--elev-1);
 }
 :deep(.stream.is-done) {
-  border-color: #2e6a4a;
+  border-color: var(--blueberry-300);
 }
 
 :deep(.stream-head) {
@@ -394,12 +516,14 @@ const ProgressStream = defineComponent({
   margin-bottom: 10px;
 }
 :deep(.stream-label) {
+  font-family: var(--font-sans), 'DM Sans', system-ui, sans-serif;
   font-size: 13px; font-weight: 500;
-  color: #e8ecf8;
+  color: var(--clay-black);
   letter-spacing: 0.4px;
 }
 :deep(.stream-sub) {
-  font-size: 11px; color: #6677aa;
+  font-family: var(--font-mono), 'DM Mono', monospace;
+  font-size: 11px; color: var(--warm-silver);
   text-transform: uppercase; letter-spacing: 1.2px;
 }
 :deep(.stream-tick-rail) {
@@ -409,20 +533,20 @@ const ProgressStream = defineComponent({
 }
 :deep(.stream-tick) {
   width: 4px; height: 4px; border-radius: 50%;
-  background: rgba(180, 200, 255, 0.18);
+  background: var(--oat-border);
   transition: background 0.25s ease, box-shadow 0.25s ease;
 }
 :deep(.stream-tick.is-filled) {
   /* color/box-shadow set inline via accent */
 }
 :deep(.stream-pct) {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 12px; font-weight: 500;
   min-width: 36px; text-align: right;
 }
 
 :deep(.bar) {
-  height: 4px; background: rgba(255, 255, 255, 0.06);
+  height: 4px; background: var(--border-light);
   border-radius: 2px; overflow: hidden;
   margin-bottom: 12px;
 }
@@ -433,9 +557,9 @@ const ProgressStream = defineComponent({
 }
 
 :deep(.logs) {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 11px;
-  color: #6677aa;
+  color: var(--warm-silver);
   min-height: 60px;
   display: flex; flex-direction: column; gap: 3px;
 }
@@ -446,13 +570,14 @@ const ProgressStream = defineComponent({
 
 .status-line {
   text-align: center;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 12px;
-  color: #6677aa;
+  color: var(--warm-charcoal);
   letter-spacing: 1px;
   text-transform: uppercase;
   transition: color 0.4s ease;
 }
-.status-line.done { color: #82e0aa; }
+.status-line.done { color: var(--blueberry-800); }
 
 /* Overall pipeline phase-rail: 3 dots labeled uploading / analyzing / syncing */
 .loading-phase-rail {
@@ -462,31 +587,31 @@ const ProgressStream = defineComponent({
 }
 .loading-phase-cell {
   display: flex; align-items: center; gap: 8px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 10px; letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: #556688;
+  color: var(--warm-silver);
   transition: color 0.35s ease;
 }
 .loading-phase-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: rgba(180, 200, 255, 0.18);
+  background: var(--oat-border);
   transition: background 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease;
 }
 .loading-phase-cell.past .loading-phase-dot {
-  background: color-mix(in srgb, #82e0aa 55%, transparent);
+  background: var(--blueberry-300);
 }
 .loading-phase-cell.past .loading-phase-label {
-  color: #99a3bb;
+  color: var(--warm-charcoal);
 }
 .loading-phase-cell.active .loading-phase-dot {
-  background: #82e0aa;
-  box-shadow: 0 0 6px #82e0aa;
+  background: var(--blueberry-800);
+  box-shadow: 0 0 6px rgba(1, 65, 141, 0.45);
   transform: scale(1.4);
   animation: phase-pulse 1.6s ease-in-out infinite;
 }
 .loading-phase-cell.active .loading-phase-label {
-  color: #82e0aa;
+  color: var(--blueberry-800);
 }
 @keyframes phase-pulse {
   0%, 100% { opacity: 1; }

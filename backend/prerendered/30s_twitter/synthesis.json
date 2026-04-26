@@ -1,0 +1,105 @@
+{
+  "headline": "Externally locked scroll \u2014 visual sustained, DMN suppressed, late VAN/FPN spike at t=30s. Falsification generic (delta 0.0).",
+  "synthesis_paragraph": "Across the half-minute the visual specialist held steady engagement, parsing a cascade of text blocks, icons, and thumbnails as the feed scrolled \u2014 sports gossip, game stats, meme screenshots, a K-pop confession \u2014 each post a discrete packet rather than a continuous scene. Dorsal attention remained largely quiet, punctuated by brief orienting flickers as new content entered frame, never locking into sustained focus. The ventral attention specialist stayed near-silent until the final seconds, when a discrete element triggered a sharp bottom-up reorienting spike. Limbic registered near-zero deviation; the parade of celebrity drama and gaming humor carried no detectable reward charge. Default-mode remained suppressed below baseline, its narrative voice drowned by the externally anchored visual stream. Frontoparietal barely stirred except for a single late peak coinciding with the VAN spike \u2014 a momentary decision point. Somatomotor stayed offline. The arc is low-effort consumption: eyes moving, networks idling.",
+  "temporal_arc": [
+    {
+      "t_window": "0-6s",
+      "scene": "User scrolls past a tweet about Klay Thompson unfollowing Lexie Brown \u2014 sports gossip and social drama.",
+      "brain_signature": "Visual dominant (0.10-0.13), all other networks near baseline.",
+      "claim": "The visual specialist's reading of sustained engagement with text-heavy static content matches the modest visual peak; dorsal attention's near-silence corroborates passive scrolling rather than goal-directed search."
+    },
+    {
+      "t_window": "6-14s",
+      "scene": "User scrolls through a TV-show mockery, a basketball-meme reaction, then a competitive-game complaint with detailed player stats.",
+      "brain_signature": "Visual climbing toward peak (0.13\u21920.25), default-mode suppressed.",
+      "claim": "Visual cortex builds as denser text and stat blocks enter frame; the default-mode specialist's reading of suppression confirms external locking \u2014 narrative and self-referential processing recede while feed parsing dominates."
+    },
+    {
+      "t_window": "14-22s",
+      "scene": "User views a humorous K-pop-poster confession with a performer photo, then transitions toward gaming humor.",
+      "brain_signature": "Visual decays (0.25\u21920.07); brief frontoparietal trace (0.03) at t=20-22s.",
+      "claim": "As visual load drops between posts, the frontoparietal specialist's faint trace appears \u2014 consistent with momentary control demand at a content boundary, but well within the network's largely-disengaged reading."
+    },
+    {
+      "t_window": "22-28s",
+      "scene": "User encounters a tweet about adding a steering wheel to League of Legends, with a Reddit post reference.",
+      "brain_signature": "Visual rebounds (0.07\u21920.19), other networks quiet.",
+      "claim": "Visual climbs again on the gaming-humor post; the limbic specialist's reading of zero affective engagement holds \u2014 content carries no detectable reward or personal stake."
+    },
+    {
+      "t_window": "28-30s",
+      "scene": "Final post; clip closes on the gaming/Reddit content.",
+      "brain_signature": "Somatomotor blip (0.07) at t=29s; ventral attention spike (0.11) at t=30s.",
+      "claim": "The ventral attention specialist's late spike fits its reading of a discrete bottom-up reorienting event; the somatomotor blip immediately prior is consistent with the specialist's medium-confidence note that a brief sound or body-relevant cue may have preceded the reorienting."
+    }
+  ],
+  "neural_evidence": [
+    {
+      "network": "visual",
+      "what_it_processed": "Sustained engagement with text-heavy, static feed content \u2014 words, icons, and thumbnails rather than cinematic motion.",
+      "anchored": true,
+      "contribution": "Visual is the load-bearing network across the clip; its steady moderate activation (peaking 0.25 at t=14s) anchors the verdict that this is externally locked feed-parsing rather than narrative immersion."
+    },
+    {
+      "network": "somatomotor",
+      "what_it_processed": "Functionally offline across most of the clip, with a single brief spike at t=29s consistent with a momentary sound or body-relevant cue.",
+      "anchored": true,
+      "contribution": "The near-silence corroborates a stationary posture and quiet audio environment; the late blip aligns temporally with the VAN reorienting and supports the auditory-onset interpretation."
+    },
+    {
+      "network": "dorsal_attention",
+      "what_it_processed": "Brief orienting flickers as new posts entered frame, but no sustained goal-directed focus.",
+      "anchored": true,
+      "contribution": "DAN's low-but-present trace differentiates passive scrolling from either deep focus or full disengagement; its pattern matches the specialist's reading of scattered micro-orientations."
+    },
+    {
+      "network": "ventral_attention",
+      "what_it_processed": "Near-zero baseline broken by a single discrete spike at t=30s \u2014 bottom-up reorienting to a salient element.",
+      "anchored": true,
+      "contribution": "The late spike is the clip's clearest pivot; its precise timing in activity_summary matches the specialist's reading and provides the inflection moment."
+    },
+    {
+      "network": "limbic",
+      "what_it_processed": "Near-zero deviation throughout \u2014 no detectable reward, threat, or personally meaningful response.",
+      "anchored": true,
+      "contribution": "Limbic flatness is informative: the celebrity drama, gaming losses, and K-pop confession landed without affective engagement, supporting the low-stakes-consumption verdict."
+    },
+    {
+      "network": "frontoparietal",
+      "what_it_processed": "Minimal cognitive control demand; a single brief peak at t=20-22s suggesting a momentary task-switch or content-boundary decision.",
+      "anchored": true,
+      "contribution": "FPN's near-flat baseline rules out deliberative reasoning or multi-tasking; the small peak co-localizes with a content transition rather than the late VAN spike."
+    },
+    {
+      "network": "default_mode",
+      "what_it_processed": "Suppressed below baseline (mean -0.085) \u2014 externally anchored attention displacing narrative and self-referential processing.",
+      "anchored": true,
+      "contribution": "DMN suppression with simultaneous visual/DAN engagement is the textbook external-attention signature; this anti-correlation is what gives the clip its 'externally locked' character."
+    }
+  ],
+  "inflection_moment": {
+    "t_s": 30,
+    "scene_event": "Clip closes on the final gaming-humor tweet referencing Reddit; the feed reaches its terminal post.",
+    "neural_event": "Dominant network shifts from visual to ventral_attention (0.11) at t=30s, immediately preceded by a somatomotor blip at t=29s.",
+    "why_it_matters": "This is the clip's only sharp transition \u2014 a discrete bottom-up reorienting event in an otherwise flat attentional landscape. It crystallizes the verdict that the user was passively scrolling until something specific cut through, and provides the only temporal landmark where multiple specialists' readings converge."
+  },
+  "falsification": {
+    "delta": 0.0,
+    "verdict": "generic_plausible",
+    "explanation": "Main and control scored identically (0.997 vs 0.997). The paragraph captured this clip's per-region signal accurately \u2014 every network anchored at 0.85+ candidate_match \u2014 but the signal itself is a low-amplitude, externally-locked scrolling pattern that likely resembles many passive-consumption clips. The visual-dominant / DMN-suppressed / limbic-flat profile is too generic to discriminate this Twitter session from another, even though the description faithfully tracks the within-clip evidence."
+  },
+  "scenario_lens": {
+    "listenlabs": {
+      "shift_signature": "Visual dominant; default-mode suppressed; limbic and frontoparietal both recessive \u2014 externally locked consumption signature, not deliberative and not affectively engaged.",
+      "argument_lever": "t=30s \u2014 the ventral attention spike is the clip's only moment that pulled multiple specialists (VAN + somatomotor + a faint FPN trace nearby) toward a single discrete element. The scroll itself carried no lever; the close did.",
+      "immunization_brief": "This feed didn't argue \u2014 it idled your networks. Limbic stayed flat, frontoparietal barely engaged, default-mode receded. Notice when content holds your eyes without earning your attention or feeling; that flat-engagement signature is how thirty minutes vanish.",
+      "brain_card_summary": "Eyes moving, networks idling \u2014 externally locked, affectively flat scroll."
+    }
+  },
+  "model_metadata": {
+    "model": "claude-opus-4-7",
+    "input_tokens": 9882,
+    "output_tokens": 3169,
+    "elapsed_ms": 52522
+  }
+}

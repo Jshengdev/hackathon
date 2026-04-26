@@ -1,0 +1,105 @@
+{
+  "headline": "Sustained visual tracking with a t=18s dorsal-attention shift; falsification inconclusive (delta 0.0).",
+  "synthesis_paragraph": "A first-person walk through an active construction site shows the worker passing scaffolding, scanning a yellow crane and steel framework, then approaching and inspecting a partially built concrete-block wall before hands enter frame to adjust a small object near the blocks. The activity summary tracks this as a long visual-network plateau across t=0-17s, then a clean shift into dorsal-attention dominance from t=18-23s as the inspection deepens, before visual processing returns through the handling segment and a brief ventral-attention bump at the closing turn. Swarm-specialist readings did not return on this run, so per-region anchoring could not be established. The falsification delta of 0.0 reflects this: with no specialist evidence to braid, the paragraph describes the scene faithfully but does not yet anchor specifically to this clip's neural pattern versus a control.",
+  "temporal_arc": [
+    {
+      "t_window": "0-5s",
+      "scene": "Worker walks past scaffolding with other crew members visible ahead.",
+      "brain_signature": "Visual network dominant (~0.17-0.27).",
+      "claim": "The visual network climbed steadily as the scene populated with structured elements \u2014 scaffolding, vests, hard hats \u2014 consistent with a perception-led opening rather than an attention- or decision-led one."
+    },
+    {
+      "t_window": "6-17s",
+      "scene": "Camera pans across a yellow crane and steel framework, then approaches a partially built concrete block wall.",
+      "brain_signature": "Visual network sustained (~0.20-0.26).",
+      "claim": "Visual dominance held through the pan and approach. No specialist reading is available to corroborate which features carried the signal, so this segment is described at the network level only."
+    },
+    {
+      "t_window": "18-23s",
+      "scene": "Worker inspects the block wall; hands enter frame to adjust or place a small object.",
+      "brain_signature": "Dorsal-attention network takes the top slot (~0.21-0.25).",
+      "claim": "The shift from visual to dorsal-attention dominance lines up with the transition from passive scanning to focused inspection and manipulation \u2014 the kind of top-down attention reallocation the dorsal-attention specialist would be expected to track."
+    },
+    {
+      "t_window": "24-28s",
+      "scene": "Continued handling of materials near the blocks.",
+      "brain_signature": "Visual network returns to top (~0.22-0.27).",
+      "claim": "Visual dominance reasserts as the manipulation continues, suggesting the perceptual demand of close-range hand-object coordination outweighed the sustained top-down set."
+    },
+    {
+      "t_window": "29-30s",
+      "scene": "Camera turns sharply, revealing wider site and orange safety fencing.",
+      "brain_signature": "Brief dorsal-attention then ventral-attention top (~0.06-0.13).",
+      "claim": "The closing turn produced a small ventral-attention bump consistent with a reorienting event, though absolute magnitudes here are low and should not be over-read."
+    }
+  ],
+  "neural_evidence": [
+    {
+      "network": "visual",
+      "what_it_processed": "Specialist reading unavailable on this run; activity summary shows visual as the top network across roughly 23 of 31 seconds.",
+      "anchored": false,
+      "contribution": "Visual carried the dominant signal across the clip but cannot be claimed as anchored because the per-region attribution did not return a usable score. The paragraph describes the visual plateau qualitatively rather than asserting fidelity to it."
+    },
+    {
+      "network": "somatomotor",
+      "what_it_processed": "Specialist reading unavailable; not surfaced as a top region in the activity summary, though the hand-manipulation segment (t=21-28s) is where engagement would be expected.",
+      "anchored": false,
+      "contribution": "Without specialist or attribution evidence, no claim is made about somatomotor engagement during the handling segment."
+    },
+    {
+      "network": "dorsal_attention",
+      "what_it_processed": "Specialist reading unavailable; activity summary shows it taking the top slot at t=18-23s during the inspection-and-handling transition.",
+      "anchored": false,
+      "contribution": "The dorsal-attention shift is the clearest network-level event in the clip and is described in the temporal arc, but it is not formally anchored because attribution scores did not return."
+    },
+    {
+      "network": "ventral_attention",
+      "what_it_processed": "Specialist reading unavailable; appears as the top network only at t=30s with a low magnitude (~0.13).",
+      "anchored": false,
+      "contribution": "The end-of-clip ventral-attention bump is consistent with a reorienting event at the camera turn but is too brief and low-magnitude to anchor the paragraph."
+    },
+    {
+      "network": "limbic",
+      "what_it_processed": "Specialist reading unavailable; not surfaced in the activity summary.",
+      "anchored": false,
+      "contribution": "No limbic spike is visible in the top-region table, consistent with the vision report's industrious, task-oriented tone."
+    },
+    {
+      "network": "frontoparietal",
+      "what_it_processed": "Specialist reading unavailable; not surfaced as a top region.",
+      "anchored": false,
+      "contribution": "Frontoparietal did not dominate at the network level during this clip; whether it ran a quieter sustained background role cannot be claimed without attribution evidence."
+    },
+    {
+      "network": "default_mode",
+      "what_it_processed": "Specialist reading unavailable; not surfaced as a top region.",
+      "anchored": false,
+      "contribution": "Default-mode did not surface in the top-region table, consistent with an externally-directed task profile."
+    }
+  ],
+  "inflection_moment": {
+    "t_s": 18,
+    "scene_event": "Worker transitions from scanning the wider site to close inspection of the partially built concrete block wall.",
+    "neural_event": "Top network shifts from visual (held since t=0) to dorsal-attention, and stays there through t=23s.",
+    "why_it_matters": "This is the only clean network-level pivot in the clip \u2014 perception-led scanning gives way to top-down focused attention exactly where the task changes from navigation to inspection. It is the load-bearing moment because the brain signature and the visual event align without requiring specialist interpretation."
+  },
+  "falsification": {
+    "delta": 0.0,
+    "verdict": "generic_plausible",
+    "explanation": "Main and control paragraph scores were identical (0.877 each), yielding a delta of 0.0. The swarm specialists and per-region attribution did not return usable values on this run, so the paragraph could not be steered toward this clip's specific signal. The result reflects pipeline degradation, not a finding about the clip itself."
+  },
+  "scenario_lens": {
+    "ironside": {
+      "cognitive_load_index": 0.25,
+      "decision_quality": "engaged",
+      "risk_flag": "t=18s \u2014 clean shift from visual to dorsal-attention dominance at the inspection transition; no limbic spike accompanied it, so the moment reads as focused reallocation rather than threat-driven reactivity.",
+      "training_target": "Per-region attribution did not return on this run, so no specialist gap can be named with confidence; on a clean run, the dorsal-attention transition at t=18s is the segment worth re-scoring to confirm sustained top-down attention through the inspection."
+    }
+  },
+  "model_metadata": {
+    "model": "claude-opus-4-7",
+    "input_tokens": 7939,
+    "output_tokens": 2654,
+    "elapsed_ms": 42595
+  }
+}

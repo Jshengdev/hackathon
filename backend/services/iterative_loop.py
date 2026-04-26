@@ -3,7 +3,7 @@
 K2 swarm acts as evaluator: each round fires 7 parallel K2 calls (one per
 Yeo7 network) rating how well the candidate paragraph captures that region's
 reading. Aggregate -> round_score. Plateau-exit on |Δ|<0.02 over 2 rounds,
-or 8 rounds max.
+or 3 rounds max.
 """
 from __future__ import annotations
 import asyncio
@@ -26,7 +26,7 @@ NETWORKS: tuple[str, ...] = (
 _PROMPTS_DIR = Path(__file__).parents[1] / "prompts"
 _EVALUATOR_PROMPT_PATH = _PROMPTS_DIR / "evaluator_score.md"
 _PER_CALL_MAX_TOKENS = 120
-_PER_CALL_TIMEOUT_S = 20.0
+_PER_CALL_TIMEOUT_S = 90.0
 _TARGET_SCORE = 1.0
 
 _SCORE_RE = re.compile(r"^\s*score\s*:\s*([0-9]*\.?[0-9]+)", re.IGNORECASE | re.MULTILINE)
@@ -89,7 +89,7 @@ async def _evaluate_one(network: str, region_reading: str, paragraph: str) -> di
     k2 = _get_k2()
     try:
         raw = await asyncio.wait_for(
-            k2.chat(system, user, max_tokens=_PER_CALL_MAX_TOKENS),
+            k2.chat(system, user, max_tokens=_PER_CALL_MAX_TOKENS, tag=f"evaluator:{network}"),
             timeout=_PER_CALL_TIMEOUT_S,
         )
     except Exception as e:
@@ -141,7 +141,7 @@ async def run_iterative_loop(
     vision_report: dict,
     swarm_readings: dict,
     scenario: str,
-    max_rounds: int = 8,
+    max_rounds: int = 3,
     plateau_threshold: float = 0.02,
 ) -> dict:
     from services.empathy_synthesis import synthesize  # local import: agent-K2's file
@@ -175,6 +175,17 @@ async def run_iterative_loop(
 
         if not isinstance(candidate, str):
             candidate = str(candidate)
+
+        # synthesize() returns a "[empathy_synthesis ... error: ...]" string
+        # when the moderator K2 call fails (timeout, parse error, etc).
+        # Skip the round entirely instead of recording it as a 0-score garbage
+        # entry in the trajectory — keeps best_paragraph from prior rounds
+        # intact and stops error strings from leaking into the demo UI.
+        if candidate.lstrip().startswith("[") and "error" in candidate[:100].lower():
+            print(f"[iterative_loop] skipping round {round_idx} — synthesize failed: {candidate[:80]}")
+            # Don't reset prior_score / prior_paragraph — let the next round
+            # retry from the same refinement context.
+            continue
 
         score, attribution = await evaluate_paragraph(candidate, swarm_readings)
 

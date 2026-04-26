@@ -22,19 +22,7 @@ from services.session_cache import (
 logger = logging.getLogger(__name__)
 
 
-_NETWORKS: tuple[str, ...] = (
-    "visual",
-    "somatomotor",
-    "dorsal_attention",
-    "ventral_attention",
-    "limbic",
-    "frontoparietal",
-    "default_mode",
-)
-
-_PROMPTS_DIR = Path(__file__).parents[1] / "prompts"
-_K2_REGION_SEMAPHORE_LIMIT = 6
-_REQUIRED_KEYS = ("vision_report", "swarm_readings", "k2_region_cache", "empathy")
+_REQUIRED_KEYS = ("vision_report", "swarm_readings", "empathy")
 
 _CONTROL_FOR = {
     "ironside": "workplace_routine_baseline",
@@ -72,98 +60,14 @@ def _resolve_video_path(prerendered_dir: Path, clip_id: str) -> Path:
     return mp4s[0] if mp4s else clip_dir / f"{clip_id}.mp4"
 
 
-def _load_region_system_prompt(network: str) -> str:
-    path = _PROMPTS_DIR / f"{network}.md"
-    if path.exists():
-        return path.read_text(encoding="utf-8")
-    return (
-        f"You are the {network} network. React in 1-2 sentences to your "
-        "activation, grounded in published neuroscience."
-    )
-
-
-async def _run_k2_region(activity: dict, network: str, t: int, k2_client) -> dict:
-    """Mirror of backend/main.py:k2_region handler logic — DO NOT edit main.py."""
-    from services.orchestrator import _parse_observation
-
-    frames = activity.get("frames") or []
-    if not frames:
-        return {
-            "network": network,
-            "t": t,
-            "text": "[no frames]",
-            "confidence": "",
-            "cite": None,
-        }
-    frame = frames[t % len(frames)]
-    regions: dict = frame.get("regions") or {}
-
-    system_prompt = _load_region_system_prompt(network)
-    others = ", ".join(
-        f"{k}={v:.2f}" for k, v in regions.items() if k != network
-    )
-    user = (
-        f"Your activation: {regions.get(network, 0.0):.2f}.\n"
-        f"Other networks: {others}.\n"
-        f"Time: t={t}s.\n"
-        "Output the three lines exactly as specified in your system prompt."
-    )
-
-    try:
-        text = await k2_client.chat(system_prompt, user, max_tokens=200)
-    except Exception as e:
-        return {
-            "network": network,
-            "t": t,
-            "text": f"[K2 call failed: {e}]",
-            "confidence": "",
-            "cite": None,
-        }
-
-    parsed = _parse_observation(text)
-    cite = parsed.get("cite") or None
-    if cite:
-        cite = cite.strip()
-        if cite.startswith("[") and cite.endswith("]"):
-            cite = cite[1:-1].strip()
-
-    return {
-        "network": network,
-        "t": t,
-        "text": parsed.get("reading") or text.strip(),
-        "confidence": parsed.get("confidence") or "",
-        "cite": cite,
-    }
-
-
-async def _bake_k2_region_cache(activity: dict, k2_client) -> dict:
-    n_frames = len(activity.get("frames") or [])
-    if n_frames == 0:
-        return {}
-
-    sem = asyncio.Semaphore(_K2_REGION_SEMAPHORE_LIMIT)
-
-    async def _gated(network: str, t: int):
-        async with sem:
-            return await _run_k2_region(activity, network, t, k2_client)
-
-    tasks = [
-        _gated(net, t) for net in _NETWORKS for t in range(n_frames)
-    ]
-    results = await asyncio.gather(*tasks, return_exceptions=False)
-
-    cache: dict[str, dict] = {}
-    for entry in results:
-        cache[f"{entry['network']}_t{entry['t']}"] = entry
-    return cache
-
-
 async def _build_empathy(
     vision_report: dict,
     swarm_readings: dict,
     scenario: dict,
     main_activity: dict,
     control_activity: dict,
+    clip_id: str,
+    clip_dir: Path,
 ) -> dict:
     """Wraps iterative_loop.run_iterative_loop + falsification.compute_falsification.
 
@@ -181,6 +85,8 @@ async def _build_empathy(
     )
 
     best_paragraph = loop_result.get("best_paragraph", "")
+    round_trajectory = loop_result.get("round_trajectory", [])
+    per_region_attribution = loop_result.get("per_region_attribution", {})
 
     falsification_block: dict[str, Any]
     try:
@@ -203,17 +109,49 @@ async def _build_empathy(
             "error": str(e),
         }
 
+    synthesis_document: dict | None = None
+    try:
+        from services.empathy_polish import synthesize_document
+
+        synthesis_document = await synthesize_document(
+            clip_id=clip_id,
+            scenario=scenario_name,
+            vision_report=vision_report,
+            activity=main_activity,
+            swarm_readings=swarm_readings,
+            round_trajectory=round_trajectory,
+            per_region_attribution=per_region_attribution,
+            falsification=falsification_block,
+            best_paragraph=best_paragraph,
+            clip_dir=clip_dir,
+        )
+    except Exception as e:
+        logger.warning(
+            "[empathy_polish] unexpected error clip=%s err=%s: %s",
+            clip_id,
+            type(e).__name__,
+            e,
+        )
+        synthesis_document = None
+
+    polished_paragraph = (
+        synthesis_document.get("synthesis_paragraph")
+        if isinstance(synthesis_document, dict)
+        else None
+    )
+
     return {
         "scenario": scenario_name,
         "scenario_label": scenario_label,
         "vision_report": vision_report,
         "swarm_readings": swarm_readings,
         "best_paragraph": best_paragraph,
-        "polished_paragraph": loop_result.get("polished_paragraph"),
+        "polished_paragraph": polished_paragraph,
         "final_score": loop_result.get("final_score", 0.0),
-        "round_trajectory": loop_result.get("round_trajectory", []),
-        "per_region_attribution": loop_result.get("per_region_attribution", {}),
+        "round_trajectory": round_trajectory,
+        "per_region_attribution": per_region_attribution,
         "falsification": falsification_block,
+        "synthesis_document": synthesis_document,
     }
 
 
@@ -243,7 +181,7 @@ def _load_control_activity(prerendered_dir: Path, scenario_name: str, fallback_c
 async def warmup_clip(prerendered_dir: Path, clip_id: str) -> dict:
     """Pre-bake all Layer 1 cache files for a clip if missing.
 
-    Order: vision_report → swarm_readings → k2_region_cache → empathy.
+    Order: vision_report → swarm_readings → empathy.
     """
     from services.k2_client import K2Client
     from services.swarm_runner import run_swarm
@@ -292,18 +230,11 @@ async def warmup_clip(prerendered_dir: Path, clip_id: str) -> dict:
             errors["swarm_readings"] = str(e)
             swarm_readings = {"clip_id": clip_id, "regions": {}}
 
-    # 3. k2_region_cache
-    if read_cached(prerendered_dir, clip_id, "k2_region_cache") is not None:
-        skipped.append("k2_region_cache")
-    else:
-        try:
-            region_cache = await _bake_k2_region_cache(activity, k2_client)
-            write_cached(prerendered_dir, clip_id, "k2_region_cache", region_cache)
-            completed.append("k2_region_cache")
-        except Exception as e:
-            errors["k2_region_cache"] = str(e)
-
-    # 4. empathy (full pipeline)
+    # 3. empathy (full pipeline)
+    # k2_region_cache step was removed — /demo/k2-region now serves the per-
+    # network reading directly from swarm_readings.json (already 30s-aggregated)
+    # so a separate per-frame cache would be redundant and would reason over
+    # 1-second slices instead of the full clip.
     if read_cached(prerendered_dir, clip_id, "empathy") is not None:
         skipped.append("empathy")
     else:
@@ -317,6 +248,8 @@ async def warmup_clip(prerendered_dir: Path, clip_id: str) -> dict:
                 scenario=scenario,
                 main_activity=activity,
                 control_activity=control_activity,
+                clip_id=clip_id,
+                clip_dir=Path(prerendered_dir) / clip_id,
             )
             empathy["clip_id"] = clip_id
             write_cached(prerendered_dir, clip_id, "empathy", empathy)
@@ -339,6 +272,8 @@ async def warmup_clip(prerendered_dir: Path, clip_id: str) -> dict:
 
 
 async def get_warmup_status(prerendered_dir: Path, clip_id: str) -> dict:
+    from services.swarm_runner import get_swarm_progress
+
     completed: list[str] = []
     pending: list[str] = []
     for key in _REQUIRED_KEYS:
@@ -347,8 +282,28 @@ async def get_warmup_status(prerendered_dir: Path, clip_id: str) -> dict:
             completed.append(key)
         else:
             pending.append(key)
+
+    # Merge in per-network swarm progress. If swarm_readings is already cached
+    # we synthesize a "done" state for all 7 networks straight from disk so a
+    # cache-hit warmup still drives the SwarmStatusPanel into its done state.
+    swarm_readings_progress: dict[str, dict] = {}
+    cached_swarm = read_cached(Path(prerendered_dir), clip_id, "swarm_readings")
+    if isinstance(cached_swarm, dict) and isinstance(cached_swarm.get("regions"), dict):
+        for net, reading in cached_swarm["regions"].items():
+            if not isinstance(reading, dict):
+                continue
+            swarm_readings_progress[net] = {
+                "state": "done",
+                "text": reading.get("reading", "") or "",
+                "confidence": reading.get("confidence", "") or "",
+                "cite": reading.get("cite"),
+            }
+    else:
+        swarm_readings_progress = get_swarm_progress(clip_id)
+
     return {
         "ready": len(pending) == 0,
         "completed": completed,
         "pending": pending,
+        "swarm_readings_progress": swarm_readings_progress,
     }

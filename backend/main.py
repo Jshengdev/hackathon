@@ -7,6 +7,7 @@ from typing import Optional
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
@@ -378,18 +379,49 @@ async def _ensure_empathy(clip_id: str) -> dict:
         control_activity,
     )
 
+    best_paragraph = loop_result.get("best_paragraph") or ""
+    round_trajectory = loop_result.get("round_trajectory") or []
+    per_region_attribution = loop_result.get("per_region_attribution") or {}
+
+    synthesis_document: Optional[dict] = None
+    try:
+        from services.empathy_polish import synthesize_document
+
+        synthesis_document = await synthesize_document(
+            clip_id=clip_id,
+            scenario=scenario["scenario"],
+            vision_report=vision_report,
+            activity=main_activity,
+            swarm_readings=swarm_readings,
+            round_trajectory=round_trajectory,
+            per_region_attribution=per_region_attribution,
+            falsification=falsif,
+            best_paragraph=best_paragraph,
+            clip_dir=_clip_dir(clip_id),
+        )
+    except Exception as e:
+        print(f"[empathy_polish] unexpected error clip={clip_id} err={type(e).__name__}: {e}")
+        synthesis_document = None
+
+    polished_paragraph = (
+        synthesis_document.get("synthesis_paragraph")
+        if isinstance(synthesis_document, dict)
+        else None
+    )
+
     empathy = {
         "clip_id": clip_id,
         "scenario": scenario["scenario"],
         "scenario_label": scenario["label"],
         "vision_report": vision_report,
         "swarm_readings": swarm_readings,
-        "best_paragraph": loop_result.get("best_paragraph"),
-        "polished_paragraph": None,
+        "best_paragraph": best_paragraph,
+        "polished_paragraph": polished_paragraph,
         "final_score": loop_result.get("final_score"),
-        "round_trajectory": loop_result.get("round_trajectory") or [],
-        "per_region_attribution": loop_result.get("per_region_attribution") or {},
+        "round_trajectory": round_trajectory,
+        "per_region_attribution": per_region_attribution,
         "falsification": falsif,
+        "synthesis_document": synthesis_document,
     }
     write_cached(PRERENDERED_DIR, clip_id, "empathy", empathy)
     return empathy
@@ -430,12 +462,72 @@ async def get_falsification(clip_id: str):
     return falsif
 
 
+@app.post("/demo/empathy-chat/{clip_id}")
+async def post_empathy_chat(clip_id: str, payload: dict):
+    """Opus 4.7 viewer Q&A grounded in the clip's empathy.json. Honors the
+    same forbidden-claim guardrails as moderator_synthesis (no reverse
+    inference, no clinical claims) — see prompts/empathy_chat.md."""
+    _clip_dir(clip_id)
+    history = (payload or {}).get("messages")
+    if not isinstance(history, list) or not history:
+        raise HTTPException(status_code=400, detail="messages (list) required")
+    empathy = await _ensure_empathy(clip_id)
+    activity = _load_activity(clip_id)
+    try:
+        from services.empathy_chat import answer
+        reply = await answer(clip_id, history, empathy, activity)
+    except ValueError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"chat failed: {type(e).__name__}: {e}",
+        )
+    return {"reply": reply}
+
+
+@app.get("/demo/per-vertex/{clip_id}")
+async def get_per_vertex(clip_id: str):
+    """Stub today — no clip has per_vertex.bin baked yet. Frontend probes once per clip and falls back to network-weight matmul on 404."""
+    clip_dir = _clip_dir(clip_id)
+    if not (clip_dir / "activity.json").exists():
+        raise HTTPException(status_code=404, detail="clip not found")
+    bin_path = clip_dir / "per_vertex.bin"
+    manifest_path = clip_dir / "per_vertex.json"
+    if not bin_path.exists() or not manifest_path.exists():
+        raise HTTPException(status_code=404, detail="no per-vertex data baked")
+    try:
+        manifest = json.loads(manifest_path.read_text())
+        n_frames = int(manifest["n_frames"])
+        n_vertices = int(manifest["n_vertices"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"failed to parse per_vertex.json: {e}")
+    return FileResponse(
+        str(bin_path),
+        media_type="application/octet-stream",
+        headers={
+            "X-N-Frames": str(n_frames),
+            "X-N-Vertices": str(n_vertices),
+            "X-Dtype": "float32",
+            "X-Byte-Order": "little",
+        },
+    )
+
+
 @app.post("/demo/k2-region")
 async def k2_region(payload: dict):
-    """Run K2 with a paper-grounded prompt for a given region at a timestamp.
+    """Return the per-network K2 reading for a given clip.
 
     Body: {"clip_id": str, "network": str, "t": int}
-    Returns: {network, text, cite, t}
+    Returns: {network, t, text, confidence, cite}
+
+    The reading is the same 30s-aggregated reading the swarm panel shows —
+    served straight from swarm_readings.json so the popup voice always
+    matches the swarm-status panel. The `t` field is echoed back for the
+    frontend, but is not used for lookup (a single reading covers the clip).
+    On a cache miss (swarm_readings not yet baked), we fall back to a live
+    K2 call using the same aggregate the swarm runner uses, so the response
+    is never silently a per-frame snapshot.
     """
     clip_id = (payload or {}).get("clip_id")
     network = (payload or {}).get("network")
@@ -454,18 +546,38 @@ async def k2_region(payload: dict):
     if not activity_path.exists():
         raise HTTPException(status_code=404, detail="clip not found")
 
+    # Cache lookup — swarm_readings.json holds the 30s aggregate reading per
+    # network. Same fields the popup needs (rename reading → text).
+    swarm_cache = read_cached(PRERENDERED_DIR, clip_id, "swarm_readings") or {}
+    region_entry = (swarm_cache.get("regions") or {}).get(network)
+    if region_entry and region_entry.get("reading"):
+        return {
+            "network": network,
+            "t": t_int,
+            "text": region_entry.get("reading", ""),
+            "confidence": region_entry.get("confidence", ""),
+            "cite": region_entry.get("cite"),
+            "frame_window": swarm_cache.get("frame_window"),
+            "cached": True,
+        }
+
+    # Live fallback — swarm_readings hasn't been baked yet. Use the SAME
+    # aggregate the swarm runner uses so the popup never reasons over a
+    # single 1s slice.
     try:
         activity = json.loads(activity_path.read_text(encoding="utf-8"))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"failed to parse activity.json: {e}")
-
     frames = activity.get("frames") or []
     if not frames:
         raise HTTPException(status_code=500, detail="activity.json has no frames")
-    frame = frames[t_int % len(frames)]
-    regions: dict = frame.get("regions") or {}
 
-    # Load the network's grounded system prompt.
+    from services.swarm_runner import _aggregate_per_network, _build_user_prompt
+    agg = _aggregate_per_network(frames)
+    stats = agg.get(network)
+    if not stats:
+        raise HTTPException(status_code=500, detail=f"no aggregate for network {network}")
+
     prompt_path = PROMPTS_DIR / f"{network}.md"
     if prompt_path.exists():
         system_prompt = prompt_path.read_text(encoding="utf-8")
@@ -474,24 +586,19 @@ async def k2_region(payload: dict):
             f"You are the {network} network. React in 1-2 sentences to your "
             "activation, grounded in published neuroscience."
         )
-    others = ", ".join(
-        f"{k}={v:.2f}" for k, v in regions.items() if k != network
-    )
-    user = (
-        f"Your activation: {regions.get(network, 0.0):.2f}.\n"
-        f"Other networks: {others}.\n"
-        f"Time: t={t_int}s in clip '{clip_id}'.\n"
-        "Output the three lines exactly as specified in your system prompt."
-    )
+    user = _build_user_prompt(clip_id, network, stats)
 
     try:
-        text = await get_k2_client().chat(system_prompt, user, max_tokens=200)
+        text = await get_k2_client().chat(
+            system_prompt, user, max_tokens=200,
+            tag=f"region:{network}",
+        )
     except Exception as e:
         return {
             "network": network,
             "t": t_int,
             "text": f"[K2 call failed: {e}]",
-            "confidence": "",
+            "confidence": "low",
             "cite": None,
             "stub": True,
             "error": str(e),
@@ -506,11 +613,25 @@ async def k2_region(payload: dict):
         if cite.startswith("[") and cite.endswith("]"):
             cite = cite[1:-1].strip()
 
+    # Normalize confidence to one of {high, medium, low}. K2 sometimes omits
+    # this line or emits a verbose phrase; pick the first known token if
+    # present, otherwise default to "medium" so the popup's confidence bar
+    # always renders rather than collapsing to a neutral mid-rail.
+    raw_conf = (parsed.get("confidence") or "").strip().lower()
+    if "high" in raw_conf:
+        confidence = "high"
+    elif "low" in raw_conf:
+        confidence = "low"
+    elif "medium" in raw_conf or "med" in raw_conf:
+        confidence = "medium"
+    else:
+        confidence = "medium"
+
     return {
         "network": network,
         "t": t_int,
         "text": parsed.get("reading") or text.strip(),
-        "confidence": parsed.get("confidence") or "",
+        "confidence": confidence,
         "cite": cite,
         "raw": text,
     }

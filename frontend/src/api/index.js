@@ -82,3 +82,18 @@ export async function fetchWarmupStatus(clipId) {
 export function videoUrl(clipId) {
   return `/prerendered/${encodeURIComponent(clipId)}/${encodeURIComponent(clipId)}.mp4`
 }
+
+export async function postEmpathyChat(clipId, messages) {
+  const r = await fetch(`${DEMO}/empathy-chat/${encodeURIComponent(clipId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages }),
+  })
+  if (!r.ok) {
+    let detail = ''
+    try { detail = (await r.json())?.detail || '' } catch {}
+    throw new Error(detail || `empathy-chat failed (${r.status})`)
+  }
+  const data = await r.json()
+  return data.reply
+}

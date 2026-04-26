@@ -26,7 +26,10 @@ except Exception:  # pragma: no cover - fail-soft if module missing
 _PROMPTS_DIR = Path(__file__).parents[1] / "prompts"
 _SYSTEM_PROMPT_PATH = _PROMPTS_DIR / "moderator_synthesis.md"
 _MAX_TOKENS = 600
-_TIMEOUT_S = 30.0
+# K2's moderator endpoint can take 2-4 min under load (longer prompt + larger
+# output than evaluator calls). 120s was guaranteeing failures during fresh
+# bakes — bumped to 300s after observing 9/9 moderator calls timing out.
+_TIMEOUT_S = 300.0
 
 _NETWORKS: tuple[str, ...] = (
     "visual",
@@ -45,6 +48,19 @@ _STRICTER_DIRECTIVE = (
     "'normal', 'symptom', or 'disorder'. Do NOT make reverse inferences. "
     "Stay strictly observational and network-level. Output ONE paragraph, "
     "150-300 words, plain text only."
+)
+
+# Triggered when a candidate comes back shaped like a region:value list
+# instead of flowing prose (a known K2 failure mode in late refinement
+# rounds where the model mirrors the per_region_miss input format).
+_LIST_ESCAPE_DIRECTIVE = (
+    "\n\nFORMAT CORRECTION: A previous draft was returned as a list of "
+    "'region: value' pairs instead of prose. The output MUST be ONE flowing "
+    "paragraph (150-300 words). Do NOT emit lines like 'visual: 0.85' or "
+    "'- dorsal_attention: …'. Do NOT use bullet points, numbered lists, or "
+    "colons followed by numeric scores. Write essayist prose only — full "
+    "sentences that braid the vision events with the network-level "
+    "observations into a single arc."
 )
 
 _k2_client: K2Client | None = None
@@ -162,10 +178,29 @@ def _build_user_message(
     return "\n".join(parts)
 
 
+def _looks_like_region_list_dump(text: str) -> bool:
+    """True if `text` reads like a list of `network: value` pairs instead
+    of paragraph prose. Defends against a K2 failure mode where the model
+    mirrors the per_region_miss input format back as its candidate."""
+    if not text:
+        return True
+    lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
+    if not lines:
+        return True
+    network_set = set(_NETWORKS)
+    region_line_count = 0
+    for ln in lines:
+        head = ln.lstrip("-* \t").split(":", 1)[0].strip().lower()
+        if head in network_set:
+            region_line_count += 1
+    # Mostly region-shaped lines with little prose around them ⇒ malformed.
+    return region_line_count >= 2 and len(lines) <= region_line_count + 2
+
+
 async def _fire_once(system: str, user: str) -> str:
     k2 = _get_k2()
     raw = await asyncio.wait_for(
-        k2.chat(system, user, max_tokens=_MAX_TOKENS),
+        k2.chat(system, user, max_tokens=_MAX_TOKENS, tag="moderator"),
         timeout=_TIMEOUT_S,
     )
     return (raw or "").strip()
@@ -186,7 +221,7 @@ async def synthesize(
     try:
         candidate = await _fire_once(system, user)
     except Exception as e:
-        return f"[empathy_synthesis error: {e}]"
+        return f"[empathy_synthesis error: {type(e).__name__}: {e}]"
 
     try:
         ok = bool(pass_guardrail_pre_flight(candidate))
@@ -197,6 +232,16 @@ async def synthesize(
         try:
             candidate = await _fire_once(system + _STRICTER_DIRECTIVE, user)
         except Exception as e:
-            return f"[empathy_synthesis retry error: {e}]"
+            return f"[empathy_synthesis retry error: {type(e).__name__}: {e}]"
+
+    if _looks_like_region_list_dump(candidate):
+        print(
+            f"[empathy_synthesis] region-list dump detected, retrying with "
+            f"format directive (len={len(candidate)})"
+        )
+        try:
+            candidate = await _fire_once(system + _LIST_ESCAPE_DIRECTIVE, user)
+        except Exception as e:
+            return f"[empathy_synthesis format-retry error: {type(e).__name__}: {e}]"
 
     return candidate

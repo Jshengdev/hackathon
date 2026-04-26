@@ -168,12 +168,18 @@ const props = defineProps({
       { round: 8, score: 0.84, paragraphExcerpt: 'She moved through the scaffolding like someone whose attention had already left for the day, body still here, mind clocked out.' },
     ]),
   },
-  accent:     { type: String, default: '#82e0aa' },
+  accent:     { type: String, default: '#f5a142' },
   autoplay:   { type: Boolean, default: true },
   roundMs:    { type: Number, default: 1100 },
-  loop:       { type: Boolean, default: true }, // restart the visual cycle once converged
-  pauseAfterMs: { type: Number, default: 1800 }, // hold on the converged frame this long before re-looping
+  // Once the trajectory reaches its last round, settle and stay there.
+  // Set true ONLY for marketing demos that need an endless animation.
+  loop:       { type: Boolean, default: false },
+  pauseAfterMs: { type: Number, default: 1800 }, // only used when loop=true
 })
+
+// Emitted once when the playback reaches its final round and settles. Used
+// by parent stages to gate "next" affordances until the visual completes.
+const emit = defineEmits(['settled'])
 
 const currentIndex = ref(0)
 const settled = ref(false)
@@ -235,6 +241,7 @@ function advance() {
     schedule()
   } else {
     settled.value = true
+    emit('settled')
     if (props.loop) {
       phaseTimer = setTimeout(() => {
         settled.value = false
@@ -260,6 +267,7 @@ onMounted(() => {
     // Skip animation entirely; show the converged frame.
     currentIndex.value = props.trajectory.length - 1
     settled.value = true
+    emit('settled')
     return
   }
 
@@ -286,12 +294,12 @@ watch(
 <style scoped>
 .iterative-loop {
   position: relative;
-  background: rgba(10, 10, 25, 0.92);
-  border: 1px solid #2a3a6a;
-  border-radius: 8px;
+  background: rgba(10, 10, 25, 0.6);
+  border: 1px solid rgba(218, 212, 200, 0.15);
+  border-radius: var(--r-card);
   padding: 10px 16px 12px;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: #d0d8ee;
+  font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+  color: var(--oat-border);
   overflow: hidden;
   display: flex; flex-direction: column;
   transition: border-color 0.4s ease, box-shadow 0.4s ease;
@@ -305,8 +313,8 @@ watch(
 .loop-grid {
   position: absolute; inset: 0;
   background-image:
-    linear-gradient(rgba(120, 160, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 160, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(218, 212, 200, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(218, 212, 200, 0.04) 1px, transparent 1px);
   background-size: 36px 36px;
   mask-image: radial-gradient(circle at center, #000 25%, transparent 75%);
   pointer-events: none;
@@ -328,14 +336,15 @@ watch(
 }
 .loop-eyebrow {
   display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 11px; letter-spacing: 1.4px;
-  text-transform: uppercase; color: #99a3bb;
+  text-transform: uppercase; color: var(--oat-border);
 }
 .loop-eyebrow-meta {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 10px; letter-spacing: 0.6px;
   text-transform: lowercase;
-  color: #6677aa;
+  color: var(--warm-silver);
   margin-left: 6px;
 }
 .brand-dot {
@@ -352,14 +361,14 @@ watch(
 
 .loop-telemetry {
   display: flex; align-items: center; gap: 10px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
 }
 .loop-telemetry-value {
   font-size: 16px; font-weight: 500; color: var(--accent);
   letter-spacing: 0.4px;
 }
 .loop-telemetry-label {
-  font-size: 10px; color: #6677aa;
+  font-size: 10px; color: var(--warm-silver);
   text-transform: uppercase; letter-spacing: 1.1px;
 }
 .loop-telemetry-bar {
@@ -402,10 +411,10 @@ watch(
   filter: drop-shadow(0 0 6px var(--accent));
 }
 .loop-round-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 9px;
   letter-spacing: 0.6px;
-  fill: #6677aa;
+  fill: #9f9b93;
   transition: fill 0.3s ease;
 }
 .loop-round-label.active { fill: var(--accent); }
@@ -416,10 +425,10 @@ watch(
   pointer-events: none;
 }
 .loop-round-counter {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 11px; letter-spacing: 1.4px;
   text-transform: uppercase;
-  color: #99a3bb;
+  color: var(--oat-border);
 }
 .loop-round-counter strong {
   color: var(--accent);
@@ -428,8 +437,8 @@ watch(
 }
 .loop-score-trend {
   margin-top: 4px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px; color: #6677aa;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-size: 10px; color: var(--warm-silver);
   letter-spacing: 0.6px;
 }
 .loop-score-trend.rising { color: var(--accent); }
@@ -437,7 +446,7 @@ watch(
 .loop-excerpt-frame {
   position: relative; z-index: 2;
   display: flex; align-items: flex-start; gap: 10px;
-  border-top: 1px solid rgba(180, 200, 255, 0.08);
+  border-top: 1px solid rgba(218, 212, 200, 0.10);
   padding-top: 8px;
   min-height: 44px;
 }
@@ -451,9 +460,9 @@ watch(
 }
 .loop-excerpt {
   margin: 0;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
   font-size: 13px; line-height: 1.5;
-  color: #d0d8ee;
+  color: var(--oat-border);
   font-style: italic;
 }
 .loop-excerpt-quote {
@@ -479,7 +488,7 @@ watch(
 }
 .loop-phase-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: rgba(180, 200, 255, 0.18);
+  background: rgba(218, 212, 200, 0.18);
   transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
 .loop-phase-dot.past { background: color-mix(in srgb, var(--accent) 55%, transparent); }
@@ -489,10 +498,10 @@ watch(
   box-shadow: 0 0 6px var(--accent);
 }
 .loop-footer-meta {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 10px; letter-spacing: 1px;
   text-transform: uppercase;
-  color: #6677aa;
+  color: var(--warm-silver);
 }
 .loop-footer-state.is-settled { color: var(--accent); }
 

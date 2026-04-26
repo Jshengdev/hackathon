@@ -5,11 +5,17 @@ the swarm fires once per network across the clip (not once per frame).
 """
 from __future__ import annotations
 import asyncio
+import time
 from pathlib import Path
 from typing import Any
 
 from services.k2_client import K2Client
 from services.orchestrator import _parse_observation
+
+# Per-clip live progress dict for the 7-agent swarm. Populated incrementally
+# as each network's K2 call resolves so /demo/warmup-status can drip readings
+# to the frontend before the whole swarm finishes. Process-local, ephemeral.
+SWARM_PROGRESS: dict[str, dict[str, dict[str, Any]]] = {}
 
 NETWORKS: tuple[str, ...] = (
     "visual",
@@ -23,7 +29,7 @@ NETWORKS: tuple[str, ...] = (
 
 _PROMPTS_DIR = Path(__file__).parents[1] / "prompts"
 _PER_CALL_MAX_TOKENS = 200
-_PER_CALL_TIMEOUT_S = 30.0
+_PER_CALL_TIMEOUT_S = 90.0
 
 _k2_client: K2Client | None = None
 
@@ -97,21 +103,46 @@ def _build_user_prompt(clip_id: str, network: str, stats: dict[str, Any]) -> str
     )
 
 
-async def _call_one(network: str, system: str, user: str) -> dict[str, Any]:
+async def _call_one(
+    network: str, system: str, user: str, clip_id: str | None = None,
+) -> dict[str, Any]:
     k2 = _get_k2()
     try:
         raw = await asyncio.wait_for(
-            k2.chat(system, user, max_tokens=_PER_CALL_MAX_TOKENS),
+            k2.chat(system, user, max_tokens=_PER_CALL_MAX_TOKENS, tag=f"specialist:{network}"),
             timeout=_PER_CALL_TIMEOUT_S,
         )
         parsed = _parse_observation(raw)
-        return {
+        result = {
             "reading": parsed.get("reading", "") or "",
             "confidence": parsed.get("confidence", "") or "",
             "cite": parsed.get("cite") or None,
         }
     except Exception as e:
-        return {"reading": f"[K2 error: {e}]", "confidence": "", "cite": None}
+        result = {"reading": f"[K2 error: {e}]", "confidence": "", "cite": None}
+
+    if clip_id is not None:
+        SWARM_PROGRESS.setdefault(clip_id, {})[network] = {
+            "state": "done",
+            "text": result["reading"],
+            "confidence": result["confidence"],
+            "cite": result["cite"],
+            "completed_at": time.time(),
+        }
+    return result
+
+
+def get_swarm_progress(clip_id: str) -> dict[str, dict[str, Any]]:
+    """Snapshot of the per-network in-flight progress for a clip.
+
+    Networks not present in the dict have not finished yet; callers should
+    treat absence as 'thinking'.
+    """
+    return dict(SWARM_PROGRESS.get(clip_id) or {})
+
+
+def reset_swarm_progress(clip_id: str) -> None:
+    SWARM_PROGRESS.pop(clip_id, None)
 
 
 async def run_swarm(activity_json: dict, clip_id: str) -> dict:
@@ -119,11 +150,14 @@ async def run_swarm(activity_json: dict, clip_id: str) -> dict:
     n = len(frames)
     agg = _aggregate_per_network(frames)
 
+    # Reset progress so a re-run for the same clip doesn't show stale state.
+    reset_swarm_progress(clip_id)
+
     tasks = []
     for net in NETWORKS:
         system = _load_system_prompt(net)
         user = _build_user_prompt(clip_id, net, agg[net])
-        tasks.append(_call_one(net, system, user))
+        tasks.append(_call_one(net, system, user, clip_id=clip_id))
 
     results = await asyncio.gather(*tasks, return_exceptions=False)
     regions = {net: results[i] for i, net in enumerate(NETWORKS)}

@@ -19,12 +19,12 @@ const SlideFrame = forwardRef<HTMLElement, Props>(function SlideFrame(
     <section
       id={id}
       ref={ref}
-      className="relative w-full overflow-hidden"
+      className="relative w-full"
       data-index={index}
       style={{ minHeight: "100vh" }}
     >
       <div
-        className={`relative mx-auto w-full max-w-[1440px] ${padded ? "px-10 md:px-16 lg:px-24" : ""} py-16 md:py-20 min-h-screen flex flex-col justify-center`}
+        className={`relative mx-auto w-full max-w-[1440px] ${padded ? "px-10 md:px-16 lg:px-24" : ""} py-12 md:py-16 min-h-screen flex flex-col justify-center`}
       >
         {children}
       </div>

@@ -32,6 +32,11 @@ const props = defineProps({
 
   // Whether clicks on regions should emit
   interactive:  { type: Boolean, default: true },
+
+  // K2 swarm readings keyed by network — when a reading mentions "high",
+  // that network's swarm-net edges fire faster, brighter, and arc further.
+  // Shape: { visual: { state, text, confidence, ... }, ... }
+  swarmReadings: { type: Object, default: null },
 })
 
 const emit = defineEmits(['region-clicked', 'mesh-ready'])
@@ -39,6 +44,10 @@ const emit = defineEmits(['region-clicked', 'mesh-ready'])
 // ── Reactive UI state ──────────────────────────────────────────────────────
 const container = ref(null)
 const topRegion = ref('')
+
+// Networks whose K2 reading contains "high" — drives boosted firing schedule
+// + larger arc lift + brighter color in updateSwarmNetwork below.
+const boostedSet = ref(new Set())
 
 // Mesh networks (exposed to parent via mesh-ready emit)
 const meshNetworks = shallowRef(null)
@@ -60,8 +69,6 @@ const SWARM_NET_FIRE_MIN_MS = 1500
 const SWARM_NET_FIRE_MAX_MS = 4500
 const SWARM_NET_DECAY_PER_MS = 0.0022
 const swarmNetPairs = []     // [{ a, b, fireAt, intensity }]
-let raycaster = null
-const _ndc = new THREE.Vector2()
 let animId = null
 
 // Wanderer agent state — frontend-driven boids-ish update
@@ -128,7 +135,6 @@ function initThree() {
   fill.position.set(-60, -40, 100)
   scene.add(fill)
 
-  raycaster = new THREE.Raycaster()
   renderer.domElement.addEventListener('click', onCanvasClick)
 
   window.addEventListener('resize', onResize)
@@ -163,13 +169,16 @@ function buildBrainMesh(data) {
   geo.computeVertexNormals()
 
   // MeshStandardMaterial: high roughness + zero metalness reads as cortical
-  // tissue under the warm key light. No emissive, no transparency — the heat
-  // colormap is purely vertex-color driven.
+  // tissue under the warm key light. Lowered opacity so the firing nodes +
+  // swarm-net arcs read against the cortex without being lost in it.
   const mat = new THREE.MeshStandardMaterial({
     vertexColors: true,
-    side: THREE.FrontSide,
+    side: THREE.DoubleSide,
     roughness: 0.92,
     metalness: 0.0,
+    transparent: true,
+    opacity: 0.45,
+    depthWrite: false,
   })
 
   brainMesh = new THREE.Mesh(geo, mat)
@@ -298,7 +307,14 @@ function buildEdgeGraphs() {
 }
 
 // ── Region agents (7 spheres) ──────────────────────────────────────────────
+//
+// Place each sphere at the network's anatomical centroid PROJECTED to the
+// nearest pial-surface vertex — `data.centroid` (mean of vertex_indices) can
+// land inside the cortex for spread-out networks like default_mode. Pushing
+// the projected vertex slightly outward along its origin-radial keeps the
+// sphere visually "on the surface" rather than embedded in it.
 function buildRegionAgents(networks) {
+  const meshPos = brainMesh?.geometry?.attributes?.position?.array
   for (const [name, data] of Object.entries(networks)) {
     const hex = networkHex(name)
 
@@ -306,7 +322,34 @@ function buildRegionAgents(networks) {
       new THREE.SphereGeometry(4, 16, 12),
       new THREE.MeshPhongMaterial({ color: hex, emissive: hex, emissiveIntensity: 0.25 }),
     )
-    mesh.position.set(...data.centroid)
+
+    let placed = data.centroid
+    const idxs = data.vertex_indices || []
+    if (meshPos && idxs.length) {
+      const [cx, cy, cz] = data.centroid
+      let bestIdx = idxs[0]
+      let bestD2 = Infinity
+      for (let k = 0; k < idxs.length; k++) {
+        const v = idxs[k]
+        const dx = meshPos[v * 3] - cx
+        const dy = meshPos[v * 3 + 1] - cy
+        const dz = meshPos[v * 3 + 2] - cz
+        const d2 = dx * dx + dy * dy + dz * dz
+        if (d2 < bestD2) {
+          bestD2 = d2
+          bestIdx = v
+        }
+      }
+      const sx = meshPos[bestIdx * 3]
+      const sy = meshPos[bestIdx * 3 + 1]
+      const sz = meshPos[bestIdx * 3 + 2]
+      // Push 5 units along the origin-outward direction so sphere sits ABOVE
+      // the surface, not embedded in cortical tissue.
+      const r = Math.sqrt(sx * sx + sy * sy + sz * sz) || 1
+      const f = (r + 5) / r
+      placed = [sx * f, sy * f, sz * f]
+    }
+    mesh.position.set(...placed)
     mesh.userData.network = name
     scene.add(mesh)
 
@@ -547,22 +590,40 @@ function applyLayout(layout) {
   }
 }
 
-// ── Click → raycast region spheres ─────────────────────────────────────────
+// ── Click → nearest region in screen space ────────────────────────────────
+// Yeo7 centroids are averaged across both hemispheres, so all 7 land near the
+// midline (x≈5) and a strict raycaster against the small radius-4 spheres
+// almost always picks whichever is closest to the camera (frontoparietal),
+// regardless of where the user clicks. Project each centroid to screen and
+// pick the closest one within a generous pixel radius — matches what the
+// user actually sees.
+const _projVec = new THREE.Vector3()
 function onCanvasClick(ev) {
-  if (!props.interactive || !raycaster) return
+  if (!props.interactive || !camera) return
   const rect = renderer.domElement.getBoundingClientRect()
-  _ndc.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1
-  _ndc.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1
-  raycaster.setFromCamera(_ndc, camera)
-  const targets = Object.values(regionMeshes).map(rm => rm.mesh)
-  const hits = raycaster.intersectObjects(targets, true)
-  if (hits.length) {
-    // Walk up to find the userData.network
-    let obj = hits[0].object
-    while (obj && !obj.userData.network) obj = obj.parent
-    if (obj?.userData.network) {
-      emit('region-clicked', obj.userData.network)
+  const cx = ev.clientX - rect.left
+  const cy = ev.clientY - rect.top
+  const W = rect.width, H = rect.height
+
+  let bestName = null
+  let bestDist2 = Infinity
+  for (const [name, rm] of Object.entries(regionMeshes)) {
+    _projVec.copy(rm.mesh.position).project(camera)
+    if (_projVec.z > 1) continue  // behind camera / clipped
+    const sx = (_projVec.x * 0.5 + 0.5) * W
+    const sy = (-_projVec.y * 0.5 + 0.5) * H
+    const dx = sx - cx, dy = sy - cy
+    const d2 = dx * dx + dy * dy
+    if (d2 < bestDist2) {
+      bestDist2 = d2
+      bestName = name
     }
+  }
+  // Generous radius: 120px ~ a third of typical pane height. Spheres are
+  // small and labels sit ~9 world units above; give the user room.
+  const MAX_PX = 120
+  if (bestName && bestDist2 <= MAX_PX * MAX_PX) {
+    emit('region-clicked', bestName)
   }
 }
 
@@ -749,13 +810,20 @@ function updateSwarmNetwork(now, dt) {
   const positions = swarmNetEdgeLines.geometry.attributes.position.array
   const colors    = swarmNetEdgeLines.geometry.attributes.color.array
   const decay = Math.exp(-SWARM_NET_DECAY_PER_MS * dt)
+  const boosted = boostedSet.value
 
   let segOffset = 0
   for (const pair of swarmNetPairs) {
+    // A pair is boosted if EITHER endpoint network had a "high" reading.
+    // Boosted pairs fire 4x more often, hold higher intensity, and arc
+    // further out beyond the brain volume.
+    const pairBoosted = boosted.has(pair.a) || boosted.has(pair.b)
+    const fireMin = pairBoosted ? SWARM_NET_FIRE_MIN_MS / 4 : SWARM_NET_FIRE_MIN_MS
+    const fireMax = pairBoosted ? SWARM_NET_FIRE_MAX_MS / 4 : SWARM_NET_FIRE_MAX_MS
+
     if (now >= pair.fireAt && pair.intensity < 0.05) {
-      pair.intensity = 1.0
-      pair.fireAt = now + SWARM_NET_FIRE_MIN_MS
-        + Math.random() * (SWARM_NET_FIRE_MAX_MS - SWARM_NET_FIRE_MIN_MS)
+      pair.intensity = pairBoosted ? 1.6 : 1.0
+      pair.fireAt = now + fireMin + Math.random() * (fireMax - fireMin)
     } else {
       pair.intensity *= decay
     }
@@ -768,12 +836,16 @@ function updateSwarmNetwork(now, dt) {
     const aCol = aMesh.mesh.material.color
     const bCol = bMesh.mesh.material.color
     const I = pair.intensity
+    // Lift coefficient — 0.45 baseline, 1.10 boosted (arc travels well past
+    // the brain volume so high-confidence connections read as "outside the
+    // cortex" loops).
+    const liftCoef = pairBoosted ? 1.10 : 0.45
 
     for (let s = 0; s < SWARM_NET_SEGMENTS; s++) {
       const t0 = s / SWARM_NET_SEGMENTS
       const t1 = (s + 1) / SWARM_NET_SEGMENTS
-      const p0 = arcPoint(a, b, t0)
-      const p1 = arcPoint(a, b, t1)
+      const p0 = arcPoint(a, b, t0, liftCoef)
+      const p1 = arcPoint(a, b, t1, liftCoef)
       const k = (segOffset + s) * 6
       positions[k]     = p0.x; positions[k + 1] = p0.y; positions[k + 2] = p0.z
       positions[k + 3] = p1.x; positions[k + 4] = p1.y; positions[k + 5] = p1.z
@@ -781,10 +853,11 @@ function updateSwarmNetwork(now, dt) {
       // Bright leading head, dim tail — head sits at t=0 on fire and slides
       // out as intensity decays, so a fresh pulse reads as "signal racing
       // from one node to the other".
-      const headPos = 1 - I
+      const headPos = 1 - Math.min(1, I)
       const distFromHead = Math.abs(t0 - headPos)
       const headGlow = Math.pow(Math.max(0, 1 - distFromHead * 6), 2)
-      const baseT = (0.15 + headGlow * 0.85) * I
+      const gain = pairBoosted ? 1.7 : 1.0
+      const baseT = (0.15 + headGlow * 0.85) * Math.min(1, I) * gain
       const blend = t0
       const r = (aCol.r * (1 - blend) + bCol.r * blend) * baseT
       const g = (aCol.g * (1 - blend) + bCol.g * blend) * baseT
@@ -802,7 +875,9 @@ function updateSwarmNetwork(now, dt) {
 // Arc helper — quadratic Bézier with a midpoint lifted along the average
 // outward normal of the two endpoints. Same trick as greenchain's route arcs:
 // `arcHeight = sin(progress*PI)^0.94` lifts the midpoint above the body.
-function arcPoint(a, b, t) {
+// liftCoef controls how far above the brain volume the arc bows — values >0.6
+// take the arc visibly outside the cortex (used for boosted "high" pairs).
+function arcPoint(a, b, t, liftCoef = 0.45) {
   const ax = a.x, ay = a.y, az = a.z
   const bx = b.x, by = b.y, bz = b.z
   // Linear interp
@@ -815,7 +890,7 @@ function arcPoint(a, b, t) {
   const dist = Math.sqrt(
     (bx - ax) ** 2 + (by - ay) ** 2 + (bz - az) ** 2
   )
-  const lift = Math.pow(Math.sin(t * Math.PI), 0.94) * dist * 0.45
+  const lift = Math.pow(Math.sin(t * Math.PI), 0.94) * dist * liftCoef
   return {
     x: lx + (mx / rm) * lift,
     y: ly + (my / rm) * lift,
@@ -841,6 +916,26 @@ watch(() => props.layout, (v) => {
     applyLayout(v)
   })
 })
+
+// Recompute boosted networks when swarmReadings prop changes. A network is
+// "boosted" if any of its reading text fields contains the word "high"
+// (case-insensitive) — that's our cue from the K2 confidence/intensity
+// language that this specialist is actively asserting strong activation.
+watch(
+  () => props.swarmReadings,
+  (sr) => {
+    const next = new Set()
+    if (sr && typeof sr === 'object') {
+      for (const [net, info] of Object.entries(sr)) {
+        if (!info) continue
+        const haystack = `${info.text || info.reading || ''} ${info.confidence || ''}`
+        if (/\bhigh\b/i.test(haystack)) next.add(net)
+      }
+    }
+    boostedSet.value = next
+  },
+  { immediate: true, deep: true },
+)
 
 // ── Lifecycle ──────────────────────────────────────────────────────────────
 onMounted(async () => {

@@ -6,6 +6,7 @@
         :activity-data="activityData"
         :current-time="currentTime"
         :is-playing="isPlaying"
+        :swarm-readings="swarmReadingsRef"
         layout="left-half"
         :show-hud="true"
         :interactive="true"

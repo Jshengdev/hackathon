@@ -1,6 +1,28 @@
 <template>
   <div class="loading-stage">
     <div class="bg-grid" />
+
+    <!-- Orbital backdrop: two faint, slow-rotating ellipses (matches LandingStage) -->
+    <svg class="loading-orbital-svg" viewBox="0 0 800 800" aria-hidden="true">
+      <g class="loading-orbital-group">
+        <ellipse
+          class="loading-orbital loading-orbital--outer"
+          cx="400" cy="400"
+          rx="320" ry="190"
+          transform="rotate(-18 400 400)"
+        />
+        <ellipse
+          class="loading-orbital loading-orbital--inner"
+          cx="400" cy="400"
+          rx="220" ry="130"
+          transform="rotate(24 400 400)"
+        />
+      </g>
+    </svg>
+
+    <!-- Vignette: accent glow at center, fades to transparent -->
+    <div class="loading-vignette" />
+
     <div class="container">
       <div class="header">
         <span class="brand-dot" :class="{ done: allDone }" />
@@ -29,6 +51,23 @@
       <div class="status-line" :class="{ done: allDone }">
         <span v-if="allDone">Both pipelines complete · advancing…</span>
         <span v-else>Running pipelines in parallel…</span>
+      </div>
+
+      <!-- Overall pipeline phase-rail: uploading → analyzing → syncing -->
+      <div class="loading-phase-rail" role="progressbar" :aria-valuenow="Math.round(overallProgress * 100)" aria-valuemin="0" aria-valuemax="100">
+        <div
+          v-for="(p, i) in pipelinePhases"
+          :key="`phase-${p.key}`"
+          class="loading-phase-cell"
+          :class="{
+            past: phaseIndex > i,
+            active: phaseIndex === i,
+            future: phaseIndex < i,
+          }"
+        >
+          <span class="loading-phase-dot" />
+          <span class="loading-phase-label">{{ p.label }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -71,6 +110,25 @@ let tribeResult  = null
 let timers = []
 
 const allDone = computed(() => visionDone.value && tribeDone.value)
+
+// Overall pipeline progress (mean of the two streams) drives the phase-rail.
+const overallProgress = computed(() => (visionProgress.value + tribeProgress.value) / 2)
+
+const pipelinePhases = [
+  { key: 'uploading', label: 'uploading' },
+  { key: 'analyzing', label: 'analyzing' },
+  { key: 'syncing',   label: 'syncing' },
+]
+
+// Threshold-based phase index. 0..0.33 → uploading, 0.33..0.66 → analyzing,
+// 0.66..1.0 → syncing, ===1.0 → done (all three filled).
+const phaseIndex = computed(() => {
+  const p = overallProgress.value
+  if (allDone.value || p >= 1) return 3 // all phases past
+  if (p < 0.33) return 0
+  if (p < 0.66) return 1
+  return 2
+})
 
 function pushLog(target, msg) {
   target.value = [...target.value, msg]
@@ -181,10 +239,22 @@ const ProgressStream = defineComponent({
     accent:   { type: String, default: '#4ecdc4' },
   },
   setup(p) {
+    // Tick-rail thresholds: 0.2 / 0.4 / 0.6 / 0.8 / 1.0
+    const TICK_THRESHOLDS = [0.2, 0.4, 0.6, 0.8, 1.0]
+
     return () => h('div', { class: ['stream', p.done && 'is-done'] }, [
       h('div', { class: 'stream-head' }, [
         h('span', { class: 'stream-label' }, p.label),
         h('span', { class: 'stream-sub' }, p.subtitle),
+        h('span', { class: 'stream-tick-rail' },
+          TICK_THRESHOLDS.map((t, i) => h('span', {
+            key: `tick-${i}`,
+            class: ['stream-tick', p.progress >= t && 'is-filled'],
+            style: p.progress >= t
+              ? { background: p.accent, boxShadow: `0 0 4px ${p.accent}` }
+              : undefined,
+          })),
+        ),
         h('span', {
           class: 'stream-pct',
           style: { color: p.accent },
@@ -225,6 +295,45 @@ const ProgressStream = defineComponent({
     linear-gradient(90deg, rgba(120, 160, 255, 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(circle at center, #000 30%, transparent 75%);
+  pointer-events: none;
+}
+
+/* Orbital backdrop — slow-rotating SVG ellipses, CSS-only animation */
+.loading-orbital-svg {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: min(120vmin, 1100px);
+  height: min(120vmin, 1100px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  overflow: visible;
+  opacity: 0.9;
+}
+.loading-orbital {
+  fill: none;
+  stroke-width: 1;
+  transform-origin: 400px 400px;
+  transform-box: fill-box;
+}
+.loading-orbital--outer {
+  stroke: rgba(180, 200, 255, 0.10);
+  animation: orbit-spin 60s linear infinite;
+}
+.loading-orbital--inner {
+  stroke: rgba(180, 200, 255, 0.06);
+  animation: orbit-spin 35s linear infinite reverse;
+}
+@keyframes orbit-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Vignette — accent glow at center, fades to transparent */
+.loading-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(130, 224, 170, 0.08) 0%,
+    rgba(130, 224, 170, 0) 55%);
   pointer-events: none;
 }
 
@@ -293,10 +402,23 @@ const ProgressStream = defineComponent({
   font-size: 11px; color: #6677aa;
   text-transform: uppercase; letter-spacing: 1.2px;
 }
-:deep(.stream-pct) {
+:deep(.stream-tick-rail) {
   margin-left: auto;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding-right: 4px;
+}
+:deep(.stream-tick) {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: rgba(180, 200, 255, 0.18);
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+:deep(.stream-tick.is-filled) {
+  /* color/box-shadow set inline via accent */
+}
+:deep(.stream-pct) {
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px; font-weight: 500;
+  min-width: 36px; text-align: right;
 }
 
 :deep(.bar) {
@@ -331,4 +453,43 @@ const ProgressStream = defineComponent({
   transition: color 0.4s ease;
 }
 .status-line.done { color: #82e0aa; }
+
+/* Overall pipeline phase-rail: 3 dots labeled uploading / analyzing / syncing */
+.loading-phase-rail {
+  margin-top: 20px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 28px;
+}
+.loading-phase-cell {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #556688;
+  transition: color 0.35s ease;
+}
+.loading-phase-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(180, 200, 255, 0.18);
+  transition: background 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease;
+}
+.loading-phase-cell.past .loading-phase-dot {
+  background: color-mix(in srgb, #82e0aa 55%, transparent);
+}
+.loading-phase-cell.past .loading-phase-label {
+  color: #99a3bb;
+}
+.loading-phase-cell.active .loading-phase-dot {
+  background: #82e0aa;
+  box-shadow: 0 0 6px #82e0aa;
+  transform: scale(1.4);
+  animation: phase-pulse 1.6s ease-in-out infinite;
+}
+.loading-phase-cell.active .loading-phase-label {
+  color: #82e0aa;
+}
+@keyframes phase-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
 </style>

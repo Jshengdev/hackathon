@@ -26,7 +26,7 @@ NETWORKS: tuple[str, ...] = (
 _PROMPTS_DIR = Path(__file__).parents[1] / "prompts"
 _EVALUATOR_PROMPT_PATH = _PROMPTS_DIR / "evaluator_score.md"
 _PER_CALL_MAX_TOKENS = 120
-_PER_CALL_TIMEOUT_S = 20.0
+_PER_CALL_TIMEOUT_S = 90.0
 _TARGET_SCORE = 1.0
 
 _SCORE_RE = re.compile(r"^\s*score\s*:\s*([0-9]*\.?[0-9]+)", re.IGNORECASE | re.MULTILINE)

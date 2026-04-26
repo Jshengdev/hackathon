@@ -485,6 +485,21 @@ async def k2_region(payload: dict):
     if not activity_path.exists():
         raise HTTPException(status_code=404, detail="clip not found")
 
+    # Cache lookup — k2_region_cache.json is baked during warmup with one entry
+    # per (network, t). Hits are instant; misses fall through to a live K2 call.
+    region_cache = read_cached(PRERENDERED_DIR, clip_id, "k2_region_cache") or {}
+    cached_entry = region_cache.get(f"{network}_t{t_int}")
+    if cached_entry and cached_entry.get("text"):
+        return {
+            "network": network,
+            "t": t_int,
+            "text": cached_entry.get("text", ""),
+            "confidence": cached_entry.get("confidence", ""),
+            "cite": cached_entry.get("cite"),
+            "raw": cached_entry.get("raw", cached_entry.get("text", "")),
+            "cached": True,
+        }
+
     try:
         activity = json.loads(activity_path.read_text(encoding="utf-8"))
     except Exception as e:

@@ -29,7 +29,7 @@ NETWORKS: tuple[str, ...] = (
 
 _PROMPTS_DIR = Path(__file__).parents[1] / "prompts"
 _PER_CALL_MAX_TOKENS = 200
-_PER_CALL_TIMEOUT_S = 30.0
+_PER_CALL_TIMEOUT_S = 90.0
 
 _k2_client: K2Client | None = None
 

@@ -242,7 +242,9 @@ async function runTribe() {
 // rises over MIN_MS and the swarm-count "lights up" one specialist per ~2.6s,
 // so the loading screen feels like the swarm is actually working.
 const WARMUP_MIN_MS_FULL = 20000      // 20s when backend has real work to do
-const WARMUP_MIN_MS_PREBAKED = 0      // skip the floor entirely when cached
+const WARMUP_MIN_MS_PREBAKED = 7000   // 7s theatrical floor even when cached
+                                       // — sells the "matching to brain pattern"
+                                       // beat without faking a cold-start wait
 async function pollWarmup(maxMs = 180000, intervalMs = 600) {
   const start = performance.now()
   let lastShownCount = 0

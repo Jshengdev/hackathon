@@ -4,7 +4,7 @@
     <div class="rsb-track" :style="{ height: `${height}px` }">
       <div class="rsb-fill" :style="fillStyle" />
     </div>
-    <div class="rsb-readout">{{ displayScore.toFixed(2) }}</div>
+    <div class="rsb-readout">{{ (displayValue ?? displayScore).toFixed(2) }}</div>
   </div>
 </template>
 
@@ -18,6 +18,10 @@ const props = defineProps({
   height:    { type: Number, default: 12 },
   accent:    { type: String, default: '#4ecdc4' },
   label:     { type: String, default: '' },
+  // Optional: when provided, the right-side readout shows this number
+  // instead of `score`. Lets the bar render a progress fraction while
+  // the readout still shows the underlying score value.
+  displayValue: { type: Number, default: null },
 })
 
 const displayScore = ref(props.fromScore)

@@ -5,8 +5,9 @@
 
     <div class="bar-wrap">
       <RoundScoreBar
-        :score="currentScore"
-        :from-score="prevScore"
+        :score="progressValue"
+        :from-score="prevProgressValue"
+        :display-value="currentScore"
         :duration="1500"
         :height="14"
         :label="`round ${currentRound} / ${totalRounds || '?'}`"
@@ -38,16 +39,21 @@ import { filterRealRounds } from '../utils/trajectory.js'
 const props = defineProps({ clipId: { type: String, required: true } })
 defineEmits(['reveal-done'])
 
-const trajectory   = ref([])
-const totalRounds  = ref(0)
-const currentRound = ref(1)
-const currentScore = ref(0)
-const prevScore    = ref(0)
-const excerpt      = ref('')
-const done         = ref(false)
-const error        = ref('')
-const finalScore   = ref(null)
-const hasFinalScore = computed(() => Number.isFinite(finalScore.value))
+const trajectory       = ref([])
+const totalRounds      = ref(0)
+const currentRound     = ref(1)
+const currentScore     = ref(0)
+const prevScore        = ref(0)
+// Bar fill is driven by ROUND PROGRESS (i/N), not score — so round 1/2
+// fills the bar to 50%, round 2/2 to 100%. The score is still surfaced
+// via the bar's right-side readout via :display-value.
+const progressValue    = ref(0)
+const prevProgressValue = ref(0)
+const excerpt          = ref('')
+const done             = ref(false)
+const error            = ref('')
+const finalScore       = ref(null)
+const hasFinalScore    = computed(() => Number.isFinite(finalScore.value))
 
 let timer = null
 
@@ -79,9 +85,13 @@ async function loadAndPlay() {
       prevScore.value = currentScore.value
       currentScore.value = r.score ?? 0
       currentRound.value = r.round ?? (i + 1)
+      prevProgressValue.value = progressValue.value
+      progressValue.value = (i + 1) / rt.length
       excerpt.value = (r.paragraph_excerpt || '').slice(0, 80)
       i += 1
-      timer = setTimeout(step, 2000)
+      // 10s between rounds — gives the audience time to read each candidate
+      // excerpt and watch the bar advance discretely.
+      timer = setTimeout(step, 10000)
     }
     step()
   } catch (e) {

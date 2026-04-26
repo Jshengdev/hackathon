@@ -81,6 +81,7 @@
             :accent="iterativeAccent"
             :round-ms="10000"
             :loop="false"
+            @settled="loopSettled = true"
           />
           <div v-else class="panel-loading">iterative loop loading…</div>
 
@@ -97,8 +98,15 @@
       </div>
     </div>
 
-    <!-- Next button -->
-    <button class="next-btn" @click="$emit('next')">
+    <!-- Next button — gated until the IterativeLoop visual finishes its
+         round-by-round playback so viewers see the convergence land before
+         leaving the dashboard. -->
+    <button
+      class="next-btn"
+      :disabled="!loopSettled"
+      :title="loopSettled ? '' : 'wait for the iterative loop to finish'"
+      @click="loopSettled && $emit('next')"
+    >
       Next →
     </button>
 
@@ -158,6 +166,10 @@ const {
 } = useSwarmProgress(500)
 const iterativeTrajectory = ref(null)  // { round_trajectory, final_score, ... }
 const empathyData = ref(null)          // EmpathyDocument
+// Set true once IterativeLoop emits 'settled' (its round-by-round playback
+// reached the final round). Gates the "Next →" button so viewers don't
+// skip past the convergence moment. Reset on clip switch.
+const loopSettled = ref(false)
 
 const iterativeAccent = '#82e0aa'
 
@@ -367,6 +379,7 @@ onMounted(() => {
 watch(() => props.clipId, (id) => {
   iterativeTrajectory.value = null
   empathyData.value = null
+  loopSettled.value = false
   videoMissing.value = !props.videoUrl
   hasStarted.value = false
   stopSwarmPolling()
@@ -587,9 +600,18 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 12px rgba(78, 205, 196, 0.18);
   z-index: 50;
 }
-.next-btn:hover {
+.next-btn:hover:not(:disabled) {
   background: rgba(20, 50, 40, 0.92);
   box-shadow: 0 0 18px rgba(78, 205, 196, 0.45);
   transform: translateY(-1px);
+}
+.next-btn:disabled {
+  color: #3a4a5e;
+  border-color: #1e2a36;
+  background: rgba(10, 10, 28, 0.6);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
 }
 </style>

@@ -177,6 +177,10 @@ const props = defineProps({
   pauseAfterMs: { type: Number, default: 1800 }, // only used when loop=true
 })
 
+// Emitted once when the playback reaches its final round and settles. Used
+// by parent stages to gate "next" affordances until the visual completes.
+const emit = defineEmits(['settled'])
+
 const currentIndex = ref(0)
 const settled = ref(false)
 const reducedMotion = ref(false)
@@ -237,6 +241,7 @@ function advance() {
     schedule()
   } else {
     settled.value = true
+    emit('settled')
     if (props.loop) {
       phaseTimer = setTimeout(() => {
         settled.value = false
@@ -262,6 +267,7 @@ onMounted(() => {
     // Skip animation entirely; show the converged frame.
     currentIndex.value = props.trajectory.length - 1
     settled.value = true
+    emit('settled')
     return
   }
 
